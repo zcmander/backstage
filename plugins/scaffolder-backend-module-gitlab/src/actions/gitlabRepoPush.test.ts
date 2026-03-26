@@ -107,6 +107,7 @@ describe('createGitLabCommit', () => {
             execute_filemode: false,
           },
         ],
+        undefined,
       );
       expect(ctx.output).toHaveBeenCalledWith(
         'commitHash',
@@ -146,6 +147,7 @@ describe('createGitLabCommit', () => {
             execute_filemode: false,
           },
         ],
+        undefined,
       );
       expect(ctx.output).toHaveBeenCalledWith(
         'commitHash',
@@ -183,6 +185,7 @@ describe('createGitLabCommit', () => {
             execute_filemode: false,
           },
         ],
+        undefined,
       );
       expect(ctx.output).toHaveBeenCalledWith(
         'commitHash',
@@ -220,6 +223,7 @@ describe('createGitLabCommit', () => {
             execute_filemode: false,
           },
         ],
+        undefined,
       );
       expect(ctx.output).toHaveBeenCalledWith(
         'commitHash',
@@ -263,6 +267,7 @@ describe('createGitLabCommit', () => {
             execute_filemode: false,
           },
         ],
+        undefined,
       );
       expect(ctx.output).toHaveBeenCalledWith(
         'commitHash',
@@ -305,6 +310,7 @@ describe('createGitLabCommit', () => {
             execute_filemode: false,
           },
         ],
+        undefined,
       );
       expect(ctx.output).toHaveBeenCalledWith(
         'commitHash',
@@ -369,6 +375,7 @@ describe('createGitLabCommit', () => {
             execute_filemode: false,
           },
         ],
+        undefined,
       );
       expect(ctx.output).toHaveBeenCalledWith(
         'commitHash',
