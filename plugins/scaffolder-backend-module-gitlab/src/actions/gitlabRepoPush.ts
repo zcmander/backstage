@@ -224,7 +224,7 @@ export const createGitlabRepoPushAction = (options: {
               branchName,
               ctx.input.commitMessage,
               actions,
-              ...(allowEmpty !== undefined ? [{ allowEmpty } as object] : []),
+              allowEmpty !== undefined ? ({ allowEmpty } as any) : undefined,
             );
             return commit.id;
           },
