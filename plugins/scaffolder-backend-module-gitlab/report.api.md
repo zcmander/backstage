@@ -212,7 +212,7 @@ export function createPublishGitlabAction(options: {
           visibility?: 'internal' | 'private' | 'public' | undefined;
           path?: string | undefined;
           description?: string | undefined;
-          merge_method?: 'merge' | 'ff' | 'rebase_merge' | undefined;
+          merge_method?: 'merge' | 'rebase_merge' | 'ff' | undefined;
           topics?: string[] | undefined;
           auto_devops_enabled?: boolean | undefined;
           only_allow_merge_if_pipeline_succeeds?: boolean | undefined;
