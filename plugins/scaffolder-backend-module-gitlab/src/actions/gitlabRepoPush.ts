@@ -219,13 +219,21 @@ export const createGitlabRepoPushAction = (options: {
         const commitId = await ctx.checkpoint({
           key: `commit.create.${repoID}.${branchName}`,
           fn: async () => {
-            const commit = await api.Commits.create(
-              repoID,
-              branchName,
-              ctx.input.commitMessage,
-              actions,
-              allowEmpty !== undefined ? ({ allowEmpty } as any) : undefined,
-            );
+            const commit =
+              allowEmpty !== undefined
+                ? await api.Commits.create(
+                    repoID,
+                    branchName,
+                    ctx.input.commitMessage,
+                    actions,
+                    { allowEmpty } as any,
+                  )
+                : await api.Commits.create(
+                    repoID,
+                    branchName,
+                    ctx.input.commitMessage,
+                    actions,
+                  );
             return commit.id;
           },
         });
