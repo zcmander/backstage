@@ -69,7 +69,7 @@ export const createGitlabIssueAction: (options: {
     discussionToResolve?: string | undefined;
     epicId?: number | undefined;
     labels?: string | undefined;
-    issueType?: 'issue' | 'incident' | 'test_case' | 'task' | undefined;
+    issueType?: 'issue' | 'task' | 'incident' | 'test_case' | undefined;
     mergeRequestToResolveDiscussionsOf?: number | undefined;
     milestoneId?: number | undefined;
     weight?: number | undefined;
@@ -274,7 +274,7 @@ export const createPublishGitlabMergeRequestAction: (options: {
     sourcePath?: string | undefined;
     targetPath?: string | undefined;
     token?: string | undefined;
-    commitAction?: 'auto' | 'update' | 'skip' | 'create' | 'delete' | undefined;
+    commitAction?: 'auto' | 'update' | 'create' | 'delete' | 'skip' | undefined;
     projectid?: string | undefined;
     removeSourceBranch?: boolean | undefined;
     assignee?: string | undefined;
@@ -325,7 +325,7 @@ export const editGitlabIssueAction: (options: {
     discussionLocked?: boolean | undefined;
     dueDate?: string | undefined;
     epicId?: number | undefined;
-    issueType?: 'issue' | 'incident' | 'test_case' | 'task' | undefined;
+    issueType?: 'issue' | 'task' | 'incident' | 'test_case' | undefined;
     labels?: string | undefined;
     milestoneId?: number | undefined;
     removeLabels?: string | undefined;
