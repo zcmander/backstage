@@ -27,7 +27,9 @@ describe('GitLabRepoOwnerPicker', () => {
   const scaffolderApiMock: Partial<ScaffolderApi> = {
     autocomplete: jest
       .fn()
-      .mockResolvedValue({ results: [{ id: 'owner1' }, { id: 'owner2' }] }),
+      .mockResolvedValue({
+        results: [{ title: 'owner1' }, { title: 'owner2' }],
+      }),
   };
 
   it('renders an input field', async () => {

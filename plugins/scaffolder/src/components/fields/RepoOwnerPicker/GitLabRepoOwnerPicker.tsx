@@ -69,8 +69,8 @@ export const GitLabRepoOwnerPicker = ({
       })
       .then(({ results }) => {
         const owners = results
-          .map(r => r.id)
-          .filter(id => !excludedOwners.includes(id));
+          .map(r => r.title!)
+          .filter(title => !excludedOwners.includes(title));
 
         setAvailableOwners(owners);
       })
