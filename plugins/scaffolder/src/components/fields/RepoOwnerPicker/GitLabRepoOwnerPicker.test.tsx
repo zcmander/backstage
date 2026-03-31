@@ -25,11 +25,9 @@ import userEvent from '@testing-library/user-event';
 
 describe('GitLabRepoOwnerPicker', () => {
   const scaffolderApiMock: Partial<ScaffolderApi> = {
-    autocomplete: jest
-      .fn()
-      .mockResolvedValue({
-        results: [{ title: 'owner1' }, { title: 'owner2' }],
-      }),
+    autocomplete: jest.fn().mockResolvedValue({
+      results: [{ title: 'owner1' }, { title: 'owner2' }],
+    }),
   };
 
   it('renders an input field', async () => {
