@@ -188,6 +188,12 @@ function NavContentRenderer(props: {
         return [];
       }
 
+      const navItemNodeId = node.spec.id.replace(/^page:/, 'nav-item:');
+      const navItemNode = tree.nodes.get(navItemNodeId);
+      if (navItemNode?.spec.disabled) {
+        return [];
+      }
+
       const routeRef = node.instance.getData(coreExtensionData.routeRef);
       if (!routeRef) {
         return [];
