@@ -28,7 +28,8 @@ into your backend.
 
 ### Key metrics to monitor
 
-Backstage plugins emit metrics that give you insight into system health:
+Backstage plugins emit metrics that give you insight into system health.
+Common examples include:
 
 - `catalog_entities_count` - Total number of entities in the catalog.
 - `catalog.processed.entities.count` - Number of entities processed.
@@ -36,8 +37,9 @@ Backstage plugins emit metrics that give you insight into system health:
 - `scaffolder.task.count` - Number of scaffolder tasks run.
 - `scaffolder.task.duration` - Time taken by scaffolder tasks.
 
-These metrics help you set up alerts for things like processing backlogs or
-unusually slow scaffolder runs.
+The specific metric names may vary depending on which plugins you have
+installed and their versions. These examples help you set up alerts for
+things like processing backlogs or unusually slow scaffolder runs.
 
 ### Health checks
 

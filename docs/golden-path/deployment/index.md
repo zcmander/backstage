@@ -4,7 +4,7 @@ title: Deploying Backstage to production
 description: A guided path for deploying your Backstage app to production
 ---
 
-### Prerequisites
+## Prerequisites
 
 - You have completed the [create-app golden path](../create-app/index.md) and
   have a working Backstage app.
@@ -13,7 +13,7 @@ description: A guided path for deploying your Backstage app to production
 - You have a general understanding of how your company builds and deploys
   software.
 
-### What should I get out of this guide?
+## What should I get out of this guide?
 
 This guide walks through everything you need to get your Backstage instance
 running in a production environment. By the end, you will have:
@@ -25,7 +25,7 @@ running in a production environment. By the end, you will have:
 - Monitoring and observability set up with OpenTelemetry.
 - An understanding of how to scale your deployment as usage grows.
 
-### Structure
+## Structure
 
 We start with the Docker image since that is the foundation of any deployment.
 Then we set up the two critical pre-deploy dependencies: a database and
@@ -33,6 +33,6 @@ authentication. After that, we walk through deploying to Kubernetes and discuss
 other deployment options. Finally, we cover operational topics like
 configuration management, monitoring, and scaling.
 
-### Next steps
+## Next steps
 
 - [Building the Docker image](./001-docker.md)
