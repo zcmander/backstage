@@ -40,7 +40,7 @@ and produces better caching behavior.
 From the root of your repository:
 
 ```shell
-yarn install --immutable
+yarn install
 yarn tsc
 yarn build:backend
 ```
@@ -59,29 +59,6 @@ docker run -it -p 7007:7007 backstage
 
 You should see logs in your terminal and be able to open `http://localhost:7007`
 in your browser.
-
-## Running the build in CI
-
-While you can run this build locally, you will typically run it as part of your
-CI pipeline. A GitHub Actions workflow might look like this:
-
-```yaml
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-      - run: yarn install --immutable
-      - run: yarn tsc
-      - run: yarn build:backend
-      - run: docker image build . -f packages/backend/Dockerfile --tag backstage
-```
-
-After building, push the image to your container registry (ECR, GCR, Docker
-Hub, etc.) so that your deployment platform can pull it.
 
 :::tip Troubleshooting
 
