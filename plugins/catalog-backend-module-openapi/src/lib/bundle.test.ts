@@ -548,6 +548,55 @@ properties:
       'https://github.com/owner/repo/tree/main/specs/schemas/error.yaml',
     );
   });
+
+  it('should resolve depth-2 nested refs through the http resolver', async () => {
+    const spec = `
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Test
+paths:
+  /pets:
+    get:
+      $ref: "https://external.example.com/specs/paths/pets.yaml"
+`;
+
+    const petsContent = `
+summary: List all pets
+operationId: listPets
+responses:
+  '200':
+    description: OK
+    content:
+      application/json:
+        schema:
+          $ref: "../schemas/pet.yaml"
+`;
+
+    const petSchemaContent = `
+type: object
+properties:
+  name:
+    type: string
+`;
+
+    (read as jest.Mock)
+      .mockResolvedValueOnce(petsContent)
+      .mockResolvedValueOnce(petSchemaContent);
+
+    const baseUrl =
+      'https://github.com/owner/repo/blob/main/specs/openapi.yaml';
+
+    await bundleFileWithRefs(spec, baseUrl, read, resolveUrl);
+
+    const petsUrl = 'https://external.example.com/specs/paths/pets.yaml';
+    expect(resolveUrl).toHaveBeenCalledWith(petsUrl, baseUrl);
+    expect(read).toHaveBeenCalledWith(petsUrl);
+    expect(resolveUrl).toHaveBeenCalledWith('../schemas/pet.yaml', petsUrl);
+    expect(read).toHaveBeenCalledWith(
+      'https://external.example.com/specs/schemas/pet.yaml',
+    );
+  });
 });
 
 describe('bundleFileWithRefs - Testing getRelativePath scenarios', () => {
