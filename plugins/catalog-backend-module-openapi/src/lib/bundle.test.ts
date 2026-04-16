@@ -549,6 +549,77 @@ properties:
     );
   });
 
+  it('should resolve the vj-goto/test-catalog scenario (issue #33076)', async () => {
+    // Mirrors https://github.com/vj-goto/test-catalog — cproc/specs/transcript-tester.yaml
+    // refs ./../../common/specs/common.yaml for shared responses.
+    const spec = `
+openapi: 3.1.0
+info:
+  version: 1.0.0
+  title: Transcription Tester API
+paths:
+  /tests/post-call-transcription:
+    post:
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          $ref: "./../../common/specs/common.yaml#/components/responses/400"
+        '404':
+          $ref: "./../../common/specs/common.yaml#/components/responses/404"
+        '500':
+          $ref: "./../../common/specs/common.yaml#/components/responses/500"
+`;
+
+    const commonContent = `
+openapi: 3.0.0
+info:
+  version: 2.0.0
+  title: Common Definitions
+paths: {}
+components:
+  responses:
+    "400":
+      description: Bad Request
+      content:
+        "*/*":
+          schema:
+            type: object
+    "404":
+      description: Not Found
+      content:
+        "*/*":
+          schema:
+            type: object
+    "500":
+      description: Server Error
+      content:
+        "*/*":
+          schema:
+            type: object
+`;
+
+    (read as jest.Mock).mockResolvedValue(commonContent);
+
+    const baseUrl =
+      'https://github.com/vj-goto/test-catalog/blob/main/cproc/specs/transcript-tester.yaml';
+
+    await bundleFileWithRefs(spec, baseUrl, read, resolveUrl);
+
+    expect(resolveUrl).toHaveBeenCalledWith(
+      './../../common/specs/common.yaml',
+      baseUrl,
+    );
+    expect(read).toHaveBeenCalledWith(
+      'https://github.com/vj-goto/test-catalog/tree/main/common/specs/common.yaml',
+    );
+    expect(read).toHaveBeenCalledTimes(1);
+  });
+
   it('should resolve depth-2 nested refs through the http resolver', async () => {
     const spec = `
 openapi: "3.0.0"
