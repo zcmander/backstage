@@ -52,6 +52,10 @@ export async function bundleFileWithRefs(
   read: BundlerRead,
   resolveUrl: BundlerResolveUrl,
 ): Promise<string> {
+  // file.baseUrl from the parser is a filesystem path, not an SCM URL. For
+  // nested refs (depth > 1) we need the parent's SCM URL to resolve against,
+  // so we track the translation from each read file's internal URL to the
+  // SCM URL we computed for it.
   const resolvedUrlMap = new Map<string, string>();
 
   const fileUrlReaderResolver: ResolverOptions = {
