@@ -365,8 +365,7 @@ export class NunjucksWorkflowRunner implements WorkflowRunner {
             )) ??
           {};
         taskLogger.info(
-          `Running ${action.id
-          } in dry-run mode with inputs (secrets redacted): ${JSON.stringify(
+          `Running ${action.id} in dry-run mode with inputs (secrets redacted): ${JSON.stringify(
             debugInput,
             undefined,
             2,
@@ -436,8 +435,7 @@ export class NunjucksWorkflowRunner implements WorkflowRunner {
           continue;
         }
 
-        const actionId = `${action.id}${iteration.each ? `[${iteration.each.key}]` : ''
-          }`;
+        const actionId = `${action.id}${iteration.each ? `[${iteration.each.key}]` : ''}`;
 
         if (action.schema?.input) {
           const validateResult = validateJsonSchema(
