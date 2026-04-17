@@ -222,8 +222,12 @@ export class SecureTemplater {
       render,
       dispose: () => {
         if (context && !isolate.isDisposed) {
-          context.release();
-          isolate.dispose();
+          try {
+            context.release();
+            isolate.dispose();
+          } catch (error) {
+            // Ignore errors during dispose, as there's not much we can do about it
+          }
         }
       },
     };
