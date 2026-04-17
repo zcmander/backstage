@@ -365,8 +365,7 @@ export class NunjucksWorkflowRunner implements WorkflowRunner {
             )) ??
           {};
         taskLogger.info(
-          `Running ${action.id
-          } in dry-run mode with inputs (secrets redacted): ${JSON.stringify(
+          `Running ${action.id} in dry-run mode with inputs (secrets redacted): ${JSON.stringify(
             debugInput,
             undefined,
             2,
