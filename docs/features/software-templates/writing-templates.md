@@ -325,6 +325,57 @@ spec:
         token: ${{ each.value.token }}
 ```
 
+### Defining a Secrets Schema
+
+You can define a JSON Schema for secrets that will be validated when a task is created. This is useful when secrets are passed programmatically (e.g., via CI/CD pipelines or API calls) rather than through the UI form. The schema ensures that required secrets are provided before task execution begins.
+
+```yaml
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: publish-to-npm
+  title: Publish to NPM
+spec:
+  owner: backstage/techdocs-core
+  type: service
+
+  # Define required secrets with a JSON Schema
+  secrets:
+    schema:
+      required:
+        - NPM_TOKEN
+      properties:
+        NPM_TOKEN:
+          type: string
+          description: NPM authentication token for publishing
+
+  parameters:
+    - title: Package Details
+      properties:
+        packageName:
+          type: string
+          title: Package Name
+
+  steps:
+    - id: publish
+      action: npm:publish
+      input:
+        packageName: ${{ parameters.packageName }}
+        token: ${{ secrets.NPM_TOKEN }}
+```
+
+When a task is created without the required secrets, the API returns a `400` error with a descriptive message:
+
+```json
+{
+  "errors": [
+    {
+      "message": "secrets.NPM_TOKEN is required"
+    }
+  ]
+}
+```
+
 ### Custom step layouts
 
 If you find that the default layout of the form used in a particular step does not meet your needs then you can supply your own [custom step layout](./writing-custom-step-layouts.md).
@@ -525,7 +576,7 @@ token from the user, which you can do on a per-provider basis, in case your
 template can be published to multiple providers.
 
 Note, that you will need to configure an [authentication provider](../../auth/index.md#configuring-authentication-providers), alongside the
-[`ScmAuthApi`](../../auth/index.md#scaffolder-configuration-software-templates) for your source code management (SCM) service to make this feature work.
+[`ScmAuthApi`](../../auth/index.md#custom-scmauthapi-implementation) for your source code management (SCM) service to make this feature work.
 
 ### The Repository Branch Picker
 
@@ -552,6 +603,35 @@ For more information regarding the `requestUserCredentials` object, please refer
 For a list of all possible `ui:options` input props for `RepoBranchPicker`, please visit [here](./ui-options-examples.md#repobranchpicker).
 
 The `RepoBranchPicker` is a custom field that we provide part of the
+`plugin-scaffolder`. You can provide your own custom fields by
+[writing your own Custom Field Extensions](./writing-custom-field-extensions.md)
+
+### The Repository Owner Picker
+
+Similar to the repository picker, there is a picker for owners to support autocompletion. A full example could look like this:
+
+```yaml
+- title: Choose an owner
+  required:
+    - repoOwner
+  properties:
+    repoOwner:
+      title: Repository Owner
+      type: string
+      ui:field: RepoOwnerPicker
+      ui:options:
+        host: github.com
+        excludedOwners:
+          - backstage
+        requestUserCredentials:
+          secretsKey: USER_OAUTH_TOKEN
+```
+
+Passing the `requestUserCredentials` and `host` properties is required for autocompletion to work. For more information regarding the `requestUserCredentials` object, please refer to the [Using the Users `oauth` token](#using-the-users-oauth-token) section under [The Repository Picker](#the-repository-picker).
+
+For a list of all possible `ui:options` input props for `RepoOwnerPicker`, please visit [here](./ui-options-examples.md#repoownerpicker).
+
+The `RepoOwnerPicker` is a custom field that we provide part of the
 `plugin-scaffolder`. You can provide your own custom fields by
 [writing your own Custom Field Extensions](./writing-custom-field-extensions.md)
 
@@ -685,6 +765,26 @@ output:
     - title: More information
       content: |
         **Entity URL:** `${{ steps['publish'].output.remoteUrl }}`
+```
+
+Output `links` and `text` items support an optional `if` condition, using the same syntax as step conditions. Items where the condition evaluates to false are excluded from the output:
+
+```yaml
+output:
+  links:
+    - title: Repository
+      url: ${{ steps['publish'].output.remoteUrl }}
+    - if: ${{ parameters.enableCI === "Yes" }}
+      title: CI Dashboard
+      url: https://ci.example.com/${{ parameters.name }}
+  text:
+    - title: Summary
+      content: |
+        **Component:** `${{ parameters.name }}`
+    - if: ${{ parameters.showDetails }}
+      title: Details
+      content: |
+        **CI enabled:** ${{ parameters.enableCI }}
 ```
 
 ## The templating syntax

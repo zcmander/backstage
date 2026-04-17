@@ -16,65 +16,87 @@
 
 import {
   Row as ReactAriaRow,
-  RowProps,
   useTableOptions,
-  Cell,
+  Cell as ReactAriaCell,
   Collection,
-  Checkbox,
-  RouterProvider,
 } from 'react-aria-components';
-import { useStyles } from '../../../hooks/useStyles';
-import { TableDefinition } from '../definition';
-import { useNavigate } from 'react-router-dom';
-import { useHref } from 'react-router-dom';
-import { isExternalLink } from '../../../utils/isExternalLink';
-import styles from '../Table.module.css';
+import { Checkbox } from '../../Checkbox';
+import { useDefinition } from '../../../hooks/useDefinition';
+import { RowDefinition } from '../definition';
+import type { RowProps } from '../types';
+import { isExternalLink } from '../../../utils/linkUtils';
 import clsx from 'clsx';
+import { Flex } from '../../Flex';
 
-/** @public */
+/**
+ * A table row that can optionally act as a navigation link or trigger an action when clicked, with analytics tracking.
+ *
+ * @public
+ */
 export function Row<T extends object>(props: RowProps<T>) {
-  const { classNames, cleanedProps } = useStyles(TableDefinition, props);
-  const { id, columns, children, href, ...rest } = cleanedProps;
-  const navigate = useNavigate();
+  const { ownProps, restProps, dataAttributes, analytics } = useDefinition(
+    RowDefinition,
+    props,
+  );
+  const { classes, columns, children, href } = ownProps;
   const isExternal = isExternalLink(href);
+  const hasInternalHref = !!href && !isExternal;
+  const hasExternalHref = !!href && isExternal;
+  const hasInteraction = !!restProps.onAction || !!href;
 
-  let { selectionBehavior } = useTableOptions();
+  // Derive the effective target, defaulting to _blank for external links.
+  const effectiveTarget = hasExternalHref ? '_blank' : restProps.target;
+  // Always include noopener noreferrer when target=_blank, merging any
+  // consumer-provided rel tokens to avoid reverse-tabnabbing risk.
+  const effectiveRel =
+    effectiveTarget === '_blank'
+      ? [
+          ...new Set([
+            'noopener',
+            'noreferrer',
+            ...(restProps.rel?.split(/\s+/).filter(Boolean) ?? []),
+          ]),
+        ].join(' ')
+      : restProps.rel;
+
+  const handlePress = hasInteraction
+    ? () => {
+        restProps.onAction?.();
+        if (href) {
+          analytics.captureEvent('click', href, {
+            attributes: { to: String(href) },
+          });
+        }
+      }
+    : undefined;
+
+  let { selectionBehavior, selectionMode } = useTableOptions();
 
   const content = (
     <>
-      {selectionBehavior === 'toggle' && (
-        <Cell>
-          <Checkbox slot="selection" />
-        </Cell>
+      {selectionBehavior === 'toggle' && selectionMode === 'multiple' && (
+        <ReactAriaCell className={clsx(classes.cell, classes.cellSelection)}>
+          <Flex justify="center" align="center">
+            <Checkbox slot="selection" aria-label="Select row" />
+          </Flex>
+        </ReactAriaCell>
       )}
       <Collection items={columns}>{children}</Collection>
     </>
   );
 
-  if (isExternal) {
-    return (
-      <ReactAriaRow
-        id={id}
-        href={href}
-        className={clsx(classNames.row, styles[classNames.row])}
-        {...rest}
-      >
-        {content}
-      </ReactAriaRow>
-    );
-  }
-
   return (
-    <RouterProvider navigate={navigate} useHref={useHref}>
-      <ReactAriaRow
-        id={id}
-        href={href}
-        className={clsx(classNames.row, styles[classNames.row])}
-        data-react-aria-pressable="true"
-        {...rest}
-      >
-        {content}
-      </ReactAriaRow>
-    </RouterProvider>
+    <ReactAriaRow
+      href={href}
+      {...restProps}
+      {...dataAttributes}
+      target={effectiveTarget}
+      rel={effectiveRel}
+      className={clsx(classes.root, restProps.className)}
+      data-react-aria-pressable={hasInternalHref ? 'true' : undefined}
+      onAction={handlePress}
+    >
+      {content}
+    </ReactAriaRow>
   );
 }

@@ -30,7 +30,7 @@ import {
   NotificationSeverity,
 } from '@backstage/plugin-notifications-common';
 import { Knex } from 'knex';
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 import { durationToMilliseconds, HumanDuration } from '@backstage/types';
 
 const migrationsDir = resolvePackagePath(
@@ -289,11 +289,11 @@ export class DatabaseNotificationsStore implements NotificationsStore {
       }
     }
 
-    if (options.limit) {
+    if (options.limit !== undefined) {
       query.limit(options.limit);
     }
 
-    if (options.offset) {
+    if (options.offset !== undefined) {
       query.offset(options.offset);
     }
 

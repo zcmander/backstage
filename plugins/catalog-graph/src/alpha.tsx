@@ -19,10 +19,8 @@ import {
   createFrontendPlugin,
   PageBlueprint,
 } from '@backstage/frontend-plugin-api';
-import {
-  compatWrapper,
-  convertLegacyRouteRef,
-} from '@backstage/core-compat-api';
+import { z } from 'zod/v4';
+import { RiMindMap } from '@remixicon/react';
 import { EntityCardBlueprint } from '@backstage/plugin-catalog-react/alpha';
 import { catalogGraphRouteRef, catalogEntityRouteRef } from './routes';
 import {
@@ -33,59 +31,57 @@ import {
 
 const CatalogGraphEntityCard = EntityCardBlueprint.makeWithOverrides({
   name: 'relations',
-  config: {
-    schema: {
-      kinds: z => z.array(z.string()).optional(),
-      relations: z => z.array(z.string()).optional(),
-      maxDepth: z => z.number().optional(),
-      unidirectional: z => z.boolean().optional(),
-      mergeRelations: z => z.boolean().optional(),
-      direction: z => z.nativeEnum(Direction).optional(),
-      relationPairs: z => z.array(z.tuple([z.string(), z.string()])).optional(),
-      zoom: z => z.enum(['enabled', 'disabled', 'enable-on-click']).optional(),
-      curve: z => z.enum(['curveStepBefore', 'curveMonotoneX']).optional(),
-      // Skipping a "variant" config for now, defaulting to "gridItem" in the component
-      // For more details, see this comment: https://github.com/backstage/backstage/pull/22619#discussion_r1477333252
-      title: z => z.string().optional(),
-      height: z => z.number().optional(),
-    },
+  configSchema: {
+    kinds: z.array(z.string()).optional(),
+    relations: z.array(z.string()).optional(),
+    maxDepth: z.number().optional(),
+    unidirectional: z.boolean().optional(),
+    mergeRelations: z.boolean().optional(),
+    showArrowHeads: z.boolean().optional(),
+    direction: z.nativeEnum(Direction).optional(),
+    relationPairs: z.array(z.tuple([z.string(), z.string()])).optional(),
+    zoom: z.enum(['enabled', 'disabled', 'enable-on-click']).optional(),
+    curve: z.enum(['curveStepBefore', 'curveMonotoneX']).optional(),
+    // Skipping a "variant" config for now, defaulting to "gridItem" in the component
+    // For more details, see this comment: https://github.com/backstage/backstage/pull/22619#discussion_r1477333252
+    title: z.string().optional(),
+    height: z.number().optional(),
   },
   factory(originalFactory, { config }) {
     return originalFactory({
       loader: async () =>
-        import('./components/CatalogGraphCard').then(m =>
-          compatWrapper(<m.CatalogGraphCard {...config} />),
-        ),
+        import('./components/CatalogGraphCard').then(m => (
+          <m.CatalogGraphCard {...config} />
+        )),
     });
   },
 });
 
 const CatalogGraphPage = PageBlueprint.makeWithOverrides({
-  config: {
-    schema: {
-      selectedKinds: z => z.array(z.string()).optional(),
-      selectedRelations: z => z.array(z.string()).optional(),
-      rootEntityRefs: z => z.array(z.string()).optional(),
-      maxDepth: z => z.number().optional(),
-      unidirectional: z => z.boolean().optional(),
-      mergeRelations: z => z.boolean().optional(),
-      direction: z => z.nativeEnum(Direction).optional(),
-      showFilters: z => z.boolean().optional(),
-      curve: z => z.enum(['curveStepBefore', 'curveMonotoneX']).optional(),
-      kinds: z => z.array(z.string()).optional(),
-      relations: z => z.array(z.string()).optional(),
-      relationPairs: z => z.array(z.tuple([z.string(), z.string()])).optional(),
-      zoom: z => z.enum(['enabled', 'disabled', 'enable-on-click']).optional(),
-    },
+  configSchema: {
+    selectedKinds: z.array(z.string()).optional(),
+    selectedRelations: z.array(z.string()).optional(),
+    rootEntityRefs: z.array(z.string()).optional(),
+    maxDepth: z.number().optional(),
+    unidirectional: z.boolean().optional(),
+    mergeRelations: z.boolean().optional(),
+    showArrowHeads: z.boolean().optional(),
+    direction: z.nativeEnum(Direction).optional(),
+    showFilters: z.boolean().optional(),
+    curve: z.enum(['curveStepBefore', 'curveMonotoneX']).optional(),
+    kinds: z.array(z.string()).optional(),
+    relations: z.array(z.string()).optional(),
+    relationPairs: z.array(z.tuple([z.string(), z.string()])).optional(),
+    zoom: z.enum(['enabled', 'disabled', 'enable-on-click']).optional(),
   },
   factory(originalFactory, { config }) {
     return originalFactory({
       path: '/catalog-graph',
-      routeRef: convertLegacyRouteRef(catalogGraphRouteRef),
+      routeRef: catalogGraphRouteRef,
       loader: () =>
-        import('./components/CatalogGraphPage').then(m =>
-          compatWrapper(<m.CatalogGraphPage {...config} />),
-        ),
+        import('./components/CatalogGraphPage').then(m => (
+          <m.CatalogGraphPage {...config} />
+        )),
     });
   },
 });
@@ -101,14 +97,22 @@ const CatalogGraphApi = ApiBlueprint.make({
 
 export default createFrontendPlugin({
   pluginId: 'catalog-graph',
+  title: 'Catalog Graph',
+  icon: <RiMindMap />,
   info: { packageJson: () => import('../package.json') },
   routes: {
-    catalogGraph: convertLegacyRouteRef(catalogGraphRouteRef),
+    catalogGraph: catalogGraphRouteRef,
   },
   externalRoutes: {
-    catalogEntity: convertLegacyRouteRef(catalogEntityRouteRef),
+    catalogEntity: catalogEntityRouteRef,
   },
   extensions: [CatalogGraphPage, CatalogGraphEntityCard, CatalogGraphApi],
 });
 
-export { catalogGraphTranslationRef } from './translation';
+import { catalogGraphTranslationRef as _catalogGraphTranslationRef } from './translation';
+
+/**
+ * @alpha
+ * @deprecated Import from `@backstage/plugin-catalog-graph` instead.
+ */
+export const catalogGraphTranslationRef = _catalogGraphTranslationRef;

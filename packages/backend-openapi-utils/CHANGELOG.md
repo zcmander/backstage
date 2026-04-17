@@ -1,5 +1,131 @@
 # @backstage/backend-openapi-utils
 
+## 0.6.8
+
+### Patch Changes
+
+- 59dd9b9: Fixes a memory leak during `wrapServer` where stopped servers weren't removed from the clean up list.
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.9.0
+  - @backstage/errors@1.3.0
+
+## 0.6.8-next.2
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/errors@1.3.0-next.0
+  - @backstage/backend-plugin-api@1.9.0-next.2
+
+## 0.6.8-next.1
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.9.0-next.1
+
+## 0.6.8-next.0
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.8.1-next.0
+  - @backstage/errors@1.2.7
+  - @backstage/types@1.2.2
+
+## 0.6.7
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.8.0
+
+## 0.6.7-next.1
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.8.0-next.1
+
+## 0.6.7-next.0
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.7.1-next.0
+  - @backstage/errors@1.2.7
+  - @backstage/types@1.2.2
+
+## 0.6.6
+
+### Patch Changes
+
+- 7455dae: Use node prefix on native imports
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.7.0
+
+## 0.6.6-next.0
+
+### Patch Changes
+
+- 7455dae: Use node prefix on native imports
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.7.0-next.0
+  - @backstage/errors@1.2.7
+  - @backstage/types@1.2.2
+
+## 0.6.5
+
+### Patch Changes
+
+- 6678b78: Internal update to use native feature from our request validation library for handling base path determination.
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.6.1
+
+## 0.6.5-next.0
+
+### Patch Changes
+
+- 6678b78: Internal update to use native feature from our request validation library for handling base path determination.
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.6.0
+  - @backstage/errors@1.2.7
+  - @backstage/types@1.2.2
+
+## 0.6.4
+
+### Patch Changes
+
+- de96a60: chore(deps): bump `express` from 4.21.2 to 4.22.0
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.6.0
+
+## 0.6.4-next.1
+
+### Patch Changes
+
+- de96a60: chore(deps): bump `express` from 4.21.2 to 4.22.0
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.6.0-next.1
+  - @backstage/errors@1.2.7
+  - @backstage/types@1.2.2
+
+## 0.6.4-next.0
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.5.1-next.0
+  - @backstage/errors@1.2.7
+  - @backstage/types@1.2.2
+
+## 0.6.3
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.5.0
+
 ## 0.6.3-next.1
 
 ### Patch Changes

@@ -16,33 +16,39 @@
 
 import {
   TableHeader as ReactAriaTableHeader,
-  type TableHeaderProps,
-  Checkbox,
+  Collection,
+  useTableOptions,
 } from 'react-aria-components';
-import { Collection, useTableOptions } from 'react-aria-components';
+import { Checkbox } from '../../Checkbox';
 import { Column } from './Column';
-import { useStyles } from '../../../hooks/useStyles';
-import { TableDefinition } from '../definition';
-import styles from '../Table.module.css';
-import clsx from 'clsx';
+import { useDefinition } from '../../../hooks/useDefinition';
+import { TableHeaderDefinition } from '../definition';
+import type { TableHeaderProps } from '../types';
+import { Flex } from '../../Flex';
 
-/** @public */
+/**
+ * The header row of a table, rendering column labels and an optional select-all checkbox for toggle selection mode.
+ *
+ * @public
+ */
 export const TableHeader = <T extends object>(props: TableHeaderProps<T>) => {
-  let { selectionBehavior, selectionMode, allowsDragging } = useTableOptions();
+  let { selectionBehavior, selectionMode } = useTableOptions();
 
-  const { classNames, cleanedProps } = useStyles(TableDefinition, props);
-  const { columns, children, ...rest } = cleanedProps;
+  const { ownProps, restProps } = useDefinition(TableHeaderDefinition, props);
+  const { classes, columns, children } = ownProps;
 
   return (
-    <ReactAriaTableHeader
-      className={clsx(classNames.header, styles[classNames.header])}
-      {...rest}
-    >
-      {/* Add extra columns for drag and drop and selection. */}
-      {allowsDragging && <Column />}
-      {selectionBehavior === 'toggle' && (
-        <Column>
-          {selectionMode === 'multiple' && <Checkbox slot="selection" />}
+    <ReactAriaTableHeader className={classes.root} {...restProps}>
+      {selectionBehavior === 'toggle' && selectionMode === 'multiple' && (
+        <Column
+          width={40}
+          minWidth={40}
+          maxWidth={40}
+          className={classes.headSelection}
+        >
+          <Flex justify="center" align="center" aria-label="Row selection">
+            <Checkbox slot="selection" aria-label="Select all" />
+          </Flex>
         </Column>
       )}
       <Collection items={columns}>{children}</Collection>

@@ -1,6 +1,6 @@
 {
   "name": "@backstage/plugin-notifications-backend",
-  "version": "0.6.0-next.2",
+  "version": "0.6.4",
   "backstage": {
     "role": "backend-plugin",
     "pluginId": "notifications",
@@ -9,6 +9,9 @@
       "@backstage/plugin-notifications-backend",
       "@backstage/plugin-notifications-common",
       "@backstage/plugin-notifications-node"
+    ],
+    "peerModules": [
+      "@backstage/plugin-scaffolder-backend-module-notifications"
     ]
   },
   "publishConfig": {
@@ -48,7 +51,7 @@
     "@backstage/plugin-notifications-node": "workspace:^",
     "@backstage/plugin-signals-node": "workspace:^",
     "@backstage/types": "workspace:^",
-    "express": "^4.17.1",
+    "express": "^4.22.0",
     "express-promise-router": "^4.1.0",
     "knex": "^3.0.0",
     "p-throttle": "^4.1.1",

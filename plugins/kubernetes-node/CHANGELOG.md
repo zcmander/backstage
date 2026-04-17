@@ -1,5 +1,149 @@
 # @backstage/plugin-kubernetes-node
 
+## 0.4.3
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.9.0
+  - @backstage/catalog-model@1.8.0
+  - @backstage/plugin-kubernetes-common@0.9.11
+
+## 0.4.3-next.2
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.9.0-next.2
+  - @backstage/catalog-model@1.7.8-next.0
+  - @backstage/plugin-kubernetes-common@0.9.11-next.0
+
+## 0.4.3-next.1
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.9.0-next.1
+
+## 0.4.3-next.0
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.8.1-next.0
+  - @backstage/catalog-model@1.7.7
+  - @backstage/types@1.2.2
+  - @backstage/plugin-kubernetes-common@0.9.10
+
+## 0.4.2
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.8.0
+  - @backstage/catalog-model@1.7.7
+
+## 0.4.2-next.1
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.8.0-next.1
+
+## 0.4.2-next.0
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.7.1-next.0
+  - @backstage/catalog-model@1.7.6
+  - @backstage/types@1.2.2
+  - @backstage/plugin-kubernetes-common@0.9.10
+
+## 0.4.1
+
+### Patch Changes
+
+- 7455dae: Use node prefix on native imports
+- ce3639c: Add PersistentVolume and PersistentVolumeClaims Rendering
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.7.0
+  - @backstage/plugin-kubernetes-common@0.9.10
+
+## 0.4.1-next.1
+
+### Patch Changes
+
+- ce3639c: Add PersistentVolume and PersistentVolumeClaims Rendering
+- Updated dependencies
+  - @backstage/plugin-kubernetes-common@0.9.10-next.1
+  - @backstage/backend-plugin-api@1.7.0-next.1
+
+## 0.4.1-next.0
+
+### Patch Changes
+
+- 7455dae: Use node prefix on native imports
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.7.0-next.0
+  - @backstage/catalog-model@1.7.6
+  - @backstage/types@1.2.2
+  - @backstage/plugin-kubernetes-common@0.9.10-next.0
+
+## 0.4.0
+
+### Minor Changes
+
+- 7f9846f: Add possibility to extends Kubernetes REST API. Add fetcher to parameters for custom objects provider
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.6.0
+  - @backstage/plugin-kubernetes-common@0.9.9
+
+## 0.4.0-next.2
+
+### Minor Changes
+
+- 7f9846f: Add possibility to extends Kubernetes REST API. Add fetcher to parameters for custom objects provider
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.6.0-next.1
+  - @backstage/catalog-model@1.7.6
+  - @backstage/types@1.2.2
+  - @backstage/plugin-kubernetes-common@0.9.9-next.0
+
+## 0.3.7-next.1
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/plugin-kubernetes-common@0.9.9-next.0
+
+## 0.3.7-next.0
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.5.1-next.0
+  - @backstage/catalog-model@1.7.6
+  - @backstage/types@1.2.2
+  - @backstage/plugin-kubernetes-common@0.9.8
+
+## 0.3.6
+
+### Patch Changes
+
+- 1906d37: Updated dependency `@kubernetes/client-node` to `1.4.0`.
+- 05f60e1: Refactored constructor parameter properties to explicit property declarations for compatibility with TypeScript's `erasableSyntaxOnly` setting. This internal refactoring maintains all existing functionality while ensuring TypeScript compilation compatibility.
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.5.0
+  - @backstage/plugin-kubernetes-common@0.9.8
+  - @backstage/catalog-model@1.7.6
+
 ## 0.3.6-next.2
 
 ### Patch Changes

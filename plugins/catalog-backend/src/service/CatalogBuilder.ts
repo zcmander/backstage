@@ -26,7 +26,7 @@ import {
   Validators,
 } from '@backstage/catalog-model';
 import { ScmIntegrations } from '@backstage/integration';
-import { createHash } from 'crypto';
+import { createHash } from 'node:crypto';
 import { Router } from 'express';
 import lodash from 'lodash';
 
@@ -43,28 +43,16 @@ import {
   UrlReaderService,
 } from '@backstage/backend-plugin-api';
 import { Config, readDurationFromConfig } from '@backstage/config';
-import {
-  catalogPermissions,
-  RESOURCE_TYPE_CATALOG_ENTITY,
-} from '@backstage/plugin-catalog-common/alpha';
+import { catalogPermissions } from '@backstage/plugin-catalog-common/alpha';
 import {
   CatalogProcessor,
   CatalogProcessorParser,
-  EntityProvider,
   LocationAnalyzer,
   PlaceholderResolver,
   ScmLocationAnalyzer,
 } from '@backstage/plugin-catalog-node';
 import { EventsService } from '@backstage/plugin-events-node';
-import {
-  Permission,
-  PermissionAuthorizer,
-  toPermissionEvaluator,
-} from '@backstage/plugin-permission-common';
-import {
-  createConditionTransformer,
-  createPermissionIntegrationRouter,
-} from '@backstage/plugin-permission-node';
+import { createConditionTransformer } from '@backstage/plugin-permission-node';
 import { durationToMilliseconds } from '@backstage/types';
 import { DefaultCatalogDatabase } from '../database/DefaultCatalogDatabase';
 import { DefaultProcessingDatabase } from '../database/DefaultProcessingDatabase';
@@ -78,7 +66,10 @@ import {
   createRandomProcessingInterval,
   ProcessingIntervalFunction,
 } from '../processing/refresh';
-import { connectEntityProviders } from '../processing/connectEntityProviders';
+import {
+  connectEntityProviders,
+  EntityProviderEntry,
+} from '../processing/connectEntityProviders';
 import { evictEntitiesFromOrphanedProviders } from '../processing/evictEntitiesFromOrphanedProviders';
 import { DefaultCatalogProcessingEngine } from '../processing/DefaultCatalogProcessingEngine';
 import { DefaultCatalogProcessingOrchestrator } from '../processing/DefaultCatalogProcessingOrchestrator';
@@ -109,22 +100,30 @@ import { DefaultRefreshService } from './DefaultRefreshService';
 import { entitiesResponseToObjects } from './response';
 import {
   catalogEntityPermissionResourceRef,
-  CatalogPermissionRuleInput,
+  CatalogScmEventsService,
 } from '@backstage/plugin-catalog-node/alpha';
 import { filterAndSortProcessors, filterProviders } from './util';
+import { GenericScmEventRefreshProvider } from '../providers/GenericScmEventRefreshProvider';
+import { readScmEventHandlingConfig } from '../util/readScmEventHandlingConfig';
+import { MetricsService } from '@backstage/backend-plugin-api/alpha';
+import { ModelProcessor } from '../processors/ModelProcessor';
+import { ModelHolder } from '../model/ModelHolder';
 
 export type CatalogEnvironment = {
   logger: LoggerService;
+  modelHolder?: ModelHolder;
   database: DatabaseService;
   config: RootConfigService;
   reader: UrlReaderService;
-  permissions: PermissionsService | PermissionAuthorizer;
-  permissionsRegistry?: PermissionsRegistryService;
+  permissions: PermissionsService;
+  permissionsRegistry: PermissionsRegistryService;
   scheduler: SchedulerService;
   auth: AuthService;
   httpAuth: HttpAuthService;
   auditor: AuditorService;
   events: EventsService;
+  catalogScmEvents: CatalogScmEventsService;
+  metrics: MetricsService;
 };
 
 /**
@@ -149,6 +148,8 @@ export type CatalogEnvironment = {
  * - Processors can be added or replaced. These implement the functionality of
  *   reading, parsing, validating, and processing the entity data before it is
  *   persisted in the catalog.
+ *
+ * @internal
  */
 export class CatalogBuilder {
   private readonly env: CatalogEnvironment;
@@ -156,7 +157,7 @@ export class CatalogBuilder {
   private entityPoliciesReplace: boolean;
   private placeholderResolvers: Record<string, PlaceholderResolver>;
   private fieldFormatValidators: Partial<Validators>;
-  private entityProviders: EntityProvider[];
+  private entityProviders: EntityProviderEntry[];
   private processors: CatalogProcessor[];
   private locationAnalyzers: ScmLocationAnalyzer[];
   private processorsReplace: boolean;
@@ -167,8 +168,6 @@ export class CatalogBuilder {
   }) => Promise<void> | void;
   private processingInterval: ProcessingIntervalFunction;
   private locationAnalyzer: LocationAnalyzer | undefined = undefined;
-  private readonly permissions: Permission[];
-  private readonly permissionRules: CatalogPermissionRuleInput[];
   private allowedLocationType: string[];
 
   /**
@@ -189,8 +188,6 @@ export class CatalogBuilder {
     this.locationAnalyzers = [];
     this.processorsReplace = false;
     this.parser = undefined;
-    this.permissions = [...catalogPermissions];
-    this.permissionRules = Object.values(catalogPermissionRules);
     this.allowedLocationType = ['url'];
 
     this.processingInterval = CatalogBuilder.getDefaultProcessingInterval(
@@ -283,7 +280,7 @@ export class CatalogBuilder {
    * @param providers - One or more entity providers
    */
   addEntityProvider(
-    ...providers: Array<EntityProvider | Array<EntityProvider>>
+    ...providers: Array<EntityProviderEntry | Array<EntityProviderEntry>>
   ): CatalogBuilder {
     this.entityProviders.push(...providers.flat());
     return this;
@@ -366,33 +363,6 @@ export class CatalogBuilder {
   }
 
   /**
-   * Adds additional permissions. See
-   * {@link @backstage/plugin-permission-node#Permission}.
-   *
-   * @param permissions - Additional permissions
-   */
-  addPermissions(...permissions: Array<Permission | Array<Permission>>) {
-    this.permissions.push(...permissions.flat());
-    return this;
-  }
-
-  /**
-   * Adds additional permission rules. Permission rules are used to evaluate
-   * catalog resources against queries. See
-   * {@link @backstage/plugin-permission-node#PermissionRule}.
-   *
-   * @param permissionRules - Additional permission rules
-   */
-  addPermissionRules(
-    ...permissionRules: Array<
-      CatalogPermissionRuleInput | Array<CatalogPermissionRuleInput>
-    >
-  ) {
-    this.permissionRules.push(...permissionRules.flat());
-    return this;
-  }
-
-  /**
    * Sets up the allowed location types from being registered via the location service.
    *
    * @param allowedLocationTypes - the allowed location types
@@ -420,6 +390,8 @@ export class CatalogBuilder {
       auth,
       httpAuth,
       events,
+      catalogScmEvents,
+      metrics,
     } = this.env;
 
     const enableRelationsCompatibility = Boolean(
@@ -439,6 +411,7 @@ export class CatalogBuilder {
     const stitcher = DefaultStitcher.fromConfig(config, {
       knex: dbClient,
       logger,
+      metrics,
     });
 
     const processingDatabase = new DefaultProcessingDatabase({
@@ -446,6 +419,7 @@ export class CatalogBuilder {
       logger,
       events,
       refreshInterval: this.processingInterval,
+      metrics,
     });
     const providerDatabase = new DefaultProviderDatabase({
       database: dbClient,
@@ -465,16 +439,6 @@ export class CatalogBuilder {
       enableRelationsCompatibility,
     });
 
-    let permissionsService: PermissionsService;
-    if ('authorizeConditional' in permissions) {
-      permissionsService = permissions as PermissionsService;
-    } else {
-      logger.warn(
-        'PermissionAuthorizer is deprecated. Please use an instance of PermissionEvaluator instead of PermissionAuthorizer in PluginEnvironment#permissions',
-      );
-      permissionsService = toPermissionEvaluator(permissions);
-    }
-
     const orchestrator = new DefaultCatalogProcessingOrchestrator({
       processors,
       integrations,
@@ -486,14 +450,12 @@ export class CatalogBuilder {
 
     const entitiesCatalog = new AuthorizedEntitiesCatalog(
       unauthorizedEntitiesCatalog,
-      permissionsService,
-      permissionsRegistry
-        ? createConditionTransformer(
-            permissionsRegistry.getPermissionRuleset(
-              catalogEntityPermissionResourceRef,
-            ),
-          )
-        : createConditionTransformer(this.permissionRules),
+      permissions,
+      createConditionTransformer(
+        permissionsRegistry.getPermissionRuleset(
+          catalogEntityPermissionResourceRef,
+        ),
+      ),
     );
 
     const getResources = async (resourceRefs: string[]) => {
@@ -505,33 +467,41 @@ export class CatalogBuilder {
       return entitiesResponseToObjects(items).map(e => e || undefined);
     };
 
-    let permissionIntegrationRouter:
-      | ReturnType<typeof createPermissionIntegrationRouter>
-      | undefined;
-    if (permissionsRegistry) {
-      permissionsRegistry.addResourceType({
-        resourceRef: catalogEntityPermissionResourceRef,
-        getResources,
-        permissions: this.permissions,
-        rules: this.permissionRules,
-      });
-    } else {
-      permissionIntegrationRouter = createPermissionIntegrationRouter({
-        resourceType: RESOURCE_TYPE_CATALOG_ENTITY,
-        getResources,
-        permissions: this.permissions,
-        rules: this.permissionRules,
-      });
-    }
+    permissionsRegistry.addResourceType({
+      resourceRef: catalogEntityPermissionResourceRef,
+      getResources,
+      permissions: [...catalogPermissions],
+      rules: Object.values(catalogPermissionRules),
+    });
 
-    const locationStore = new DefaultLocationStore(dbClient);
+    const scmEventHandlingConfig = readScmEventHandlingConfig(config);
+    const locationStore = new DefaultLocationStore(
+      dbClient,
+      catalogScmEvents,
+      scmEventHandlingConfig,
+    );
     const configLocationProvider = new ConfigLocationEntityProvider(config);
-    const entityProviders = filterProviders(
-      lodash.uniqBy(
-        [...this.entityProviders, locationStore, configLocationProvider],
-        provider => provider.getProviderName(),
-      ),
+    const scmEvents = new GenericScmEventRefreshProvider(
+      dbClient,
+      catalogScmEvents,
+      scmEventHandlingConfig,
+    );
+
+    const entityProviderEntries = lodash.uniqBy(
+      [
+        ...this.entityProviders,
+        { provider: locationStore },
+        { provider: configLocationProvider },
+        { provider: scmEvents },
+      ],
+      entry => entry.provider.getProviderName(),
+    );
+    const enabledProviderEntries = filterProviders(
+      entityProviderEntries,
       config,
+    );
+    const enabledProviders = enabledProviderEntries.map(
+      entry => entry.provider,
     );
 
     const processingEngine = new DefaultCatalogProcessingEngine({
@@ -548,23 +518,28 @@ export class CatalogBuilder {
         this.onProcessingError?.(event);
       },
       events,
+      metrics,
     });
 
     const locationAnalyzer =
       this.locationAnalyzer ??
       new AuthorizedLocationAnalyzer(
         new RepoLocationAnalyzer(logger, integrations, this.locationAnalyzers),
-        permissionsService,
+        permissions,
       );
     const locationService = new AuthorizedLocationService(
       new DefaultLocationService(locationStore, orchestrator, {
         allowedLocationTypes: this.allowedLocationType,
+        defaultLocationConflictStrategy:
+          (config.getOptionalString(
+            'catalog.defaultLocationConflictStrategy',
+          ) as 'refresh' | 'reject') || 'reject',
       }),
-      permissionsService,
+      permissions,
     );
     const refreshService = new AuthorizedRefreshService(
       new DefaultRefreshService({ database: catalogDatabase }),
-      permissionsService,
+      permissions,
     );
 
     const router = await createRouter({
@@ -575,15 +550,14 @@ export class CatalogBuilder {
       refreshService,
       logger,
       config,
-      permissionIntegrationRouter,
       auth,
       httpAuth,
-      permissionsService,
+      permissionsService: permissions,
       auditor,
       enableRelationsCompatibility,
     });
 
-    await connectEntityProviders(providerDatabase, entityProviders);
+    await connectEntityProviders(providerDatabase, enabledProviderEntries);
 
     return {
       processingEngine: {
@@ -594,7 +568,7 @@ export class CatalogBuilder {
           ) {
             await evictEntitiesFromOrphanedProviders({
               db: providerDatabase,
-              providers: entityProviders,
+              providers: enabledProviders,
               logger,
             });
           }
@@ -658,9 +632,11 @@ export class CatalogBuilder {
     ];
 
     const builtinKindsEntityProcessor = new BuiltinKindsEntityProcessor();
-    // If the user adds a processor named 'BuiltinKindsEntityProcessor',
-    //   skip inclusion of the catalog-backend version.
+    // If the user adds a processor named 'BuiltinKindsEntityProcessor', skip
+    // inclusion of the catalog-backend version. Same if there's a model
+    // registered - then we are using the new model flow.
     if (
+      !this.env.modelHolder &&
       !this.processors.some(
         processor =>
           processor.getProcessorName() ===
@@ -668,6 +644,9 @@ export class CatalogBuilder {
       )
     ) {
       processors.push(builtinKindsEntityProcessor);
+    }
+    if (this.env.modelHolder) {
+      processors.push(new ModelProcessor(this.env.modelHolder));
     }
 
     const disableDefaultProcessors = config.getOptionalBoolean(

@@ -6,20 +6,23 @@
 import { AnyApiFactory } from '@backstage/frontend-plugin-api';
 import { AnyRouteRefParams } from '@backstage/frontend-plugin-api';
 import { ApiFactory } from '@backstage/frontend-plugin-api';
+import { ConfigurableExtensionDataRef } from '@backstage/frontend-plugin-api';
 import { Entity } from '@backstage/catalog-model';
 import { EntityCardType } from '@backstage/plugin-catalog-react/alpha';
-import { EntityPredicate } from '@backstage/plugin-catalog-react/alpha';
 import { ExtensionBlueprintParams } from '@backstage/frontend-plugin-api';
 import { ExtensionDataRef } from '@backstage/frontend-plugin-api';
 import { ExtensionInput } from '@backstage/frontend-plugin-api';
-import { ExternalRouteRef } from '@backstage/frontend-plugin-api';
+import { ExternalRouteRef } from '@backstage/core-plugin-api';
+import { FilterPredicate } from '@backstage/filter-predicates';
+import { IconElement } from '@backstage/frontend-plugin-api';
 import { JSX as JSX_2 } from 'react';
 import { OverridableExtensionDefinition } from '@backstage/frontend-plugin-api';
 import { OverridableFrontendPlugin } from '@backstage/frontend-plugin-api';
-import { RouteRef } from '@backstage/frontend-plugin-api';
+import { RouteRef } from '@backstage/core-plugin-api';
+import { RouteRef as RouteRef_2 } from '@backstage/frontend-plugin-api';
 import { TranslationRef } from '@backstage/frontend-plugin-api';
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export const catalogGraphTranslationRef: TranslationRef<
   'catalog-graph',
   {
@@ -30,7 +33,7 @@ export const catalogGraphTranslationRef: TranslationRef<
     readonly 'catalogGraphPage.supportButtonDescription': 'Start tracking your component in by adding it to the software catalog.';
     readonly 'catalogGraphPage.simplifiedSwitchLabel': 'Simplified';
     readonly 'catalogGraphPage.mergeRelationsSwitchLabel': 'Merge relations';
-    readonly 'catalogGraphPage.zoomOutDescription': 'Use pinch &amp; zoom to move around the diagram. Click to change active node, shift click to navigate to entity.';
+    readonly 'catalogGraphPage.zoomOutDescription': 'Use pinch & zoom to move around the diagram. Click to change active node, shift click to navigate to entity.';
     readonly 'catalogGraphPage.curveFilter.title': 'Curve';
     readonly 'catalogGraphPage.curveFilter.curveStepBefore': 'Step Before';
     readonly 'catalogGraphPage.curveFilter.curveMonotoneX': 'Monotone X';
@@ -53,11 +56,14 @@ const _default: OverridableFrontendPlugin<
     catalogGraph: RouteRef<undefined>;
   },
   {
-    catalogEntity: ExternalRouteRef<{
-      name: string;
-      kind: string;
-      namespace: string;
-    }>;
+    catalogEntity: ExternalRouteRef<
+      {
+        name: string;
+        kind: string;
+        namespace: string;
+      },
+      true
+    >;
   },
   {
     'api:catalog-graph': OverridableExtensionDefinition<{
@@ -82,31 +88,31 @@ const _default: OverridableFrontendPlugin<
         maxDepth: number | undefined;
         unidirectional: boolean | undefined;
         mergeRelations: boolean | undefined;
+        showArrowHeads: boolean | undefined;
         direction: 'TB' | 'BT' | 'LR' | 'RL' | undefined;
         relationPairs: [string, string][] | undefined;
         zoom: 'disabled' | 'enabled' | 'enable-on-click' | undefined;
         curve: 'curveStepBefore' | 'curveMonotoneX' | undefined;
         title: string | undefined;
         height: number | undefined;
-      } & {
-        filter: EntityPredicate | undefined;
-        type: 'content' | 'summary' | 'info' | undefined;
+        filter: FilterPredicate | undefined;
+        type: 'content' | 'info' | undefined;
       };
       configInput: {
-        height?: number | undefined;
-        curve?: 'curveStepBefore' | 'curveMonotoneX' | undefined;
-        direction?: 'TB' | 'BT' | 'LR' | 'RL' | undefined;
-        zoom?: 'disabled' | 'enabled' | 'enable-on-click' | undefined;
-        title?: string | undefined;
+        kinds?: string[] | undefined;
         relations?: string[] | undefined;
         maxDepth?: number | undefined;
-        kinds?: string[] | undefined;
-        mergeRelations?: boolean | undefined;
-        relationPairs?: [string, string][] | undefined;
         unidirectional?: boolean | undefined;
-      } & {
-        filter?: EntityPredicate | undefined;
-        type?: 'content' | 'summary' | 'info' | undefined;
+        mergeRelations?: boolean | undefined;
+        showArrowHeads?: boolean | undefined;
+        direction?: 'TB' | 'BT' | 'LR' | 'RL' | undefined;
+        relationPairs?: [string, string][] | undefined;
+        zoom?: 'disabled' | 'enabled' | 'enable-on-click' | undefined;
+        curve?: 'curveStepBefore' | 'curveMonotoneX' | undefined;
+        title?: string | undefined;
+        height?: number | undefined;
+        filter?: FilterPredicate | undefined;
+        type?: 'content' | 'info' | undefined;
       };
       output:
         | ExtensionDataRef<JSX_2.Element, 'core.reactElement', {}>
@@ -131,20 +137,12 @@ const _default: OverridableFrontendPlugin<
               optional: true;
             }
           >;
-      inputs: {
-        [x: string]: ExtensionInput<
-          ExtensionDataRef,
-          {
-            singleton: boolean;
-            optional: boolean;
-          }
-        >;
-      };
+      inputs: {};
       kind: 'entity-card';
       name: 'relations';
       params: {
         loader: () => Promise<JSX.Element>;
-        filter?: string | EntityPredicate | ((entity: Entity) => boolean);
+        filter?: string | FilterPredicate | ((entity: Entity) => boolean);
         type?: EntityCardType;
       };
     }>;
@@ -156,6 +154,7 @@ const _default: OverridableFrontendPlugin<
         maxDepth: number | undefined;
         unidirectional: boolean | undefined;
         mergeRelations: boolean | undefined;
+        showArrowHeads: boolean | undefined;
         direction: 'TB' | 'BT' | 'LR' | 'RL' | undefined;
         showFilters: boolean | undefined;
         curve: 'curveStepBefore' | 'curveMonotoneX' | undefined;
@@ -163,52 +162,92 @@ const _default: OverridableFrontendPlugin<
         relations: string[] | undefined;
         relationPairs: [string, string][] | undefined;
         zoom: 'disabled' | 'enabled' | 'enable-on-click' | undefined;
-      } & {
         path: string | undefined;
+        title: string | undefined;
       };
       configInput: {
-        curve?: 'curveStepBefore' | 'curveMonotoneX' | undefined;
-        direction?: 'TB' | 'BT' | 'LR' | 'RL' | undefined;
-        zoom?: 'disabled' | 'enabled' | 'enable-on-click' | undefined;
-        relations?: string[] | undefined;
+        selectedKinds?: string[] | undefined;
+        selectedRelations?: string[] | undefined;
         rootEntityRefs?: string[] | undefined;
         maxDepth?: number | undefined;
-        kinds?: string[] | undefined;
-        mergeRelations?: boolean | undefined;
-        relationPairs?: [string, string][] | undefined;
         unidirectional?: boolean | undefined;
-        selectedRelations?: string[] | undefined;
-        selectedKinds?: string[] | undefined;
+        mergeRelations?: boolean | undefined;
+        showArrowHeads?: boolean | undefined;
+        direction?: 'TB' | 'BT' | 'LR' | 'RL' | undefined;
         showFilters?: boolean | undefined;
-      } & {
+        curve?: 'curveStepBefore' | 'curveMonotoneX' | undefined;
+        kinds?: string[] | undefined;
+        relations?: string[] | undefined;
+        relationPairs?: [string, string][] | undefined;
+        zoom?: 'disabled' | 'enabled' | 'enable-on-click' | undefined;
         path?: string | undefined;
+        title?: string | undefined;
       };
       output:
         | ExtensionDataRef<string, 'core.routing.path', {}>
+        | ExtensionDataRef<
+            RouteRef_2<AnyRouteRefParams>,
+            'core.routing.ref',
+            {
+              optional: true;
+            }
+          >
         | ExtensionDataRef<JSX_2.Element, 'core.reactElement', {}>
         | ExtensionDataRef<
-            RouteRef<AnyRouteRefParams>,
-            'core.routing.ref',
+            string,
+            'core.title',
+            {
+              optional: true;
+            }
+          >
+        | ExtensionDataRef<
+            IconElement,
+            'core.icon',
             {
               optional: true;
             }
           >;
       inputs: {
-        [x: string]: ExtensionInput<
-          ExtensionDataRef,
+        pages: ExtensionInput<
+          | ConfigurableExtensionDataRef<JSX_2.Element, 'core.reactElement', {}>
+          | ConfigurableExtensionDataRef<string, 'core.routing.path', {}>
+          | ConfigurableExtensionDataRef<
+              RouteRef_2<AnyRouteRefParams>,
+              'core.routing.ref',
+              {
+                optional: true;
+              }
+            >
+          | ConfigurableExtensionDataRef<
+              string,
+              'core.title',
+              {
+                optional: true;
+              }
+            >
+          | ConfigurableExtensionDataRef<
+              IconElement,
+              'core.icon',
+              {
+                optional: true;
+              }
+            >,
           {
-            singleton: boolean;
-            optional: boolean;
+            singleton: false;
+            optional: false;
+            internal: false;
           }
         >;
       };
       kind: 'page';
       name: undefined;
       params: {
-        defaultPath?: [Error: `Use the 'path' param instead`];
         path: string;
-        loader: () => Promise<JSX.Element>;
-        routeRef?: RouteRef;
+        title?: string;
+        icon?: IconElement;
+        loader?: () => Promise<JSX_2.Element>;
+        routeRef?: RouteRef_2;
+        noHeader?: boolean;
       };
     }>;
   }

@@ -1,5 +1,139 @@
 # @backstage/plugin-search-backend-module-pg
 
+## 0.5.54
+
+### Patch Changes
+
+- aa08b7f: Fix a bug in large document indexing logic by using sub-transaction rollbacks
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.9.0
+  - @backstage/plugin-search-backend-node@1.4.3
+  - @backstage/config@1.3.7
+  - @backstage/plugin-search-common@1.2.23
+
+## 0.5.54-next.2
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/plugin-search-backend-node@1.4.3-next.2
+  - @backstage/backend-plugin-api@1.9.0-next.2
+  - @backstage/config@1.3.7-next.0
+  - @backstage/plugin-search-common@1.2.23-next.0
+
+## 0.5.54-next.1
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.9.0-next.1
+  - @backstage/plugin-search-backend-node@1.4.3-next.1
+
+## 0.5.54-next.0
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.8.1-next.0
+  - @backstage/plugin-search-backend-node@1.4.3-next.0
+  - @backstage/config@1.3.6
+  - @backstage/plugin-search-common@1.2.22
+
+## 0.5.53
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.8.0
+  - @backstage/plugin-search-backend-node@1.4.2
+
+## 0.5.53-next.1
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.8.0-next.1
+  - @backstage/plugin-search-backend-node@1.4.2-next.1
+
+## 0.5.53-next.0
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.7.1-next.0
+  - @backstage/config@1.3.6
+  - @backstage/plugin-search-backend-node@1.4.2-next.0
+  - @backstage/plugin-search-common@1.2.22
+
+## 0.5.52
+
+### Patch Changes
+
+- 7455dae: Use node prefix on native imports
+- 2ee354a: Return `numberOfResults` count with search query responses
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.7.0
+  - @backstage/plugin-search-backend-node@1.4.1
+  - @backstage/plugin-search-common@1.2.22
+
+## 0.5.52-next.1
+
+### Patch Changes
+
+- 2ee354a: Return `numberOfResults` count with search query responses
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.7.0-next.1
+
+## 0.5.52-next.0
+
+### Patch Changes
+
+- 7455dae: Use node prefix on native imports
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.7.0-next.0
+  - @backstage/plugin-search-backend-node@1.4.1-next.0
+  - @backstage/plugin-search-common@1.2.22-next.0
+  - @backstage/config@1.3.6
+
+## 0.5.51
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/plugin-search-backend-node@1.4.0
+  - @backstage/backend-plugin-api@1.6.0
+
+## 0.5.51-next.1
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.6.0-next.1
+  - @backstage/config@1.3.6
+  - @backstage/plugin-search-backend-node@1.4.0-next.1
+  - @backstage/plugin-search-common@1.2.21
+
+## 0.5.51-next.0
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/plugin-search-backend-node@1.4.0-next.0
+  - @backstage/backend-plugin-api@1.5.1-next.0
+  - @backstage/config@1.3.6
+  - @backstage/plugin-search-common@1.2.21
+
+## 0.5.50
+
+### Patch Changes
+
+- 05f60e1: Refactored constructor parameter properties to explicit property declarations for compatibility with TypeScript's `erasableSyntaxOnly` setting. This internal refactoring maintains all existing functionality while ensuring TypeScript compilation compatibility.
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.5.0
+  - @backstage/plugin-search-backend-node@1.3.17
+  - @backstage/config@1.3.6
+  - @backstage/plugin-search-common@1.2.21
+
 ## 0.5.50-next.1
 
 ### Patch Changes

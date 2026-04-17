@@ -15,26 +15,54 @@
  */
 import PromiseRouter from 'express-promise-router';
 import { Router } from 'express';
+import { performance } from 'node:perf_hooks';
 import { McpService } from '../services/McpService';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import { LATEST_PROTOCOL_VERSION } from '@modelcontextprotocol/sdk/types.js';
 import { HttpAuthService, LoggerService } from '@backstage/backend-plugin-api';
-import { isError } from '@backstage/errors';
+import { toError } from '@backstage/errors';
+import { MetricsService } from '@backstage/backend-plugin-api/alpha';
+import { bucketBoundaries, McpServerSessionAttributes } from '../metrics';
+import { McpServerConfig } from '../config';
 
 export const createStreamableRouter = ({
   mcpService,
   httpAuth,
   logger,
+  metrics,
+  serverConfig,
 }: {
   mcpService: McpService;
   logger: LoggerService;
   httpAuth: HttpAuthService;
+  metrics: MetricsService;
+  serverConfig?: McpServerConfig;
 }): Router => {
   const router = PromiseRouter();
 
+  const sessionDuration = metrics.createHistogram<McpServerSessionAttributes>(
+    'mcp.server.session.duration',
+    {
+      description:
+        'The duration of the MCP session as observed on the MCP server',
+      unit: 's',
+      advice: { explicitBucketBoundaries: bucketBoundaries },
+    },
+  );
+
   router.post('/', async (req, res) => {
+    const sessionStart = performance.now();
+
+    const baseAttributes: McpServerSessionAttributes = {
+      'mcp.protocol.version': LATEST_PROTOCOL_VERSION,
+      'network.transport': 'tcp',
+      'network.protocol.name': 'http',
+    };
+
     try {
       const server = mcpService.getServer({
         credentials: await httpAuth.credentials(req),
+        serverConfig,
       });
 
       const transport = new StreamableHTTPServerTransport({
@@ -49,11 +77,16 @@ export const createStreamableRouter = ({
       res.on('close', () => {
         transport.close();
         server.close();
+
+        const durationSeconds = (performance.now() - sessionStart) / 1000;
+
+        sessionDuration.record(durationSeconds, baseAttributes);
       });
     } catch (error) {
-      if (isError(error)) {
-        logger.error(error.message);
-      }
+      const err = toError(error);
+      const errorType = err.name;
+
+      logger.error(err.message);
 
       if (!res.headersSent) {
         res.status(500).json({
@@ -65,6 +98,13 @@ export const createStreamableRouter = ({
           id: null,
         });
       }
+
+      const durationSeconds = (performance.now() - sessionStart) / 1000;
+
+      sessionDuration.record(durationSeconds, {
+        ...baseAttributes,
+        'error.type': errorType,
+      });
     }
   });
 

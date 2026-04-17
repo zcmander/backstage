@@ -17,15 +17,6 @@
 import { createServiceRef } from '@backstage/backend-plugin-api';
 
 /**
- * @alpha
- */
-export const instanceMetadataServiceRef = createServiceRef<
-  import('./InstanceMetadataService').InstanceMetadataService
->({
-  id: 'core.instanceMetadata',
-});
-
-/**
  * Service for calling distributed actions
  *
  * See {@link ActionsService}
@@ -53,4 +44,26 @@ export const actionsRegistryServiceRef = createServiceRef<
   import('./ActionsRegistryService').ActionsRegistryService
 >({
   id: 'alpha.core.actionsRegistry',
+});
+
+/**
+ * Read information about your current Backstage deployment.
+ * @alpha
+ */
+export const rootSystemMetadataServiceRef = createServiceRef<
+  import('./RootSystemMetadataService').RootSystemMetadataService
+>({
+  id: 'alpha.core.rootSystemMetadata',
+  scope: 'root',
+});
+
+/**
+ * Service for managing metrics.
+ *
+ * @alpha
+ */
+export const metricsServiceRef = createServiceRef<
+  import('./MetricsService').MetricsService
+>({
+  id: 'alpha.core.metrics',
 });

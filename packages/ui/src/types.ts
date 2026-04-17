@@ -72,7 +72,11 @@ export type BorderRadius =
   | 'xl'
   | '2xl';
 
-/** @public */
+/**
+ * Border variants available for UI utility props.
+ *
+ * @public
+ */
 export type Border = 'none' | 'base' | 'error' | 'warning' | 'selected';
 
 /** @public */
@@ -92,7 +96,7 @@ export type Columns =
   | 'auto';
 
 /** @public */
-export interface SpaceProps {
+export interface MarginProps {
   m?: Responsive<Space>;
   mb?: Responsive<Space>;
   ml?: Responsive<Space>;
@@ -100,6 +104,10 @@ export interface SpaceProps {
   mt?: Responsive<Space>;
   mx?: Responsive<Space>;
   my?: Responsive<Space>;
+}
+
+/** @public */
+export interface PaddingProps {
   p?: Responsive<Space>;
   pb?: Responsive<Space>;
   pl?: Responsive<Space>;
@@ -108,6 +116,9 @@ export interface SpaceProps {
   px?: Responsive<Space>;
   py?: Responsive<Space>;
 }
+
+/** @public */
+export interface SpaceProps extends MarginProps, PaddingProps {}
 
 /** @public */
 export type TextVariants =
@@ -124,52 +135,76 @@ export type TextVariants =
 export type TextColors = 'primary' | 'secondary';
 
 /** @public */
-export type TextColorStatus = 'danger' | 'warning' | 'success';
+export type TextColorStatus = 'danger' | 'warning' | 'success' | 'info';
 
 /** @public */
 export type TextWeights = 'regular' | 'bold';
 
-/** @public */
+/**
+ * Shared utility props supported by layout-oriented UI components.
+ *
+ * @public
+ */
 export interface UtilityProps extends SpaceProps {
+  /** Aligns children on the cross axis in flex and grid layouts. */
   alignItems?: Responsive<AlignItems>;
+  /** Applies a semantic border variant. */
   border?: Responsive<Border>;
+  /** Applies a semantic border radius token. */
   borderRadius?: Responsive<BorderRadius>;
+  /** Sets the ending grid column line. */
   colEnd?: Responsive<Columns | 'auto'>;
+  /** Sets the number of grid columns to span. */
   colSpan?: Responsive<Columns | 'full'>;
+  /** Sets the starting grid column line. */
   colStart?: Responsive<Columns | 'auto'>;
+  /** Sets the number of columns for grid containers. */
   columns?: Responsive<Columns>;
+  /** Controls the CSS display value. */
   display?: Responsive<Display>;
+  /** Controls the direction of flex items. */
   flexDirection?: Responsive<FlexDirection>;
+  /** Controls how flex items wrap. */
   flexWrap?: Responsive<FlexWrap>;
+  /** Sets spacing between children in flex and grid layouts. */
   gap?: Responsive<Space>;
+  /** Aligns children on the main axis in flex and grid layouts. */
   justifyContent?: Responsive<JustifyContent>;
+  /** Sets the number of grid rows to span. */
   rowSpan?: Responsive<Columns | 'full'>;
 }
 
 /**
- * Base type for the component styles structure
+ * Resolved background level stored in context and applied as `data-bg` on DOM elements.
+ * Background type for the neutral bg system.
+ *
+ * Supports neutral levels ('neutral-1' through 'neutral-3') and
+ * intent backgrounds ('danger', 'warning', 'success').
+ *
+ * The 'neutral-4' level is not exposed as a prop value -- it is reserved
+ * for leaf component CSS (e.g. Button on a 'neutral-3' surface).
+ *
+ * This is the resolved/internal representation used by the bg context system.
+ * For the prop type accepted by container components, use `ProviderBg` instead.
+ *
  * @public
  */
-export type ClassNamesMap = Record<string, string>;
+export type ContainerBg =
+  | 'neutral-1'
+  | 'neutral-2'
+  | 'neutral-3'
+  | 'danger'
+  | 'warning'
+  | 'success';
 
 /**
- * Base type for the component styles structure
+ * Background values accepted by provider components (Box, Flex, Grid, Card, etc.).
+ *
+ * - `'neutral'` — automatically increments the neutral level from the parent context,
+ *   capping at the maximum level. This is always incremental; explicit levels cannot
+ *   be set directly.
+ * - `'danger'` | `'warning'` | `'success'` — intent backgrounds used as-is.
+ *
  * @public
  */
-export type DataAttributeValues = readonly (string | number | boolean)[];
-
-/**
- * Base type for the component styles structure
- * @public
- */
-export type DataAttributesMap = Record<string, DataAttributeValues>;
-
-/**
- * Base type for the component styles structure
- * @public
- */
-export interface ComponentDefinition {
-  classNames: ClassNamesMap;
-  dataAttributes?: DataAttributesMap;
-  utilityProps?: string[];
-}
+export type ProviderBg = 'neutral' | 'danger' | 'warning' | 'success';

@@ -1,5 +1,47 @@
 # @backstage/eslint-plugin
 
+## 0.2.3
+
+### Patch Changes
+
+- df43b0e: Fixed `no-mixed-plugin-imports` rule to return `null` from non-fixable suggestion handlers and added an explicit `SuggestionReportDescriptor[]` type annotation, matching the stricter type checking in TypeScript 6.0.
+
+## 0.2.3-next.0
+
+### Patch Changes
+
+- df43b0e: Fixed `no-mixed-plugin-imports` rule to return `null` from non-fixable suggestion handlers and added an explicit `SuggestionReportDescriptor[]` type annotation, matching the stricter type checking in TypeScript 6.0.
+
+## 0.2.2
+
+### Patch Changes
+
+- 6738cf0: build(deps): bump `minimatch` from 9.0.5 to 10.2.1
+
+## 0.2.2-next.0
+
+### Patch Changes
+
+- 6738cf0: build(deps): bump `minimatch` from 9.0.5 to 10.2.1
+
+## 0.2.1
+
+### Patch Changes
+
+- 7455dae: Use node prefix on native imports
+
+## 0.2.1-next.0
+
+### Patch Changes
+
+- 7455dae: Use node prefix on native imports
+
+## 0.2.0
+
+### Minor Changes
+
+- 926389b: Added `@backstage/no-ui-css-imports-in-non-frontend` rule, which ensures that CSS from `@backstage/ui` is not imported outside of the frontend app.
+
 ## 0.2.0-next.0
 
 ### Minor Changes

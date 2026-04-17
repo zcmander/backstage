@@ -29,6 +29,7 @@ import {
   getOrganizationUsers,
   getTeamMembers,
   getOrganizationRepositories,
+  getOrganizationRepository,
   QueryResponse,
   GithubUser,
   GithubTeam,
@@ -40,6 +41,7 @@ import {
 } from './github';
 import { Octokit } from '@octokit/core';
 import { throttling } from '@octokit/plugin-throttling';
+import { retry } from '@octokit/plugin-retry';
 
 jest.mock('@octokit/core', () => ({
   ...jest.requireActual('@octokit/core'),
@@ -166,6 +168,54 @@ describe('github', () => {
         getOrganizationUsers(graphql, 'a', 'token'),
       ).resolves.toEqual(output);
     });
+
+    it('reads members excluding suspended users', async () => {
+      const input: QueryResponse = {
+        organization: {
+          membersWithRole: {
+            pageInfo: { hasNextPage: false },
+            nodes: [
+              {
+                login: 'a',
+                name: 'b',
+                bio: 'c',
+                email: 'd',
+                avatarUrl: 'e',
+                suspendedAt: '2025-01-01',
+              },
+              {
+                login: 'a',
+                name: 'b',
+                bio: 'c',
+                email: 'd',
+                avatarUrl: 'e',
+                suspendedAt: undefined,
+              },
+            ],
+          },
+        },
+      };
+
+      const output = {
+        users: [
+          expect.objectContaining({
+            metadata: expect.objectContaining({ name: 'a', description: 'c' }),
+            spec: {
+              profile: { displayName: 'b', email: 'd', picture: 'e' },
+              memberOf: [],
+            },
+          }),
+        ],
+      };
+
+      server.use(
+        graphqlMsw.query('users', () => HttpResponse.json({ data: input })),
+      );
+
+      await expect(
+        getOrganizationUsers(graphql, 'a', 'token', undefined, undefined, true),
+      ).resolves.toEqual(output);
+    });
   });
 
   describe('getOrganizationUsers using custom UserTransformer', () => {
@@ -278,6 +328,63 @@ describe('github', () => {
 
       expect(users.users).toHaveLength(1);
       expect(users).toEqual(output);
+    });
+
+    it('reads members including suspended users', async () => {
+      const input: QueryResponse = {
+        organization: {
+          membersWithRole: {
+            pageInfo: { hasNextPage: false },
+            nodes: [
+              {
+                login: 'a',
+                name: 'b',
+                bio: 'c',
+                email: 'd',
+                avatarUrl: 'e',
+              },
+              {
+                login: 'ab',
+                name: 'bb',
+                bio: 'cc',
+                email: 'dd',
+                avatarUrl: 'ee',
+                suspendedAt: '2025-01-01',
+              },
+            ],
+          },
+        },
+      };
+
+      const output = {
+        users: [
+          expect.objectContaining({
+            metadata: expect.objectContaining({
+              name: 'a-custom',
+            }),
+          }),
+          expect.objectContaining({
+            metadata: expect.objectContaining({
+              name: 'ab-custom',
+            }),
+          }),
+        ],
+      };
+
+      server.use(
+        graphqlMsw.query('users', () => HttpResponse.json({ data: input })),
+      );
+
+      await expect(
+        getOrganizationUsers(
+          graphql,
+          'a',
+          'token',
+          customUserTransformer,
+          undefined,
+          false,
+        ),
+      ).resolves.toEqual(output);
     });
   });
 
@@ -673,14 +780,104 @@ describe('github', () => {
       };
 
       server.use(
-        graphqlMsw.query('repositories', () =>
-          HttpResponse.json({ data: input }),
-        ),
+        graphqlMsw.query('repositories', ({ variables }) => {
+          expect(variables.catalogPathRef).toBe('HEAD:catalog-info.yaml');
+          return HttpResponse.json({ data: input });
+        }),
       );
 
       await expect(
         getOrganizationRepositories(graphql, 'a', 'catalog-info.yaml'),
       ).resolves.toEqual(output);
+    });
+
+    it('uses provided branch for catalog path ref', async () => {
+      server.use(
+        graphqlMsw.query('repositories', ({ variables }) => {
+          expect(variables.catalogPathRef).toBe('develop:catalog-info.yaml');
+          return HttpResponse.json({
+            data: {
+              repositoryOwner: {
+                repositories: {
+                  pageInfo: { hasNextPage: false, endCursor: null },
+                  nodes: [
+                    {
+                      name: 'repo1',
+                      url: 'https://github.com/my-org/repo1',
+                      isArchived: false,
+                      isFork: false,
+                      visibility: 'public',
+                      defaultBranchRef: { name: 'main' },
+                      catalogInfoFile: null,
+                      repositoryTopics: { nodes: [] },
+                    },
+                  ],
+                },
+              },
+            },
+          });
+        }),
+      );
+
+      await getOrganizationRepositories(
+        graphql as any,
+        'my-org',
+        '/catalog-info.yaml',
+        undefined,
+        'develop',
+      );
+    });
+  });
+
+  describe('getOrganizationRepository', () => {
+    const repositoryData = {
+      repositoryOwner: {
+        repository: {
+          name: 'my-repo',
+          url: 'https://github.com/my-org/my-repo',
+          isArchived: false,
+          isFork: false,
+          visibility: 'public',
+          defaultBranchRef: { name: 'main' },
+          catalogInfoFile: null,
+          repositoryTopics: { nodes: [] },
+        },
+      },
+    };
+
+    it('defaults catalogPathRef to HEAD when no branch is provided', async () => {
+      server.use(
+        graphqlMsw.query('repository', ({ variables }) => {
+          expect(variables.catalogPathRef).toBe('HEAD:catalog-info.yaml');
+          return HttpResponse.json({ data: repositoryData });
+        }),
+      );
+
+      await getOrganizationRepository(
+        graphql as any,
+        'my-org',
+        'my-repo',
+        'catalog-info.yaml',
+      );
+    });
+
+    it('uses provided branch for catalogPathRef', async () => {
+      server.use(
+        graphqlMsw.query('repository', ({ variables }) => {
+          expect(variables.catalogPathRef).toBe(
+            'my-feature-branch:catalog-info.yaml',
+          );
+          return HttpResponse.json({ data: repositoryData });
+        }),
+      );
+
+      await getOrganizationRepository(
+        graphql as any,
+        'my-org',
+        'my-repo',
+        'catalog-info.yaml',
+        'my-feature-branch',
+      );
     });
   });
 
@@ -813,9 +1010,9 @@ describe('github', () => {
       baseUrl,
       logger,
     });
-    it('should return a graphql client with throttling', async () => {
+    it('should return a graphql client with throttling and retry', async () => {
       expect(client).toBeDefined();
-      expect(Octokit.plugin).toHaveBeenCalledWith(throttling);
+      expect(Octokit.plugin).toHaveBeenCalledWith(throttling, retry);
     });
 
     it('should return a graphql client with the correct options', async () => {

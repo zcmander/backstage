@@ -9,16 +9,20 @@ import { ApiFactory } from '@backstage/frontend-plugin-api';
 import { ConfigurableExtensionDataRef } from '@backstage/frontend-plugin-api';
 import { defaultEntityContentGroups } from '@backstage/plugin-catalog-react/alpha';
 import { Entity } from '@backstage/catalog-model';
-import { EntityPredicate } from '@backstage/plugin-catalog-react/alpha';
 import { ExtensionBlueprintParams } from '@backstage/frontend-plugin-api';
 import { ExtensionDataRef } from '@backstage/frontend-plugin-api';
 import { ExtensionInput } from '@backstage/frontend-plugin-api';
-import { IconComponent } from '@backstage/core-plugin-api';
+import { FilterPredicate } from '@backstage/filter-predicates';
+import { IconComponent } from '@backstage/frontend-plugin-api';
+import { IconElement } from '@backstage/frontend-plugin-api';
 import { IconLinkVerticalProps } from '@backstage/core-components';
 import { JSX as JSX_2 } from 'react';
+import { JSXElementConstructor } from 'react';
 import { OverridableExtensionDefinition } from '@backstage/frontend-plugin-api';
 import { OverridableFrontendPlugin } from '@backstage/frontend-plugin-api';
-import { RouteRef } from '@backstage/frontend-plugin-api';
+import { ReactElement } from 'react';
+import { RouteRef } from '@backstage/core-plugin-api';
+import { RouteRef as RouteRef_2 } from '@backstage/frontend-plugin-api';
 import { SearchResultItemExtensionComponent } from '@backstage/plugin-search-react/alpha';
 import { SearchResultItemExtensionPredicate } from '@backstage/plugin-search-react/alpha';
 import { SearchResultListItemBlueprintParams } from '@backstage/plugin-search-react/alpha';
@@ -44,6 +48,34 @@ const _default: OverridableFrontendPlugin<
       configInput: {};
       output: ExtensionDataRef<AnyApiFactory, 'core.api.factory', {}>;
       inputs: {};
+      params: <
+        TApi,
+        TImpl extends TApi,
+        TDeps extends { [name in string]: unknown },
+      >(
+        params: ApiFactory<TApi, TImpl, TDeps>,
+      ) => ExtensionBlueprintParams<AnyApiFactory>;
+    }>;
+    'api:techdocs/addons': OverridableExtensionDefinition<{
+      config: {};
+      configInput: {};
+      output: ExtensionDataRef<AnyApiFactory, 'core.api.factory', {}>;
+      inputs: {
+        addons: ExtensionInput<
+          ConfigurableExtensionDataRef<
+            TechDocsAddonOptions,
+            'techdocs.addon',
+            {}
+          >,
+          {
+            singleton: false;
+            optional: false;
+            internal: false;
+          }
+        >;
+      };
+      kind: 'api';
+      name: 'addons';
       params: <
         TApi,
         TImpl extends TApi,
@@ -83,6 +115,7 @@ const _default: OverridableFrontendPlugin<
           {
             singleton: boolean;
             optional: boolean;
+            internal?: boolean;
           }
         >;
       };
@@ -94,25 +127,27 @@ const _default: OverridableFrontendPlugin<
       config: {
         path: string | undefined;
         title: string | undefined;
-        filter: EntityPredicate | undefined;
+        filter: FilterPredicate | undefined;
         group: string | false | undefined;
+        icon: string | undefined;
       };
       configInput: {
-        filter?: EntityPredicate | undefined;
-        title?: string | undefined;
         path?: string | undefined;
+        title?: string | undefined;
+        filter?: FilterPredicate | undefined;
         group?: string | false | undefined;
+        icon?: string | undefined;
       };
       output:
         | ExtensionDataRef<string, 'core.routing.path', {}>
-        | ExtensionDataRef<JSX_2.Element, 'core.reactElement', {}>
         | ExtensionDataRef<
-            RouteRef<AnyRouteRefParams>,
+            RouteRef_2<AnyRouteRefParams>,
             'core.routing.ref',
             {
               optional: true;
             }
           >
+        | ExtensionDataRef<JSX_2.Element, 'core.reactElement', {}>
         | ExtensionDataRef<
             (entity: Entity) => boolean,
             'catalog.entity-filter-function',
@@ -134,6 +169,13 @@ const _default: OverridableFrontendPlugin<
             {
               optional: true;
             }
+          >
+        | ExtensionDataRef<
+            string | ReactElement<any, string | JSXElementConstructor<any>>,
+            'catalog.entity-content-icon',
+            {
+              optional: true;
+            }
           >;
       inputs: {
         addons: ExtensionInput<
@@ -145,6 +187,7 @@ const _default: OverridableFrontendPlugin<
           {
             singleton: false;
             optional: false;
+            internal: false;
           }
         >;
         emptyState: ExtensionInput<
@@ -158,6 +201,7 @@ const _default: OverridableFrontendPlugin<
           {
             singleton: true;
             optional: true;
+            internal: false;
           }
         >;
       };
@@ -170,9 +214,10 @@ const _default: OverridableFrontendPlugin<
         title: string;
         defaultGroup?: [Error: `Use the 'group' param instead`];
         group?: keyof defaultEntityContentGroups | (string & {});
+        icon?: string | ReactElement;
         loader: () => Promise<JSX.Element>;
-        routeRef?: RouteRef;
-        filter?: string | EntityPredicate | ((entity: Entity) => boolean);
+        routeRef?: RouteRef_2;
+        filter?: string | FilterPredicate | ((entity: Entity) => boolean);
       };
     }>;
     'entity-icon-link:techdocs/read-docs': OverridableExtensionDefinition<{
@@ -181,12 +226,12 @@ const _default: OverridableFrontendPlugin<
       config: {
         label: string | undefined;
         title: string | undefined;
-        filter: EntityPredicate | undefined;
+        filter: FilterPredicate | undefined;
       };
       configInput: {
-        filter?: EntityPredicate | undefined;
         label?: string | undefined;
         title?: string | undefined;
+        filter?: FilterPredicate | undefined;
       };
       output:
         | ExtensionDataRef<
@@ -211,19 +256,23 @@ const _default: OverridableFrontendPlugin<
       inputs: {};
       params: {
         useProps: () => Omit<IconLinkVerticalProps, 'color'>;
-        filter?: EntityPredicate | ((entity: Entity) => boolean);
+        filter?: FilterPredicate | ((entity: Entity) => boolean);
       };
     }>;
     'nav-item:techdocs': OverridableExtensionDefinition<{
       kind: 'nav-item';
       name: undefined;
-      config: {};
-      configInput: {};
+      config: {
+        title: string | undefined;
+      };
+      configInput: {
+        title?: string | undefined;
+      };
       output: ExtensionDataRef<
         {
           title: string;
           icon: IconComponent;
-          routeRef: RouteRef<undefined>;
+          routeRef: RouteRef_2<undefined>;
         },
         'core.nav-item.target',
         {}
@@ -232,7 +281,7 @@ const _default: OverridableFrontendPlugin<
       params: {
         title: string;
         icon: IconComponent;
-        routeRef: RouteRef<undefined>;
+        routeRef: RouteRef_2<undefined>;
       };
     }>;
     'page:techdocs': OverridableExtensionDefinition<{
@@ -240,46 +289,145 @@ const _default: OverridableFrontendPlugin<
       name: undefined;
       config: {
         path: string | undefined;
+        title: string | undefined;
       };
       configInput: {
         path?: string | undefined;
+        title?: string | undefined;
       };
       output:
         | ExtensionDataRef<string, 'core.routing.path', {}>
-        | ExtensionDataRef<JSX_2.Element, 'core.reactElement', {}>
         | ExtensionDataRef<
-            RouteRef<AnyRouteRefParams>,
+            RouteRef_2<AnyRouteRefParams>,
             'core.routing.ref',
             {
               optional: true;
             }
-          >;
-      inputs: {};
-      params: {
-        defaultPath?: [Error: `Use the 'path' param instead`];
-        path: string;
-        loader: () => Promise<JSX.Element>;
-        routeRef?: RouteRef;
-      };
-    }>;
-    'page:techdocs/reader': OverridableExtensionDefinition<{
-      config: {
-        path: string | undefined;
-      };
-      configInput: {
-        path?: string | undefined;
-      };
-      output:
-        | ExtensionDataRef<string, 'core.routing.path', {}>
+          >
         | ExtensionDataRef<JSX_2.Element, 'core.reactElement', {}>
         | ExtensionDataRef<
-            RouteRef<AnyRouteRefParams>,
-            'core.routing.ref',
+            string,
+            'core.title',
+            {
+              optional: true;
+            }
+          >
+        | ExtensionDataRef<
+            IconElement,
+            'core.icon',
             {
               optional: true;
             }
           >;
       inputs: {
+        pages: ExtensionInput<
+          | ConfigurableExtensionDataRef<JSX_2.Element, 'core.reactElement', {}>
+          | ConfigurableExtensionDataRef<string, 'core.routing.path', {}>
+          | ConfigurableExtensionDataRef<
+              RouteRef_2<AnyRouteRefParams>,
+              'core.routing.ref',
+              {
+                optional: true;
+              }
+            >
+          | ConfigurableExtensionDataRef<
+              string,
+              'core.title',
+              {
+                optional: true;
+              }
+            >
+          | ConfigurableExtensionDataRef<
+              IconElement,
+              'core.icon',
+              {
+                optional: true;
+              }
+            >,
+          {
+            singleton: false;
+            optional: false;
+            internal: false;
+          }
+        >;
+      };
+      params: {
+        path: string;
+        title?: string;
+        icon?: IconElement;
+        loader?: () => Promise<JSX_2.Element>;
+        routeRef?: RouteRef_2;
+        noHeader?: boolean;
+      };
+    }>;
+    'page:techdocs/reader': OverridableExtensionDefinition<{
+      config: {
+        withoutSearch: boolean;
+        withoutHeader: boolean;
+        path: string | undefined;
+        title: string | undefined;
+      };
+      configInput: {
+        withoutSearch?: boolean | undefined;
+        withoutHeader?: boolean | undefined;
+        path?: string | undefined;
+        title?: string | undefined;
+      };
+      output:
+        | ExtensionDataRef<string, 'core.routing.path', {}>
+        | ExtensionDataRef<
+            RouteRef_2<AnyRouteRefParams>,
+            'core.routing.ref',
+            {
+              optional: true;
+            }
+          >
+        | ExtensionDataRef<JSX_2.Element, 'core.reactElement', {}>
+        | ExtensionDataRef<
+            string,
+            'core.title',
+            {
+              optional: true;
+            }
+          >
+        | ExtensionDataRef<
+            IconElement,
+            'core.icon',
+            {
+              optional: true;
+            }
+          >;
+      inputs: {
+        pages: ExtensionInput<
+          | ConfigurableExtensionDataRef<JSX_2.Element, 'core.reactElement', {}>
+          | ConfigurableExtensionDataRef<string, 'core.routing.path', {}>
+          | ConfigurableExtensionDataRef<
+              RouteRef_2<AnyRouteRefParams>,
+              'core.routing.ref',
+              {
+                optional: true;
+              }
+            >
+          | ConfigurableExtensionDataRef<
+              string,
+              'core.title',
+              {
+                optional: true;
+              }
+            >
+          | ConfigurableExtensionDataRef<
+              IconElement,
+              'core.icon',
+              {
+                optional: true;
+              }
+            >,
+          {
+            singleton: false;
+            optional: false;
+            internal: false;
+          }
+        >;
         addons: ExtensionInput<
           ConfigurableExtensionDataRef<
             TechDocsAddonOptions,
@@ -289,16 +437,30 @@ const _default: OverridableFrontendPlugin<
           {
             singleton: false;
             optional: false;
+            internal: false;
           }
         >;
       };
       kind: 'page';
       name: 'reader';
       params: {
-        defaultPath?: [Error: `Use the 'path' param instead`];
         path: string;
+        title?: string;
+        icon?: IconElement;
+        loader?: () => Promise<JSX_2.Element>;
+        routeRef?: RouteRef_2;
+        noHeader?: boolean;
+      };
+    }>;
+    'plugin-header-action:techdocs': OverridableExtensionDefinition<{
+      kind: 'plugin-header-action';
+      name: undefined;
+      config: {};
+      configInput: {};
+      output: ExtensionDataRef<JSX_2.Element, 'core.reactElement', {}>;
+      inputs: {};
+      params: {
         loader: () => Promise<JSX.Element>;
-        routeRef?: RouteRef;
       };
     }>;
     'search-result-list-item:techdocs': OverridableExtensionDefinition<{
@@ -307,15 +469,13 @@ const _default: OverridableFrontendPlugin<
         lineClamp: number;
         asLink: boolean;
         asListItem: boolean;
-      } & {
         noTrack: boolean;
       };
       configInput: {
         title?: string | undefined;
         lineClamp?: number | undefined;
-        asListItem?: boolean | undefined;
         asLink?: boolean | undefined;
-      } & {
+        asListItem?: boolean | undefined;
         noTrack?: boolean | undefined;
       };
       output: ExtensionDataRef<
@@ -327,15 +487,7 @@ const _default: OverridableFrontendPlugin<
         'search.search-result-list-item.item',
         {}
       >;
-      inputs: {
-        [x: string]: ExtensionInput<
-          ExtensionDataRef,
-          {
-            singleton: boolean;
-            optional: boolean;
-          }
-        >;
-      };
+      inputs: {};
       kind: 'search-result-list-item';
       name: undefined;
       params: SearchResultListItemBlueprintParams;
@@ -351,15 +503,13 @@ export const techDocsSearchResultListItemExtension: OverridableExtensionDefiniti
     lineClamp: number;
     asLink: boolean;
     asListItem: boolean;
-  } & {
     noTrack: boolean;
   };
   configInput: {
     title?: string | undefined;
     lineClamp?: number | undefined;
-    asListItem?: boolean | undefined;
     asLink?: boolean | undefined;
-  } & {
+    asListItem?: boolean | undefined;
     noTrack?: boolean | undefined;
   };
   output: ExtensionDataRef<
@@ -371,15 +521,7 @@ export const techDocsSearchResultListItemExtension: OverridableExtensionDefiniti
     'search.search-result-list-item.item',
     {}
   >;
-  inputs: {
-    [x: string]: ExtensionInput<
-      ExtensionDataRef,
-      {
-        singleton: boolean;
-        optional: boolean;
-      }
-    >;
-  };
+  inputs: {};
   kind: 'search-result-list-item';
   name: undefined;
   params: SearchResultListItemBlueprintParams;

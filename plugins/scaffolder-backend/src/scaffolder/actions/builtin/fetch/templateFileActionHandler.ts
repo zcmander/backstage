@@ -21,8 +21,10 @@ import {
   TemplateGlobal,
 } from '@backstage/plugin-scaffolder-node';
 import fs from 'fs-extra';
-import path from 'path';
 import { createDefaultFilters } from '../../../../lib/templating/filters/createDefaultFilters';
+import { convertFiltersToRecord } from '../../../../util/templating';
+import { resolveSafeChildPath } from '@backstage/backend-plugin-api';
+import path from 'node:path';
 import { SecureTemplater } from '../../../../lib/templating/SecureTemplater';
 import { convertFiltersToRecord } from '../../../../util/templating';
 

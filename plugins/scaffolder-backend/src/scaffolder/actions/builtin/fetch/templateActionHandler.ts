@@ -27,10 +27,10 @@ import {
 import fs from 'fs-extra';
 import globby from 'globby';
 import { isBinaryFile } from 'isbinaryfile';
-import { extname } from 'path';
 import { createDefaultFilters } from '../../../../lib/templating/filters/createDefaultFilters';
-import { SecureTemplater } from '../../../../lib/templating/SecureTemplater';
 import { convertFiltersToRecord } from '../../../../util/templating';
+import { SecureTemplater } from '../../../../lib/templating/SecureTemplater';
+import { extname } from 'node:path';
 
 export type TemplateActionInput = {
   targetPath?: string;

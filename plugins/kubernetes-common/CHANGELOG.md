@@ -1,5 +1,65 @@
 # @backstage/plugin-kubernetes-common
 
+## 0.9.11
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/catalog-model@1.8.0
+  - @backstage/plugin-permission-common@0.9.8
+
+## 0.9.11-next.0
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/catalog-model@1.7.8-next.0
+  - @backstage/plugin-permission-common@0.9.8-next.0
+
+## 0.9.10
+
+### Patch Changes
+
+- ce3639c: Add PersistentVolume and PersistentVolumeClaims Rendering
+- Updated dependencies
+  - @backstage/plugin-permission-common@0.9.6
+
+## 0.9.10-next.1
+
+### Patch Changes
+
+- ce3639c: Add PersistentVolume and PersistentVolumeClaims Rendering
+
+## 0.9.10-next.0
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/plugin-permission-common@0.9.5-next.0
+  - @backstage/catalog-model@1.7.6
+  - @backstage/types@1.2.2
+
+## 0.9.9
+
+### Patch Changes
+
+- 8fa8d87: Add Kubernetes Plugin Secrets Accordion with masked secret datas
+
+## 0.9.9-next.0
+
+### Patch Changes
+
+- 8fa8d87: Add Kubernetes Plugin Secrets Accordion with masked secret datas
+
+## 0.9.8
+
+### Patch Changes
+
+- 1906d37: Updated dependency `@kubernetes/client-node` to `1.4.0`.
+- Updated dependencies
+  - @backstage/plugin-permission-common@0.9.3
+  - @backstage/catalog-model@1.7.6
+
 ## 0.9.8-next.1
 
 ### Patch Changes

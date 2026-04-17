@@ -32,11 +32,7 @@ import {
   AwsCodeCommitIntegration,
   ScmIntegrations,
 } from '@backstage/integration';
-import {
-  assertError,
-  ForwardedError,
-  NotModifiedError,
-} from '@backstage/errors';
+import { toError, ForwardedError, NotModifiedError } from '@backstage/errors';
 import { fromTemporaryCredentials } from '@aws-sdk/credential-providers';
 import {
   CodeCommitClient,
@@ -46,9 +42,9 @@ import {
   GetFolderCommand,
 } from '@aws-sdk/client-codecommit';
 import { AwsCredentialIdentityProvider } from '@aws-sdk/types';
-import { Readable } from 'stream';
+import { Readable } from 'node:stream';
 import { ReadUrlResponseFactory } from './ReadUrlResponseFactory';
-import { relative } from 'path/posix';
+import { relative } from 'node:path/posix';
 import { AbortController } from '@aws-sdk/abort-controller';
 
 export function parseUrl(
@@ -418,8 +414,8 @@ export class AwsCodeCommitUrlReader implements UrlReaderService {
         ],
         etag: data.etag ?? '',
       };
-    } catch (error) {
-      assertError(error);
+    } catch (e) {
+      const error = toError(e);
       if (error.name === 'NotFoundError') {
         return {
           files: [],

@@ -15,6 +15,7 @@
  */
 
 import { Backend, createSpecializedBackend } from '@backstage/backend-app-api';
+import { ServiceFactory } from '@backstage/backend-plugin-api';
 import { auditorServiceFactory } from '@backstage/backend-defaults/auditor';
 import { authServiceFactory } from '@backstage/backend-defaults/auth';
 import { cacheServiceFactory } from '@backstage/backend-defaults/cache';
@@ -38,10 +39,12 @@ import { eventsServiceFactory } from '@backstage/plugin-events-node';
 import {
   actionsRegistryServiceFactory,
   actionsServiceFactory,
-  instanceMetadataServiceFactory,
+  metricsServiceFactory,
 } from '@backstage/backend-defaults/alpha';
+import { instanceMetadataServiceFactory } from './alpha/entrypoints/instanceMetadata/instanceMetadataServiceFactory';
 
-export const defaultServiceFactories = [
+/** @public */
+export const defaultServiceFactories: ServiceFactory[] = [
   auditorServiceFactory,
   authServiceFactory,
   cacheServiceFactory,
@@ -66,6 +69,9 @@ export const defaultServiceFactories = [
   // alpha services
   actionsRegistryServiceFactory,
   actionsServiceFactory,
+  metricsServiceFactory,
+
+  // Unexported alpha services kept around for compatibility reasons
   instanceMetadataServiceFactory,
 ];
 

@@ -1,5 +1,213 @@
 # @backstage/plugin-notifications-backend
 
+## 0.6.4
+
+### Patch Changes
+
+- 4c1fd43: Added an action to get a user's notifications
+- 070af42: Fix handling of `limit=0` in `getNotifications` query to return empty results instead of all notifications
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.9.0
+  - @backstage/errors@1.3.0
+  - @backstage/catalog-model@1.8.0
+  - @backstage/plugin-catalog-node@2.2.0
+  - @backstage/plugin-signals-node@0.2.0
+  - @backstage/plugin-notifications-node@0.2.25
+  - @backstage/config@1.3.7
+  - @backstage/plugin-notifications-common@0.2.2
+
+## 0.6.4-next.2
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/errors@1.3.0-next.0
+  - @backstage/plugin-catalog-node@2.2.0-next.2
+  - @backstage/backend-plugin-api@1.9.0-next.2
+  - @backstage/catalog-model@1.7.8-next.0
+  - @backstage/config@1.3.7-next.0
+  - @backstage/plugin-notifications-node@0.2.25-next.2
+  - @backstage/plugin-notifications-common@0.2.2-next.0
+  - @backstage/plugin-signals-node@0.1.30-next.2
+
+## 0.6.4-next.1
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.9.0-next.1
+  - @backstage/plugin-catalog-node@2.1.1-next.1
+  - @backstage/plugin-notifications-node@0.2.25-next.1
+  - @backstage/plugin-signals-node@0.1.30-next.1
+
+## 0.6.4-next.0
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.8.1-next.0
+  - @backstage/plugin-catalog-node@2.1.1-next.0
+  - @backstage/plugin-notifications-node@0.2.25-next.0
+  - @backstage/plugin-signals-node@0.1.30-next.0
+  - @backstage/catalog-model@1.7.7
+  - @backstage/config@1.3.6
+  - @backstage/errors@1.2.7
+  - @backstage/types@1.2.2
+  - @backstage/plugin-notifications-common@0.2.1
+
+## 0.6.3
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.8.0
+  - @backstage/plugin-catalog-node@2.1.0
+  - @backstage/catalog-model@1.7.7
+  - @backstage/plugin-notifications-node@0.2.24
+  - @backstage/plugin-signals-node@0.1.29
+
+## 0.6.3-next.1
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.8.0-next.1
+  - @backstage/plugin-catalog-node@2.1.0-next.2
+  - @backstage/plugin-notifications-node@0.2.24-next.2
+  - @backstage/plugin-signals-node@0.1.29-next.1
+
+## 0.6.3-next.0
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/plugin-catalog-node@2.1.0-next.0
+  - @backstage/backend-plugin-api@1.7.1-next.0
+  - @backstage/catalog-model@1.7.6
+  - @backstage/config@1.3.6
+  - @backstage/errors@1.2.7
+  - @backstage/types@1.2.2
+  - @backstage/plugin-notifications-common@0.2.1
+  - @backstage/plugin-notifications-node@0.2.24-next.0
+  - @backstage/plugin-signals-node@0.1.29-next.0
+
+## 0.6.2
+
+### Patch Changes
+
+- 7455dae: Use node prefix on native imports
+- 5e3ef57: Added `peerModules` metadata declaring recommended modules for cross-plugin integrations.
+- e9eb400: Allow configuring included topics for email notifications.
+- Updated dependencies
+  - @backstage/plugin-catalog-node@2.0.0
+  - @backstage/backend-plugin-api@1.7.0
+  - @backstage/plugin-notifications-common@0.2.1
+  - @backstage/plugin-notifications-node@0.2.23
+  - @backstage/plugin-signals-node@0.1.28
+
+## 0.6.2-next.2
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/plugin-catalog-node@2.0.0-next.1
+  - @backstage/backend-plugin-api@1.7.0-next.1
+  - @backstage/plugin-notifications-node@0.2.23-next.1
+
+## 0.6.2-next.1
+
+### Patch Changes
+
+- 5e3ef57: Added `peerModules` metadata declaring recommended modules for cross-plugin integrations.
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.7.0-next.1
+
+## 0.6.2-next.0
+
+### Patch Changes
+
+- 7455dae: Use node prefix on native imports
+- Updated dependencies
+  - @backstage/plugin-catalog-node@1.21.0-next.0
+  - @backstage/backend-plugin-api@1.7.0-next.0
+  - @backstage/plugin-notifications-node@0.2.23-next.0
+  - @backstage/catalog-model@1.7.6
+  - @backstage/config@1.3.6
+  - @backstage/errors@1.2.7
+  - @backstage/types@1.2.2
+  - @backstage/plugin-notifications-common@0.2.0
+  - @backstage/plugin-signals-node@0.1.28-next.0
+
+## 0.6.1
+
+### Patch Changes
+
+- de96a60: chore(deps): bump `express` from 4.21.2 to 4.22.0
+- Updated dependencies
+  - @backstage/plugin-signals-node@0.1.27
+  - @backstage/backend-plugin-api@1.6.0
+  - @backstage/plugin-catalog-node@1.20.1
+  - @backstage/plugin-notifications-node@0.2.22
+
+## 0.6.1-next.1
+
+### Patch Changes
+
+- de96a60: chore(deps): bump `express` from 4.21.2 to 4.22.0
+- Updated dependencies
+  - @backstage/plugin-signals-node@0.1.27-next.1
+  - @backstage/backend-plugin-api@1.6.0-next.1
+  - @backstage/catalog-model@1.7.6
+  - @backstage/config@1.3.6
+  - @backstage/errors@1.2.7
+  - @backstage/types@1.2.2
+  - @backstage/plugin-catalog-node@1.20.1-next.1
+  - @backstage/plugin-notifications-common@0.2.0
+  - @backstage/plugin-notifications-node@0.2.22-next.1
+
+## 0.6.1-next.0
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.5.1-next.0
+  - @backstage/plugin-signals-node@0.1.27-next.0
+  - @backstage/plugin-catalog-node@1.20.1-next.0
+  - @backstage/plugin-notifications-node@0.2.22-next.0
+  - @backstage/config@1.3.6
+  - @backstage/catalog-model@1.7.6
+  - @backstage/errors@1.2.7
+  - @backstage/types@1.2.2
+  - @backstage/plugin-notifications-common@0.2.0
+
+## 0.6.0
+
+### Minor Changes
+
+- 87e597c: Adds support for default configuration for an entire notification channel.
+  This setting will also be inherited down to origins and topics while still respecting the users individual choices.
+
+  This will be handy if you want to use a "opt-in" strategy.
+
+### Patch Changes
+
+- 15fb764: Show default settings for notifications even before receiving first notification.
+
+  Previously, it was not possible for the users to see or modify their notification settings until they had received at
+  least one notification from specific origin or topic.
+  This update ensures that default settings are displayed from the outset,
+  allowing users to customize their preferences immediately.
+
+- 05f60e1: Refactored constructor parameter properties to explicit property declarations for compatibility with TypeScript's `erasableSyntaxOnly` setting. This internal refactoring maintains all existing functionality while ensuring TypeScript compilation compatibility.
+- Updated dependencies
+  - @backstage/plugin-catalog-node@1.20.0
+  - @backstage/plugin-notifications-common@0.2.0
+  - @backstage/backend-plugin-api@1.5.0
+  - @backstage/plugin-notifications-node@0.2.21
+  - @backstage/config@1.3.6
+  - @backstage/catalog-model@1.7.6
+  - @backstage/plugin-signals-node@0.1.26
+
 ## 0.6.0-next.2
 
 ### Minor Changes

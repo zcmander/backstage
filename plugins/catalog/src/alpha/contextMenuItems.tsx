@@ -26,7 +26,6 @@ import { alertApiRef, useApi, useRouteRef } from '@backstage/core-plugin-api';
 import {
   dialogApiRef,
   useTranslationRef,
-  type DialogApiDialog,
 } from '@backstage/frontend-plugin-api';
 import { catalogTranslationRef } from './translation';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -37,7 +36,6 @@ import {
 import { rootRouteRef, unregisterRedirectRouteRef } from '../routes';
 import { catalogEntityDeletePermission } from '@backstage/plugin-catalog-common/alpha';
 import { useEffect } from 'react';
-import { compatWrapper } from '@backstage/core-compat-api';
 
 export const copyEntityUrlContextMenuItem = EntityContextMenuItemBlueprint.make(
   {
@@ -111,23 +109,21 @@ export const unregisterEntityContextMenuItem =
           title: t('entityContextMenu.unregisterMenuTitle'),
           disabled: !unregisterPermission.allowed,
           onClick: async () => {
-            dialogApi.showModal(({ dialog }: { dialog: DialogApiDialog }) =>
-              compatWrapper(
-                <UnregisterEntityDialog
-                  open
-                  entity={entity}
-                  onClose={() => dialog.close()}
-                  onConfirm={() => {
-                    dialog.close();
-                    navigate(
-                      unregisterRedirectRoute
-                        ? unregisterRedirectRoute()
-                        : catalogRoute(),
-                    );
-                  }}
-                />,
-              ),
-            );
+            dialogApi.open(({ dialog }) => (
+              <UnregisterEntityDialog
+                open
+                entity={entity}
+                onClose={() => dialog.close()}
+                onConfirm={() => {
+                  dialog.close();
+                  navigate(
+                    unregisterRedirectRoute
+                      ? unregisterRedirectRoute()
+                      : catalogRoute(),
+                  );
+                }}
+              />
+            ));
           },
         };
       },

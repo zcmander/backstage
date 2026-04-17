@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-import {
-  compatWrapper,
-  convertLegacyRouteRefs,
-} from '@backstage/core-compat-api';
 import { createFrontendPlugin } from '@backstage/frontend-plugin-api';
+import { z } from 'zod/v4';
+import { RiTeamLine } from '@remixicon/react';
 import { catalogIndexRouteRef } from './routes';
 import { EntityCardBlueprint } from '@backstage/plugin-catalog-react/alpha';
 
@@ -29,8 +27,8 @@ const EntityGroupProfileCard = EntityCardBlueprint.make({
     type: 'info',
     filter: { kind: 'group' },
     loader: async () =>
-      import('./components/Cards/Group/GroupProfile/GroupProfileCard').then(m =>
-        compatWrapper(<m.GroupProfileCard />),
+      import('./components/Cards/Group/GroupProfile/GroupProfileCard').then(
+        m => <m.GroupProfileCard />,
       ),
   },
 });
@@ -38,23 +36,20 @@ const EntityGroupProfileCard = EntityCardBlueprint.make({
 /** @alpha */
 const EntityMembersListCard = EntityCardBlueprint.makeWithOverrides({
   name: 'members-list',
-  config: {
-    schema: {
-      initialRelationAggregation: z =>
-        z.enum(['direct', 'aggregated']).optional(),
-      showAggregateMembersToggle: z => z.boolean().optional(),
-    },
+  configSchema: {
+    initialRelationAggregation: z.enum(['direct', 'aggregated']).optional(),
+    showAggregateMembersToggle: z.boolean().optional(),
   },
   factory(originalFactory, { config }) {
     return originalFactory({
       filter: { kind: 'group' },
       loader: async () =>
-        import('./components/Cards/Group/MembersList/MembersListCard').then(m =>
-          compatWrapper(
+        import('./components/Cards/Group/MembersList/MembersListCard').then(
+          m => (
             <m.MembersListCard
               relationAggregation={config.initialRelationAggregation}
               showAggregateMembersToggle={config.showAggregateMembersToggle}
-            />,
+            />
           ),
         ),
     });
@@ -64,30 +59,28 @@ const EntityMembersListCard = EntityCardBlueprint.makeWithOverrides({
 /** @alpha */
 const EntityOwnershipCard = EntityCardBlueprint.makeWithOverrides({
   name: 'ownership',
-  config: {
-    schema: {
-      initialRelationAggregation: z =>
-        z.enum(['direct', 'aggregated']).optional(),
-      showAggregateMembersToggle: z => z.boolean().optional(),
-    },
+  configSchema: {
+    initialRelationAggregation: z.enum(['direct', 'aggregated']).optional(),
+    showAggregateMembersToggle: z.boolean().optional(),
+    ownedKinds: z.array(z.string()).optional(),
   },
   factory(originalFactory, { config }) {
     return originalFactory({
       filter: { kind: { $in: ['group', 'user'] } },
       loader: async () =>
-        import('./components/Cards/OwnershipCard/OwnershipCard').then(m =>
-          compatWrapper(
-            <m.OwnershipCard
-              relationAggregation={config.initialRelationAggregation}
-              // harmonize the exposed alpha endpoints, but keep the default behaviour
-              hideRelationsToggle={
-                config.showAggregateMembersToggle === undefined
-                  ? undefined
-                  : !config.showAggregateMembersToggle
-              }
-            />,
-          ),
-        ),
+        import('./components/Cards/OwnershipCard/OwnershipCard').then(m => (
+          <m.OwnershipCard
+            relationAggregation={config.initialRelationAggregation}
+            hideRelationsToggle={
+              config.showAggregateMembersToggle === undefined
+                ? undefined
+                : !config.showAggregateMembersToggle
+            }
+            entityFilterKind={
+              config.ownedKinds ?? ['Component', 'API', 'System', 'Resource']
+            }
+          />
+        )),
     });
   },
 });
@@ -95,11 +88,9 @@ const EntityOwnershipCard = EntityCardBlueprint.makeWithOverrides({
 /** @alpha */
 const EntityUserProfileCard = EntityCardBlueprint.makeWithOverrides({
   name: 'user-profile',
-  config: {
-    schema: {
-      maxRelations: z => z.number().optional(),
-      hideIcons: z => z.boolean().default(false),
-    },
+  configSchema: {
+    maxRelations: z.number().optional(),
+    hideIcons: z.boolean().default(false),
   },
   factory(originalFactory, { config }) {
     return originalFactory({
@@ -107,13 +98,12 @@ const EntityUserProfileCard = EntityCardBlueprint.makeWithOverrides({
       filter: { kind: 'user' },
       loader: async () =>
         import('./components/Cards/User/UserProfileCard/UserProfileCard').then(
-          m =>
-            compatWrapper(
-              <m.UserProfileCard
-                maxRelations={config.maxRelations}
-                hideIcons={config.hideIcons}
-              />,
-            ),
+          m => (
+            <m.UserProfileCard
+              maxRelations={config.maxRelations}
+              hideIcons={config.hideIcons}
+            />
+          ),
         ),
     });
   },
@@ -122,6 +112,8 @@ const EntityUserProfileCard = EntityCardBlueprint.makeWithOverrides({
 /** @alpha */
 export default createFrontendPlugin({
   pluginId: 'org',
+  title: 'Org',
+  icon: <RiTeamLine />,
   info: { packageJson: () => import('../package.json') },
   extensions: [
     EntityGroupProfileCard,
@@ -129,9 +121,15 @@ export default createFrontendPlugin({
     EntityOwnershipCard,
     EntityUserProfileCard,
   ],
-  externalRoutes: convertLegacyRouteRefs({
+  externalRoutes: {
     catalogIndex: catalogIndexRouteRef,
-  }),
+  },
 });
 
-export { orgTranslationRef } from './translation';
+import { orgTranslationRef as _orgTranslationRef } from './translation';
+
+/**
+ * @alpha
+ * @deprecated Import from `@backstage/plugin-org` instead.
+ */
+export const orgTranslationRef = _orgTranslationRef;

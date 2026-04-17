@@ -15,20 +15,40 @@
  */
 
 export type {
-  BackendFeatureMeta,
-  InstanceMetadataService,
-} from './InstanceMetadataService';
+  RootSystemMetadataServicePluginInfo,
+  RootSystemMetadataService,
+} from './RootSystemMetadataService';
 
 export type {
   ActionsRegistryService,
   ActionsRegistryActionOptions,
   ActionsRegistryActionContext,
+  ActionsRegistryActionExample,
 } from './ActionsRegistryService';
 
 export type { ActionsService, ActionsServiceAction } from './ActionsService';
 
+export type {
+  MetricsService,
+  MetricAdvice,
+  MetricAttributes,
+  MetricAttributeValue,
+  MetricOptions,
+  MetricsServiceCounter,
+  MetricsServiceUpDownCounter,
+  MetricsServiceHistogram,
+  MetricsServiceGauge,
+  MetricsServiceObservable,
+  MetricsServiceObservableCallback,
+  MetricsServiceObservableCounter,
+  MetricsServiceObservableGauge,
+  MetricsServiceObservableResult,
+  MetricsServiceObservableUpDownCounter,
+} from './MetricsService';
+
 export {
   actionsRegistryServiceRef,
   actionsServiceRef,
-  instanceMetadataServiceRef,
+  metricsServiceRef,
+  rootSystemMetadataServiceRef,
 } from './refs';

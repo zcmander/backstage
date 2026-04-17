@@ -12,16 +12,16 @@ permissions:
 
 jobs:
   build:
-    runs-on: windows-2022
+    runs-on: windows-2025
 
     strategy:
       fail-fast: false
       matrix:
-        node-version: [20.x, 22.x]
+        node-version: [22.x, 24.x]
 
     env:
       CI: true
-      NODE_OPTIONS: --max-old-space-size=8192 --no-node-snapshot --experimental-vm-modules
+      NODE_OPTIONS: --max-old-space-size=8192 --experimental-vm-modules
       INTEGRATION_TEST_GITHUB_TOKEN: ${{ secrets.INTEGRATION_TEST_GITHUB_TOKEN }}
       INTEGRATION_TEST_GITLAB_TOKEN: ${{ secrets.INTEGRATION_TEST_GITLAB_TOKEN }}
       INTEGRATION_TEST_BITBUCKET_TOKEN: ${{ secrets.INTEGRATION_TEST_BITBUCKET_TOKEN }}
@@ -29,14 +29,14 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@95d9a5deda9de15063e7595e9719c11c38c90ae2 # v2.13.2
+        uses: step-security/harden-runner@58077d3c7e43986b6b15fba718e8ea69e387dfcc # v2.15.1
         with:
           egress-policy: audit
 
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: use node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: ${{ matrix.node-version }}
           registry-url: https://registry.npmjs.org/ # Needed for auth
@@ -46,7 +46,7 @@ jobs:
         run: yarn install --immutable
 
       - name: lint
-        run: yarn backstage-cli repo lint --successCache
+        run: yarn backstage-cli repo lint --success-cache
 
       - name: type checking and declarations
         run: yarn tsc:full
@@ -55,7 +55,7 @@ jobs:
         run: yarn lint:type-deps
 
       - name: test
-        run: yarn backstage-cli repo test --maxWorkers=3 --workerIdleMemoryLimit=1300M --successCache
+        run: yarn backstage-cli repo test --maxWorkers=3 --workerIdleMemoryLimit=1300M --success-cache
         env:
           BACKSTAGE_TEST_DISABLE_DOCKER: 1
 

@@ -185,7 +185,7 @@ export function createBaseThemeOptions<PaletteOptions>(
   palette: PaletteOptions;
   typography: BackstageTypography;
   page: PageTheme;
-  getPageTheme: ({ themeId }: PageThemeSelector) => PageTheme;
+  getPageTheme: (input: PageThemeSelector) => PageTheme;
 };
 
 // @public @deprecated
@@ -460,5 +460,6 @@ export interface UnifiedThemeProviderProps {
   children: ReactNode;
   // (undocumented)
   theme: UnifiedTheme;
+  themeName?: string;
 }
 ```

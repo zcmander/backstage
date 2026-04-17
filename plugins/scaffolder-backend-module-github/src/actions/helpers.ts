@@ -15,7 +15,7 @@
  */
 
 import { Config } from '@backstage/config';
-import { assertError, NotFoundError } from '@backstage/errors';
+import { NotFoundError, toError } from '@backstage/errors';
 import { Octokit } from 'octokit';
 
 import {
@@ -79,8 +79,8 @@ export async function createGithubRepoWithCollaboratorsAndTopics(
   subscribe: boolean | undefined,
   logger: LoggerService,
   autoInit?: boolean | undefined,
+  workflowAccess?: 'none' | 'organization' | 'user',
 ) {
-  // eslint-disable-next-line testing-library/no-await-sync-queries
   const user = await client.rest.users.getByUsername({
     username: owner,
   });
@@ -89,63 +89,50 @@ export async function createGithubRepoWithCollaboratorsAndTopics(
     await validateAccessTeam(client, access);
   }
 
+  const baseRepoParams = {
+    allow_auto_merge: allowAutoMerge,
+    allow_merge_commit: allowMergeCommit,
+    allow_rebase_merge: allowRebaseMerge,
+    allow_squash_merge: allowSquashMerge,
+    allow_update_branch: allowUpdateBranch,
+    auto_init: autoInit,
+    delete_branch_on_merge: deleteBranchOnMerge,
+    description,
+    has_issues: hasIssues,
+    has_projects: hasProjects,
+    has_wiki: hasWiki,
+    homepage,
+    name: repo,
+    private: repoVisibility === 'private',
+    squash_merge_commit_message: squashMergeCommitMessage,
+    squash_merge_commit_title: squashMergeCommitTitle,
+  };
   const repoCreationPromise =
     user.data.type === 'Organization'
       ? client.rest.repos.createInOrg({
-          name: repo,
-          org: owner,
-          private: repoVisibility === 'private',
-          // @ts-ignore https://github.com/octokit/types.ts/issues/522
-          visibility: repoVisibility,
-          description: description,
-          delete_branch_on_merge: deleteBranchOnMerge,
-          allow_merge_commit: allowMergeCommit,
-          allow_squash_merge: allowSquashMerge,
-          squash_merge_commit_title: squashMergeCommitTitle,
-          squash_merge_commit_message: squashMergeCommitMessage,
-          allow_rebase_merge: allowRebaseMerge,
-          allow_auto_merge: allowAutoMerge,
-          allow_update_branch: allowUpdateBranch,
-          homepage: homepage,
-          has_projects: hasProjects,
-          has_wiki: hasWiki,
-          has_issues: hasIssues,
-          auto_init: autoInit,
+          ...baseRepoParams,
           // Custom properties only available on org repos
           custom_properties: customProperties,
+          org: owner,
+          // @ts-ignore https://github.com/octokit/types.ts/issues/522
+          visibility: repoVisibility,
         })
-      : client.rest.repos.createForAuthenticatedUser({
-          name: repo,
-          private: repoVisibility === 'private',
-          description: description,
-          delete_branch_on_merge: deleteBranchOnMerge,
-          allow_merge_commit: allowMergeCommit,
-          allow_squash_merge: allowSquashMerge,
-          squash_merge_commit_title: squashMergeCommitTitle,
-          squash_merge_commit_message: squashMergeCommitMessage,
-          allow_rebase_merge: allowRebaseMerge,
-          allow_auto_merge: allowAutoMerge,
-          allow_update_branch: allowUpdateBranch,
-          homepage: homepage,
-          has_projects: hasProjects,
-          has_wiki: hasWiki,
-          has_issues: hasIssues,
-          auto_init: autoInit,
-        });
+      : client.rest.repos.createForAuthenticatedUser(baseRepoParams);
 
   let newRepo;
 
   try {
     newRepo = (await repoCreationPromise).data;
   } catch (e) {
-    assertError(e);
-    if (e.message === 'Resource not accessible by integration') {
+    if (toError(e).message === 'Resource not accessible by integration') {
       logger.warn(
         `The GitHub app or token provided may not have the required permissions to create the ${user.data.type} repository ${owner}/${repo}.`,
       );
     }
     throw new Error(
-      `Failed to create the ${user.data.type} repository ${owner}/${repo}, ${e.message}`,
+      `Failed to create the ${user.data.type} repository ${owner}/${repo}, ${
+        toError(e).message
+      }`,
     );
   }
 
@@ -188,10 +175,11 @@ export async function createGithubRepoWithCollaboratorsAndTopics(
           });
         }
       } catch (e) {
-        assertError(e);
         const name = extractCollaboratorName(collaborator);
         logger.warn(
-          `Skipping ${collaborator.access} access for ${name}, ${e.message}`,
+          `Skipping ${collaborator.access} access for ${name}, ${
+            toError(e).message
+          }`,
         );
       }
     }
@@ -205,8 +193,7 @@ export async function createGithubRepoWithCollaboratorsAndTopics(
         names: topics.map(t => t.toLowerCase()),
       });
     } catch (e) {
-      assertError(e);
-      logger.warn(`Skipping topics ${topics.join(' ')}, ${e.message}`);
+      logger.warn(`Skipping topics ${topics.join(' ')}, ${toError(e).message}`);
     }
   }
 
@@ -272,6 +259,14 @@ export async function createGithubRepoWithCollaboratorsAndTopics(
     });
   }
 
+  if (workflowAccess) {
+    await client.rest.actions.setWorkflowAccessToRepository({
+      access_level: workflowAccess,
+      owner,
+      repo,
+    });
+  }
+
   return newRepo;
 }
 
@@ -282,7 +277,7 @@ export async function initRepoPushAndProtect(
   sourcePath: string | undefined,
   defaultBranch: string,
   protectDefaultBranch: boolean,
-  protectEnforceAdmins: boolean,
+  enforceAdmins: boolean,
   owner: string,
   client: Octokit,
   repo: string,
@@ -356,15 +351,16 @@ export async function initRepoPushAndProtect(
         requireBranchesToBeUpToDate,
         requiredConversationResolution,
         requireLastPushApproval,
-        enforceAdmins: protectEnforceAdmins,
-        dismissStaleReviews: dismissStaleReviews,
-        requiredCommitSigning: requiredCommitSigning,
-        requiredLinearHistory: requiredLinearHistory,
+        enforceAdmins,
+        dismissStaleReviews,
+        requiredCommitSigning,
+        requiredLinearHistory,
       });
     } catch (e) {
-      assertError(e);
       logger.warn(
-        `Skipping: default branch protection on '${repo}', ${e.message}`,
+        `Skipping: default branch protection on '${repo}', ${
+          toError(e).message
+        }`,
       );
     }
   }
@@ -375,8 +371,12 @@ export async function initRepoPushAndProtect(
 function extractCollaboratorName(
   collaborator: { user: string } | { team: string } | { username: string },
 ) {
-  if ('username' in collaborator) return collaborator.username;
-  if ('user' in collaborator) return collaborator.user;
+  if ('username' in collaborator) {
+    return collaborator.username;
+  }
+  if ('user' in collaborator) {
+    return collaborator.user;
+  }
   return collaborator.team;
 }
 

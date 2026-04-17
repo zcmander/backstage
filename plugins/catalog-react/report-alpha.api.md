@@ -4,19 +4,25 @@
 
 ```ts
 import { AnyRouteRefParams } from '@backstage/frontend-plugin-api';
+import { ColumnConfig } from '@backstage/ui';
 import { ComponentType } from 'react';
 import { ConfigurableExtensionDataRef } from '@backstage/frontend-plugin-api';
 import { Entity } from '@backstage/catalog-model';
+import { EntityPresentationApi } from '@backstage/plugin-catalog-react';
 import { ExtensionBlueprint } from '@backstage/frontend-plugin-api';
 import { ExtensionDataRef } from '@backstage/frontend-plugin-api';
 import { ExtensionDefinition } from '@backstage/frontend-plugin-api';
+import { FilterPredicate } from '@backstage/filter-predicates';
 import { IconLinkVerticalProps } from '@backstage/core-components';
-import { JsonValue } from '@backstage/types';
 import { JSX as JSX_2 } from 'react';
+import { JSX as JSX_3 } from 'react/jsx-runtime';
+import { JSXElementConstructor } from 'react';
+import { ReactElement } from 'react';
 import { ReactNode } from 'react';
 import { ResourcePermission } from '@backstage/plugin-permission-common';
 import { RouteRef } from '@backstage/frontend-plugin-api';
-import { TranslationRef } from '@backstage/core-plugin-api/alpha';
+import { TableItem } from '@backstage/ui';
+import { TranslationRef } from '@backstage/frontend-plugin-api';
 
 // @alpha
 export const CatalogFilterBlueprint: ExtensionBlueprint<{
@@ -31,7 +37,7 @@ export const CatalogFilterBlueprint: ExtensionBlueprint<{
   dataRefs: never;
 }>;
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export const catalogReactTranslationRef: TranslationRef<
   'catalog-react',
   {
@@ -68,6 +74,7 @@ export const catalogReactTranslationRef: TranslationRef<
     readonly 'inspectEntityDialog.colocatedPage.alertNoEntity': 'There were no other entities on this location.';
     readonly 'inspectEntityDialog.colocatedPage.locationHeader': 'At the same location';
     readonly 'inspectEntityDialog.colocatedPage.originHeader': 'At the same origin';
+    readonly 'inspectEntityDialog.colocatedPage.entityListAriaLabel': 'Colocated entities';
     readonly 'inspectEntityDialog.jsonPage.title': 'Entity as JSON';
     readonly 'inspectEntityDialog.jsonPage.description': 'This is the raw entity data as received from the catalog, on JSON form.';
     readonly 'inspectEntityDialog.overviewPage.title': 'Overview';
@@ -78,6 +85,9 @@ export const catalogReactTranslationRef: TranslationRef<
     readonly 'inspectEntityDialog.overviewPage.annotations': 'Annotations';
     readonly 'inspectEntityDialog.overviewPage.tags': 'Tags';
     readonly 'inspectEntityDialog.overviewPage.relation.title': 'Relations';
+    readonly 'inspectEntityDialog.overviewPage.copyAriaLabel': 'Copy {{label}}';
+    readonly 'inspectEntityDialog.overviewPage.copiedStatus': 'Copied';
+    readonly 'inspectEntityDialog.overviewPage.helpLinkAriaLabel': 'Learn more';
     readonly 'inspectEntityDialog.yamlPage.title': 'Entity as YAML';
     readonly 'inspectEntityDialog.yamlPage.description': 'This is the raw entity data as received from the catalog, on YAML form.';
     readonly 'inspectEntityDialog.tabNames.json': 'Raw JSON';
@@ -110,13 +120,14 @@ export const catalogReactTranslationRef: TranslationRef<
     readonly 'entityTableColumnTitle.label': 'Label';
     readonly 'entityTableColumnTitle.title': 'Title';
     readonly 'entityTableColumnTitle.description': 'Description';
-    readonly 'entityTableColumnTitle.domain': 'Domain';
     readonly 'entityTableColumnTitle.system': 'System';
-    readonly 'entityTableColumnTitle.tags': 'Tags';
     readonly 'entityTableColumnTitle.namespace': 'Namespace';
-    readonly 'entityTableColumnTitle.lifecycle': 'Lifecycle';
+    readonly 'entityTableColumnTitle.domain': 'Domain';
+    readonly 'entityTableColumnTitle.tags': 'Tags';
     readonly 'entityTableColumnTitle.owner': 'Owner';
+    readonly 'entityTableColumnTitle.lifecycle': 'Lifecycle';
     readonly 'entityTableColumnTitle.targets': 'Targets';
+    readonly 'entityRelationCard.emptyHelpLinkTitle': 'Learn how to change this.';
     readonly 'missingAnnotationEmptyState.title': 'Missing Annotation';
     readonly 'missingAnnotationEmptyState.readMore': 'Read more';
     readonly 'missingAnnotationEmptyState.annotationYaml': 'Add the annotation to your {{entityKind}} YAML as shown in the highlighted example below:';
@@ -130,7 +141,7 @@ export function convertLegacyEntityCardExtension(
   LegacyExtension: ComponentType<{}>,
   overrides?: {
     name?: string;
-    filter?: string | EntityPredicate | ((entity: Entity) => boolean);
+    filter?: string | FilterPredicate | ((entity: Entity) => boolean);
     type?: EntityCardType;
   },
 ): ExtensionDefinition;
@@ -140,30 +151,49 @@ export function convertLegacyEntityContentExtension(
   LegacyExtension: ComponentType<{}>,
   overrides?: {
     name?: string;
-    filter?: string | EntityPredicate | ((entity: Entity) => boolean);
+    filter?: string | FilterPredicate | ((entity: Entity) => boolean);
     path?: string;
     title?: string;
+    icon?: string | ReactElement;
     defaultPath?: [Error: `Use the 'path' override instead`];
     defaultTitle?: [Error: `Use the 'title' override instead`];
   },
 ): ExtensionDefinition;
 
 // @alpha
-export const defaultEntityContentGroups: {
-  overview: string;
-  documentation: string;
-  development: string;
-  deployment: string;
-  operation: string;
-  observability: string;
+export const defaultEntityContentGroupDefinitions: {
+  overview: {
+    title: string;
+  };
+  documentation: {
+    title: string;
+  };
+  development: {
+    title: string;
+  };
+  deployment: {
+    title: string;
+  };
+  operation: {
+    title: string;
+  };
+  observability: {
+    title: string;
+  };
 };
+
+// @alpha @deprecated
+export const defaultEntityContentGroups: Record<
+  keyof typeof defaultEntityContentGroupDefinitions,
+  string
+>;
 
 // @alpha
 export const EntityCardBlueprint: ExtensionBlueprint<{
   kind: 'entity-card';
   params: {
     loader: () => Promise<JSX.Element>;
-    filter?: string | EntityPredicate | ((entity: Entity) => boolean);
+    filter?: string | FilterPredicate | ((entity: Entity) => boolean);
     type?: EntityCardType;
   };
   output:
@@ -191,12 +221,12 @@ export const EntityCardBlueprint: ExtensionBlueprint<{
       >;
   inputs: {};
   config: {
-    filter: EntityPredicate | undefined;
-    type: 'content' | 'summary' | 'info' | undefined;
+    filter: FilterPredicate | undefined;
+    type: 'content' | 'info' | undefined;
   };
   configInput: {
-    filter?: EntityPredicate | undefined;
-    type?: 'content' | 'summary' | 'info' | undefined;
+    filter?: FilterPredicate | undefined;
+    type?: 'content' | 'info' | undefined;
   };
   dataRefs: {
     filterFunction: ConfigurableExtensionDataRef<
@@ -218,7 +248,33 @@ export const EntityCardBlueprint: ExtensionBlueprint<{
 }>;
 
 // @alpha (undocumented)
-export type EntityCardType = 'summary' | 'info' | 'content';
+export type EntityCardType = 'info' | 'content';
+
+// @public (undocumented)
+export interface EntityColumnConfig extends ColumnConfig<EntityRow> {
+  // (undocumented)
+  sortValue?: (entity: EntityRow) => string;
+}
+
+// @alpha (undocumented)
+export const entityColumnPresets: {
+  readonly component: {
+    readonly columns: EntityColumnConfig[];
+    readonly helpLink: 'https://backstage.io/docs/features/software-catalog/descriptor-format#kind-component';
+  };
+  readonly resource: {
+    readonly columns: EntityColumnConfig[];
+    readonly helpLink: 'https://backstage.io/docs/features/software-catalog/descriptor-format#kind-resource';
+  };
+  readonly system: {
+    readonly columns: EntityColumnConfig[];
+    readonly helpLink: 'https://backstage.io/docs/features/software-catalog/descriptor-format#kind-system';
+  };
+  readonly domain: {
+    readonly columns: EntityColumnConfig[];
+    readonly helpLink: 'https://backstage.io/docs/features/software-catalog/descriptor-format#kind-domain';
+  };
+};
 
 // @alpha
 export const EntityContentBlueprint: ExtensionBlueprint<{
@@ -230,13 +286,13 @@ export const EntityContentBlueprint: ExtensionBlueprint<{
     title: string;
     defaultGroup?: [Error: `Use the 'group' param instead`];
     group?: keyof typeof defaultEntityContentGroups | (string & {});
+    icon?: string | ReactElement;
     loader: () => Promise<JSX.Element>;
     routeRef?: RouteRef;
-    filter?: string | EntityPredicate | ((entity: Entity) => boolean);
+    filter?: string | FilterPredicate | ((entity: Entity) => boolean);
   };
   output:
     | ExtensionDataRef<string, 'core.routing.path', {}>
-    | ExtensionDataRef<JSX_2.Element, 'core.reactElement', {}>
     | ExtensionDataRef<
         RouteRef<AnyRouteRefParams>,
         'core.routing.ref',
@@ -244,6 +300,7 @@ export const EntityContentBlueprint: ExtensionBlueprint<{
           optional: true;
         }
       >
+    | ExtensionDataRef<JSX_2.Element, 'core.reactElement', {}>
     | ExtensionDataRef<
         (entity: Entity) => boolean,
         'catalog.entity-filter-function',
@@ -265,19 +322,28 @@ export const EntityContentBlueprint: ExtensionBlueprint<{
         {
           optional: true;
         }
+      >
+    | ExtensionDataRef<
+        string | ReactElement<any, string | JSXElementConstructor<any>>,
+        'catalog.entity-content-icon',
+        {
+          optional: true;
+        }
       >;
   inputs: {};
   config: {
     path: string | undefined;
     title: string | undefined;
-    filter: EntityPredicate | undefined;
+    filter: FilterPredicate | undefined;
     group: string | false | undefined;
+    icon: string | undefined;
   };
   configInput: {
-    filter?: EntityPredicate | undefined;
-    title?: string | undefined;
     path?: string | undefined;
+    title?: string | undefined;
+    filter?: FilterPredicate | undefined;
     group?: string | false | undefined;
+    icon?: string | undefined;
   };
   dataRefs: {
     title: ConfigurableExtensionDataRef<
@@ -300,14 +366,30 @@ export const EntityContentBlueprint: ExtensionBlueprint<{
       'catalog.entity-content-group',
       {}
     >;
+    icon: ConfigurableExtensionDataRef<
+      string | ReactElement<any, string | JSXElementConstructor<any>>,
+      'catalog.entity-content-icon',
+      {}
+    >;
   };
 }>;
+
+// @alpha (undocumented)
+export type EntityContentGroupDefinitions = Record<
+  string,
+  {
+    title: string;
+    icon?: string | ReactElement;
+    aliases?: string[];
+    contentOrder?: 'title' | 'natural';
+  }
+>;
 
 // @alpha (undocumented)
 export const EntityContentLayoutBlueprint: ExtensionBlueprint<{
   kind: 'entity-content-layout';
   params: {
-    filter?: string | EntityPredicate | ((entity: Entity) => boolean);
+    filter?: string | FilterPredicate | ((entity: Entity) => boolean);
     loader: () => Promise<(props: EntityContentLayoutProps) => JSX_2.Element>;
   };
   output:
@@ -333,11 +415,11 @@ export const EntityContentLayoutBlueprint: ExtensionBlueprint<{
   inputs: {};
   config: {
     type: string | undefined;
-    filter: EntityPredicate | undefined;
+    filter: FilterPredicate | undefined;
   };
   configInput: {
-    filter?: EntityPredicate | undefined;
     type?: string | undefined;
+    filter?: FilterPredicate | undefined;
   };
   dataRefs: {
     filterFunction: ConfigurableExtensionDataRef<
@@ -382,10 +464,10 @@ export const EntityContextMenuItemBlueprint: ExtensionBlueprint<{
       >;
   inputs: {};
   config: {
-    filter: EntityPredicate | undefined;
+    filter: FilterPredicate | undefined;
   };
   configInput: {
-    filter?: EntityPredicate | undefined;
+    filter?: FilterPredicate | undefined;
   };
   dataRefs: {
     filterFunction: ConfigurableExtensionDataRef<
@@ -400,15 +482,57 @@ export const EntityContextMenuItemBlueprint: ExtensionBlueprint<{
 export type EntityContextMenuItemParams = {
   useProps: UseProps;
   icon: JSX_2.Element;
-  filter?: EntityPredicate | ((entity: Entity) => boolean);
+  filter?: FilterPredicate | ((entity: Entity) => boolean);
 };
+
+// @public (undocumented)
+export function EntityDataTable(props: EntityDataTableProps): JSX_3.Element;
+
+// @public (undocumented)
+export const entityDataTableColumns: Readonly<{
+  createEntityRefColumn(options: {
+    defaultKind?: string;
+    isRowHeader?: boolean;
+    entityPresentationApi?: EntityPresentationApi;
+  }): EntityColumnConfig;
+  createEntityRelationColumn(options: {
+    id: string;
+    translationKey: 'owner' | 'system' | 'domain';
+    relation: string;
+    defaultKind?: string;
+    filter?: {
+      kind: string;
+    };
+    entityPresentationApi?: EntityPresentationApi;
+  }): EntityColumnConfig;
+  createOwnerColumn(): EntityColumnConfig;
+  createSystemColumn(): EntityColumnConfig;
+  createDomainColumn(): EntityColumnConfig;
+  createMetadataDescriptionColumn(): EntityColumnConfig;
+  createSpecTypeColumn(): EntityColumnConfig;
+  createSpecLifecycleColumn(): EntityColumnConfig;
+}>;
+
+// @public (undocumented)
+export interface EntityDataTableProps {
+  // (undocumented)
+  columnConfig: EntityColumnConfig[];
+  // (undocumented)
+  data: Entity[];
+  // (undocumented)
+  emptyState?: ReactNode;
+  // (undocumented)
+  error?: Error;
+  // (undocumented)
+  loading?: boolean;
+}
 
 // @alpha (undocumented)
 export const EntityHeaderBlueprint: ExtensionBlueprint<{
   kind: 'entity-header';
   params: {
     loader: () => Promise<JSX.Element>;
-    filter?: EntityPredicate | ((entity: Entity) => boolean);
+    filter?: FilterPredicate | ((entity: Entity) => boolean);
   };
   output:
     | ExtensionDataRef<
@@ -434,10 +558,10 @@ export const EntityHeaderBlueprint: ExtensionBlueprint<{
       >;
   inputs: {};
   config: {
-    filter: EntityPredicate | undefined;
+    filter: FilterPredicate | undefined;
   };
   configInput: {
-    filter?: EntityPredicate | undefined;
+    filter?: FilterPredicate | undefined;
   };
   dataRefs: {
     filterFunction: ConfigurableExtensionDataRef<
@@ -458,7 +582,7 @@ export const EntityIconLinkBlueprint: ExtensionBlueprint<{
   kind: 'entity-icon-link';
   params: {
     useProps: () => Omit<IconLinkVerticalProps, 'color'>;
-    filter?: EntityPredicate | ((entity: Entity) => boolean);
+    filter?: FilterPredicate | ((entity: Entity) => boolean);
   };
   output:
     | ExtensionDataRef<
@@ -484,12 +608,12 @@ export const EntityIconLinkBlueprint: ExtensionBlueprint<{
   config: {
     label: string | undefined;
     title: string | undefined;
-    filter: EntityPredicate | undefined;
+    filter: FilterPredicate | undefined;
   };
   configInput: {
-    filter?: EntityPredicate | undefined;
     label?: string | undefined;
     title?: string | undefined;
+    filter?: FilterPredicate | undefined;
   };
   dataRefs: {
     useProps: ConfigurableExtensionDataRef<
@@ -510,54 +634,39 @@ export const EntityIconLinkBlueprint: ExtensionBlueprint<{
   };
 }>;
 
-// @alpha (undocumented)
-export type EntityPredicate =
-  | EntityPredicateExpression
-  | EntityPredicatePrimitive
-  | {
-      $all: EntityPredicate[];
-    }
-  | {
-      $any: EntityPredicate[];
-    }
-  | {
-      $not: EntityPredicate;
-    };
+// @public (undocumented)
+export function EntityRelationCard(
+  props: EntityRelationCardProps,
+): JSX_3.Element;
+
+// @public (undocumented)
+export interface EntityRelationCardProps {
+  // (undocumented)
+  className?: string;
+  // (undocumented)
+  columnConfig: EntityColumnConfig[];
+  // (undocumented)
+  emptyState?: {
+    message: string;
+    helpLink?: string;
+  };
+  // (undocumented)
+  entityKind?: string;
+  // (undocumented)
+  relationType: string;
+  // (undocumented)
+  title: string;
+}
+
+// @public (undocumented)
+export type EntityRow = Entity & TableItem;
 
 // @alpha (undocumented)
-export type EntityPredicateExpression = {
-  [KPath in string]: EntityPredicateValue;
-} & {
-  [KPath in `$${string}`]: never;
-};
-
-// @alpha (undocumented)
-export type EntityPredicatePrimitive = string | number | boolean;
-
-// @alpha
-export function entityPredicateToFilterFunction<T extends JsonValue>(
-  entityPredicate: EntityPredicate,
-): (value: T) => boolean;
-
-// @alpha (undocumented)
-export type EntityPredicateValue =
-  | EntityPredicatePrimitive
-  | {
-      $exists: boolean;
-    }
-  | {
-      $in: EntityPredicatePrimitive[];
-    }
-  | {
-      $contains: EntityPredicateExpression;
-    };
-
-// @alpha (undocumented)
-export const EntityTableColumnTitle: ({
-  translationKey,
-}: EntityTableColumnTitleProps) =>
-  | 'Title'
+export const EntityTableColumnTitle: (
+  input: EntityTableColumnTitleProps,
+) =>
   | 'System'
+  | 'Title'
   | 'Domain'
   | 'Lifecycle'
   | 'Namespace'

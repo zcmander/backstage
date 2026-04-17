@@ -25,28 +25,13 @@ import {
 } from '@backstage/frontend-plugin-api';
 import mapValues from 'lodash/mapValues';
 import { AnyRouteRef, BackstageRouteObject } from './types';
-// eslint-disable-next-line @backstage/no-relative-monorepo-imports
-import { isRouteRef } from '../../../frontend-plugin-api/src/routing/RouteRef';
-// eslint-disable-next-line @backstage/no-relative-monorepo-imports
 import {
-  isSubRouteRef,
-  toInternalSubRouteRef,
-} from '../../../frontend-plugin-api/src/routing/SubRouteRef';
-// eslint-disable-next-line @backstage/no-relative-monorepo-imports
-import {
-  isExternalRouteRef,
-  toInternalExternalRouteRef,
-} from '../../../frontend-plugin-api/src/routing/ExternalRouteRef';
+  OpaqueRouteRef,
+  OpaqueExternalRouteRef,
+  OpaqueSubRouteRef,
+} from '@internal/frontend';
 import { RouteAliasResolver } from './RouteAliasResolver';
-
-// Joins a list of paths together, avoiding trailing and duplicate slashes
-export function joinPaths(...paths: string[]): string {
-  const normalized = paths.join('/').replace(/\/\/+/g, '/');
-  if (normalized !== '/' && normalized.endsWith('/')) {
-    return normalized.slice(0, -1);
-  }
-  return normalized;
-}
+import { joinPaths } from './joinPaths';
 
 /**
  * Resolves the absolute route ref that our target route ref is pointing pointing to, as well
@@ -65,10 +50,10 @@ function resolveTargetRef(
   let ref: AnyRouteRef = targetRouteRef;
   let path = '';
 
-  if (isExternalRouteRef(ref)) {
+  if (OpaqueExternalRouteRef.isType(ref)) {
     let resolvedRoute = routeBindings.get(ref);
     if (!resolvedRoute) {
-      const internal = toInternalExternalRouteRef(ref);
+      const internal = OpaqueExternalRouteRef.toInternal(ref);
       const defaultTarget = internal.getDefaultTarget();
       if (defaultTarget) {
         resolvedRoute = routeRefsById.get(defaultTarget);
@@ -80,13 +65,13 @@ function resolveTargetRef(
     ref = resolvedRoute;
   }
 
-  if (isSubRouteRef(ref)) {
-    const internal = toInternalSubRouteRef(ref);
+  if (OpaqueSubRouteRef.isType(ref)) {
+    const internal = OpaqueSubRouteRef.toInternal(ref);
     path = ref.path;
     ref = internal.getParent();
   }
 
-  if (!isRouteRef(ref)) {
+  if (!OpaqueRouteRef.isType(ref)) {
     throw new Error(
       `Unexpectedly resolved ${targetRouteRef} to a non-route ref ${ref}`,
     );

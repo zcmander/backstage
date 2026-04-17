@@ -265,6 +265,30 @@ export interface Config {
             orgs?: string[];
 
             /**
+             * (Optional) Only for GitHub Enterprise. Whether to exclude suspended users when querying organization users.
+             * Default: `false`.
+             */
+            excludeSuspendedUsers?: boolean;
+
+            /**
+             * (Optional) Configuration for the default user transformer.
+             * These options only apply when using the built-in transformer;
+             * they have no effect if a custom transformer is set via the
+             * extension point.
+             */
+            defaultUserTransformer?: {
+              /**
+               * (Optional) Whether to prefer organization verified domain emails
+               * over the user's public GitHub email when populating user entity profiles.
+               * When enabled, the transformer uses the first verified domain email
+               * (with plus-addressed routing tags stripped) and falls back to the
+               * public email if none are available.
+               * Default: `false`.
+               */
+              useVerifiedEmails?: boolean;
+            };
+
+            /**
              * The refresh schedule to use.
              */
             schedule: SchedulerServiceTaskScheduleDefinitionConfig;
@@ -314,6 +338,30 @@ export interface Config {
              * orgs on the given GitHub instance (support for GitHub App integration only).
              */
             orgs?: string[];
+
+            /**
+             * (Optional) Only for GitHub Enterprise. Whether to exclude suspended users when querying organization users.
+             * Default: `false`.
+             */
+            excludeSuspendedUsers?: boolean;
+
+            /**
+             * (Optional) Configuration for the default user transformer.
+             * These options only apply when using the built-in transformer;
+             * they have no effect if a custom transformer is set via the
+             * extension point.
+             */
+            defaultUserTransformer?: {
+              /**
+               * (Optional) Whether to prefer organization verified domain emails
+               * over the user's public GitHub email when populating user entity profiles.
+               * When enabled, the transformer uses the first verified domain email
+               * (with plus-addressed routing tags stripped) and falls back to the
+               * public email if none are available.
+               * Default: `false`.
+               */
+              useVerifiedEmails?: boolean;
+            };
 
             /**
              * The refresh schedule to use.

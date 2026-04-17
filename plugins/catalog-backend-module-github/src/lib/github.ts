@@ -30,6 +30,7 @@ import { DeferredEntity } from '@backstage/plugin-catalog-node';
 import { Octokit } from '@octokit/core';
 import { LoggerService } from '@backstage/backend-plugin-api';
 import { throttling } from '@octokit/plugin-throttling';
+import { retry } from '@octokit/plugin-retry';
 
 /**
  * Configuration for GitHub GraphQL API page sizes.
@@ -112,11 +113,13 @@ export type GithubOrg = {
  */
 export type GithubUser = {
   login: string;
+  id?: string;
   bio?: string;
   avatarUrl?: string;
   email?: string;
   name?: string;
   organizationVerifiedDomainEmails?: string[];
+  suspendedAt?: string;
 };
 
 /**
@@ -181,6 +184,7 @@ export type Connection<T> = {
  * @param tokenType - The type of GitHub credential
  * @param userTransformer - Optional transformer for user entities
  * @param pageSizes - Optional page sizes configuration
+ * @param excludeSuspendedUsers - Optional flag to exclude suspended users (only for GitHub Enterprise instances)
  */
 export async function getOrganizationUsers(
   client: typeof graphql,
@@ -188,7 +192,9 @@ export async function getOrganizationUsers(
   tokenType: GithubCredentialType,
   userTransformer: UserTransformer = defaultUserTransformer,
   pageSizes: GithubPageSizes = DEFAULT_PAGE_SIZES,
+  excludeSuspendedUsers: boolean = false,
 ): Promise<{ users: Entity[] }> {
+  const suspendedAtField = excludeSuspendedUsers ? 'suspendedAt,' : '';
   const query = `
     query users($org: String!, $email: Boolean!, $cursor: String, $organizationMembersPageSize: Int!) {
       organization(login: $org) {
@@ -198,8 +204,10 @@ export async function getOrganizationUsers(
             avatarUrl,
             bio,
             email @include(if: $email),
+            id,
             login,
             name,
+            ${suspendedAtField}
             organizationVerifiedDomainEmails(login: $org)
           }
         }
@@ -209,18 +217,19 @@ export async function getOrganizationUsers(
   // There is no user -> teams edge, so we leave the memberships empty for
   // now and let the team iteration handle it instead
 
-  const users = await queryWithPaging(
+  const users = await queryWithPaging({
     client,
     query,
     org,
-    r => r.organization?.membersWithRole,
-    userTransformer,
-    {
+    connection: r => r.organization?.membersWithRole,
+    transformer: userTransformer,
+    variables: {
       org,
       email: tokenType === 'token',
       organizationMembersPageSize: pageSizes.organizationMembers,
     },
-  );
+    filter: u => (excludeSuspendedUsers ? !u.suspendedAt : true),
+  });
 
   return { users };
 }
@@ -262,6 +271,7 @@ export async function getOrganizationTeams(
                 avatarUrl,
                 bio,
                 email,
+                id,
                 login,
                 name,
                 organizationVerifiedDomainEmails(login: $org)
@@ -305,18 +315,18 @@ export async function getOrganizationTeams(
     return await teamTransformer(team, ctx);
   };
 
-  const teams = await queryWithPaging(
+  const teams = await queryWithPaging({
     client,
     query,
     org,
-    r => r.organization?.teams,
-    materialisedTeams,
-    {
+    connection: r => r.organization?.teams,
+    transformer: materialisedTeams,
+    variables: {
       org,
       teamsPageSize: pageSizes.teams,
       membersPageSize: pageSizes.teamMembers,
     },
-  );
+  });
 
   return { teams };
 }
@@ -356,6 +366,7 @@ export async function getOrganizationTeamsFromUsers(
             avatarUrl,
             bio,
             email,
+            id,
             login,
             name,
             organizationVerifiedDomainEmails(login: $org)
@@ -399,19 +410,19 @@ export async function getOrganizationTeamsFromUsers(
     return await teamTransformer(team, ctx);
   };
 
-  const teams = await queryWithPaging(
+  const teams = await queryWithPaging({
     client,
     query,
     org,
-    r => r.organization?.teams,
-    materialisedTeams,
-    {
+    connection: r => r.organization?.teams,
+    transformer: materialisedTeams,
+    variables: {
       org,
       userLogins,
       teamsPageSize: pageSizes.teams,
       membersPageSize: pageSizes.teamMembers,
     },
-  );
+  });
 
   return { teams };
 }
@@ -458,14 +469,14 @@ export async function getOrganizationTeamsForUser(
     return await teamTransformer(team, ctx);
   };
 
-  const teams = await queryWithPaging(
+  const teams = await queryWithPaging({
     client,
     query,
     org,
-    r => r.organization?.teams,
-    materialisedTeams,
-    { org, userLogins: [userLogin], teamsPageSize: pageSizes.teams },
-  );
+    connection: r => r.organization?.teams,
+    transformer: materialisedTeams,
+    variables: { org, userLogins: [userLogin], teamsPageSize: pageSizes.teams },
+  });
 
   return { teams };
 }
@@ -486,14 +497,14 @@ export async function getOrganizationsFromUser(
     }
   }`;
 
-  const orgs = await queryWithPaging(
+  const orgs = await queryWithPaging({
     client,
     query,
-    '',
-    r => r.user?.organizations,
-    async o => o.login,
-    { user },
-  );
+    org: '',
+    connection: r => r.user?.organizations,
+    transformer: async o => o.login,
+    variables: { user },
+  });
 
   return { orgs };
 }
@@ -584,6 +595,7 @@ export async function getOrganizationRepositories(
   org: string,
   catalogPath: string,
   pageSizes: GithubPageSizes = DEFAULT_PAGE_SIZES,
+  branch?: string,
 ): Promise<{ repositories: RepositoryResponse[] }> {
   let relativeCatalogPathRef: string;
   // We must strip the leading slash or the query for objects does not work
@@ -592,7 +604,8 @@ export async function getOrganizationRepositories(
   } else {
     relativeCatalogPathRef = catalogPath;
   }
-  const catalogPathRef = `HEAD:${relativeCatalogPathRef}`;
+  const branchRef = branch ?? 'HEAD';
+  const catalogPathRef = `${branchRef}:${relativeCatalogPathRef}`;
   const query = `
     query repositories($org: String!, $catalogPathRef: String!, $cursor: String, $repositoriesPageSize: Int!) {
       repositoryOwner(login: $org) {
@@ -632,14 +645,18 @@ export async function getOrganizationRepositories(
       }
     }`;
 
-  const repositories = await queryWithPaging(
+  const repositories = await queryWithPaging({
     client,
     query,
     org,
-    r => r.repositoryOwner?.repositories,
-    async x => x,
-    { org, catalogPathRef, repositoriesPageSize: pageSizes.repositories },
-  );
+    connection: r => r.repositoryOwner?.repositories,
+    transformer: async x => x,
+    variables: {
+      org,
+      catalogPathRef,
+      repositoriesPageSize: pageSizes.repositories,
+    },
+  });
 
   return { repositories };
 }
@@ -649,6 +666,7 @@ export async function getOrganizationRepository(
   org: string,
   repoName: string,
   catalogPath: string,
+  branch?: string,
 ): Promise<RepositoryResponse | null> {
   let relativeCatalogPathRef: string;
   // We must strip the leading slash or the query for objects does not work
@@ -657,7 +675,8 @@ export async function getOrganizationRepository(
   } else {
     relativeCatalogPathRef = catalogPath;
   }
-  const catalogPathRef = `HEAD:${relativeCatalogPathRef}`;
+  const branchRef = branch ?? 'HEAD';
+  const catalogPathRef = `${branchRef}:${relativeCatalogPathRef}`;
   const query = `
     query repository($org: String!, $repoName: String!, $catalogPathRef: String!) {
       repositoryOwner(login: $org) {
@@ -727,14 +746,14 @@ export async function getTeamMembers(
       }
     }`;
 
-  const members = await queryWithPaging(
+  const members = await queryWithPaging({
     client,
     query,
     org,
-    r => r.organization?.team?.members,
-    async user => user,
-    { org, teamSlug, membersPageSize: pageSizes.teamMembers },
-  );
+    connection: r => r.organization?.team?.members,
+    transformer: async user => user,
+    variables: { org, teamSlug, membersPageSize: pageSizes.teamMembers },
+  });
 
   return { members };
 }
@@ -748,31 +767,36 @@ export async function getTeamMembers(
  *
  * Requires that the query accepts a $cursor variable.
  *
- * @param client - The octokit client
- * @param query - The query to execute
- * @param org - The slug of the org to read
- * @param connection - A function that, given the response, picks out the actual
+ * @param params - Object containing all parameters
+ * @param params.client - The octokit client
+ * @param params.query - The query to execute
+ * @param params.org - The slug of the org to read
+ * @param params.connection - A function that, given the response, picks out the actual
  *                   Connection object that's being iterated
- * @param transformer - A function that, given one of the nodes in the Connection,
+ * @param params.transformer - A function that, given one of the nodes in the Connection,
  *               returns the model mapped form of it
- * @param variables - The variable values that the query needs, minus the cursor
+ * @param params.variables - The variable values that the query needs, minus the cursor
+ * @param params.filter - An optional filter function to filter the nodes before transforming them
  */
 export async function queryWithPaging<
   GraphqlType,
   OutputType,
   Variables extends {},
   Response = QueryResponse,
->(
-  client: typeof graphql,
-  query: string,
-  org: string,
-  connection: (response: Response) => Connection<GraphqlType> | undefined,
+>(params: {
+  client: typeof graphql;
+  query: string;
+  org: string;
+  connection: (response: Response) => Connection<GraphqlType> | undefined;
   transformer: (
     item: GraphqlType,
     ctx: TransformerContext,
-  ) => Promise<OutputType | undefined>,
-  variables: Variables,
-): Promise<OutputType[]> {
+  ) => Promise<OutputType | undefined>;
+  variables: Variables;
+  filter?: (item: GraphqlType) => boolean;
+}): Promise<OutputType[]> {
+  const { client, query, org, connection, transformer, variables, filter } =
+    params;
   const result: OutputType[] = [];
   const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
@@ -789,6 +813,9 @@ export async function queryWithPaging<
     }
 
     for (const node of conn.nodes) {
+      if (filter && !filter(node)) {
+        continue;
+      }
       const transformedNode = await transformer(node, {
         client,
         query,
@@ -848,7 +875,7 @@ export const createReplaceEntitiesOperation =
   };
 
 /**
- * Creates a GraphQL Client with Throttling
+ * Creates a GraphQL Client with Throttling and Retries
  */
 export const createGraphqlClient = (args: {
   headers:
@@ -860,7 +887,7 @@ export const createGraphqlClient = (args: {
   logger: LoggerService;
 }): typeof graphql => {
   const { headers, baseUrl, logger } = args;
-  const ThrottledOctokit = Octokit.plugin(throttling);
+  const ThrottledOctokit = Octokit.plugin(throttling, retry);
   const octokit = new ThrottledOctokit({
     throttle: {
       onRateLimit: (retryAfter, rateLimitData, _, retryCount) => {

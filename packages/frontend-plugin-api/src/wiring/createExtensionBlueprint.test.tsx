@@ -31,6 +31,7 @@ import {
 import { createExtensionInput } from './createExtensionInput';
 import { RouteRef } from '../routing';
 import { createExtension, ExtensionDefinition } from './createExtension';
+import { z as zodV4 } from 'zod/v4';
 import {
   createExtensionDataContainer,
   OpaqueExtensionDefinition,
@@ -92,11 +93,7 @@ describe('createExtensionBlueprint', () => {
   it('should allow creation of extension blueprints with a generator', () => {
     const TestExtensionBlueprint = createExtensionBlueprint({
       kind: 'test-extension',
-      // Try multiple attachment points for this one
-      attachTo: [
-        { id: 'test-1', input: 'default' },
-        { id: 'test-2', input: 'default' },
-      ],
+      attachTo: { id: 'test-1', input: 'default' },
       output: [coreExtensionData.reactElement],
       *factory(params: { text: string }) {
         yield coreExtensionData.reactElement(<h1>{params.text}</h1>);
@@ -112,10 +109,7 @@ describe('createExtensionBlueprint', () => {
 
     expect(extension).toEqual({
       $$type: '@backstage/ExtensionDefinition',
-      attachTo: [
-        { id: 'test-1', input: 'default' },
-        { id: 'test-2', input: 'default' },
-      ],
+      attachTo: { id: 'test-1', input: 'default' },
       configSchema: undefined,
       disabled: false,
       inputs: {},
@@ -255,6 +249,7 @@ describe('createExtensionBlueprint', () => {
       },
     });
 
+    // @ts-expect-error: overlapping config key 'text'
     TestExtensionBlueprint.makeWithOverrides({
       name: 'my-extension',
       params: {
@@ -262,9 +257,8 @@ describe('createExtensionBlueprint', () => {
       },
       config: {
         schema: {
-          // @ts-expect-error
-          text: z => z.number(),
-          something: z => z.string(),
+          text: (z: any) => z.number(),
+          something: (z: any) => z.string(),
         },
       },
     });
@@ -314,6 +308,73 @@ describe('createExtensionBlueprint', () => {
         },
       }).reactElement(),
     );
+  });
+
+  it('should merge configSchema from blueprint with deprecated config.schema from override', () => {
+    const TestBlueprint = createExtensionBlueprint({
+      kind: 'test-extension',
+      attachTo: { id: 'test', input: 'default' },
+      output: [coreExtensionData.reactElement],
+      configSchema: {
+        title: zodV4.string().default('default title'),
+      },
+      factory(_, { config }) {
+        return [
+          coreExtensionData.reactElement(<div>{String(config.title)}</div>),
+        ];
+      },
+    });
+
+    const extension = TestBlueprint.makeWithOverrides({
+      name: 'my-extension',
+      config: {
+        schema: {
+          extra: z => z.string(),
+        },
+      },
+      factory(origFactory, { config }) {
+        const c = config as { title: string; extra: string };
+        expect(c.title).toBe('default title');
+        expect(c.extra).toBe('extra value');
+        return origFactory({});
+      },
+    });
+
+    expect.assertions(2);
+
+    renderInTestApp(
+      createExtensionTester(extension, {
+        config: { extra: 'extra value' },
+      }).reactElement(),
+    );
+  });
+
+  it('should emit a deprecation warning when using config.schema', () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    try {
+      createExtension({
+        name: 'test-deprecated-warning',
+        attachTo: { id: 'test', input: 'default' },
+        output: [coreExtensionData.reactElement],
+        config: {
+          schema: {
+            title: z => z.string().default('hello'),
+          },
+        },
+        factory() {
+          return [coreExtensionData.reactElement(<div />)];
+        },
+      });
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'DEPRECATION WARNING: The `config.schema` option for extension config is deprecated',
+        ),
+      );
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 
   it('should allow getting inputs properly', () => {
@@ -1345,7 +1406,9 @@ describe('createExtensionBlueprint', () => {
     ).toThrow('Refused to override params and factory at the same time');
   });
 
-  describe('with relative attachment points', () => {
+  // Tests for backward compatibility - runtime still supports multiple attachment points
+  // but the TypeScript types no longer allow them
+  describe('with relative attachment points (backward compat)', () => {
     const dataRef = createExtensionDataRef<string>().with({ id: 'test.data' });
 
     it('should create an extension with relative attachment points', () => {
@@ -1356,7 +1419,7 @@ describe('createExtensionBlueprint', () => {
           { relative: { kind: 'page' }, input: 'tabs' },
           { relative: { name: 'index' }, input: 'tabs' },
           { relative: { kind: 'page', name: 'index' }, input: 'tabs' },
-        ],
+        ] as any,
         output: [dataRef],
         factory: () => [dataRef('bar')],
       });
@@ -1371,7 +1434,7 @@ describe('createExtensionBlueprint', () => {
               { relative: { kind: 'page' }, input: 'tabs' },
               { relative: { name: 'index' }, input: 'tabs' },
               { relative: { kind: 'page', name: 'index' }, input: 'tabs' },
-            ],
+            ] as any,
             params: {},
           }),
         ),
@@ -1431,7 +1494,7 @@ describe('createExtensionBlueprint', () => {
           parent2.inputs.tabs,
           parent3.inputs.tabs,
           parent4.inputs.otherTabs,
-        ],
+        ] as any,
         output: [dataRef],
         factory: () => [dataRef('bar')],
       });
@@ -1445,7 +1508,7 @@ describe('createExtensionBlueprint', () => {
               parent2.inputs.tabs,
               parent3.inputs.tabs,
               parent4.inputs.otherTabs,
-            ],
+            ] as any,
             params: {},
           }),
         ),

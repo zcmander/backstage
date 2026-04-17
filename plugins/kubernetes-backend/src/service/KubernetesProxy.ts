@@ -38,15 +38,13 @@ import {
 } from '@backstage/plugin-kubernetes-node';
 
 import type { Request } from 'express';
-import { IncomingHttpHeaders } from 'http';
+import { IncomingHttpHeaders } from 'node:http';
 import {
   DiscoveryService,
   HttpAuthService,
   LoggerService,
   PermissionsService,
 } from '@backstage/backend-plugin-api';
-
-export const APPLICATION_JSON: string = 'application/json';
 
 /**
  * The header that is used to specify the cluster name.

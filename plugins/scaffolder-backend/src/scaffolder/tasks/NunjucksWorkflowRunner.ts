@@ -23,18 +23,21 @@ import {
   TaskStep,
 } from '@backstage/plugin-scaffolder-common';
 import { JsonArray, JsonObject, JsonValue } from '@backstage/types';
-import { metrics } from '@opentelemetry/api';
 import fs from 'fs-extra';
 import { validate as validateJsonSchema } from 'jsonschema';
+import path from 'node:path';
 import nunjucks from 'nunjucks';
-import path from 'path';
 import * as winston from 'winston';
 import {
   SecureTemplater,
   SecureTemplateRenderer,
 } from '../../lib/templating/SecureTemplater';
 import { TemplateActionRegistry } from '../actions/TemplateActionRegistry';
-import { generateExampleOutput, isTruthy } from './helper';
+import {
+  filterConditionalItems,
+  generateExampleOutput,
+  isTruthy,
+} from './helper';
 import { TaskTrackType, WorkflowResponse, WorkflowRunner } from './types';
 
 import type {
@@ -42,7 +45,9 @@ import type {
   LoggerService,
   PermissionsService,
 } from '@backstage/backend-plugin-api';
+import type { MetricsService } from '@backstage/backend-plugin-api/alpha';
 import { UserEntity } from '@backstage/catalog-model';
+import { Config } from '@backstage/config';
 import {
   AuthorizeResult,
   PolicyDecision,
@@ -51,6 +56,7 @@ import { createConditionAuthorizer } from '@backstage/plugin-permission-node';
 import { actionExecutePermission } from '@backstage/plugin-scaffolder-common/alpha';
 import {
   TaskContext,
+  TaskSecrets,
   TemplateAction,
   TemplateFilter,
   TemplateGlobal,
@@ -59,11 +65,7 @@ import {
   CheckpointContext,
   CheckpointState,
 } from '@backstage/plugin-scaffolder-node/alpha';
-import { createDefaultFilters } from '../../lib/templating/filters/createDefaultFilters';
-import { scaffolderActionRules } from '../../service/rules';
-import { createCounterMetric, createHistogramMetric } from '../../util/metrics';
-import { convertFiltersToRecord } from '../../util/templating';
-import { BackstageLoggerTransport, WinstonLogger } from './logger';
+import { resolveDefaultEnvironment } from '../../lib/defaultEnvironment';
 
 type NunjucksWorkflowRunnerOptions = {
   workingDirectory: string;
@@ -74,10 +76,13 @@ type NunjucksWorkflowRunnerOptions = {
   additionalTemplateFilters?: Record<string, TemplateFilter>;
   additionalTemplateGlobals?: Record<string, TemplateGlobal>;
   permissions?: PermissionsService;
+  config?: Config;
+  metrics: MetricsService;
 };
 
 type TemplateContext = {
   parameters: JsonObject;
+  environment: JsonObject;
   EXPERIMENTAL_recovery?: TaskRecovery;
   steps: {
     [stepName: string]: { output: { [outputName: string]: JsonValue } };
@@ -103,10 +108,12 @@ const createStepLogger = ({
   task,
   step,
   rootLogger,
+  redactions,
 }: {
   task: TaskContext;
   step: TaskStep;
   rootLogger: LoggerService;
+  redactions?: Record<string, string>;
 }) => {
   const taskLogger = WinstonLogger.create({
     level: process.env.LOG_LEVEL || 'info',
@@ -117,10 +124,57 @@ const createStepLogger = ({
     transports: [new BackstageLoggerTransport(rootLogger, task, step.id)],
   });
 
-  taskLogger.addRedactions(Object.values(task.secrets ?? {}));
+  taskLogger.addRedactions(Object.values(redactions ?? {}));
 
   return { taskLogger };
 };
+
+/**
+ * Recursively compares two rendered objects and returns string values from
+ * `withSecrets` that differ from their counterpart in `withoutSecrets`.
+ * These are values that were influenced by secret interpolation and should
+ * be added as log redactions.
+ */
+function collectSecretRedactions(
+  withSecrets: unknown,
+  withoutSecrets: unknown,
+): string[] {
+  if (typeof withSecrets === 'string') {
+    return withSecrets !== withoutSecrets ? [withSecrets] : [];
+  }
+  if (Array.isArray(withSecrets)) {
+    const other = Array.isArray(withoutSecrets) ? withoutSecrets : [];
+    return withSecrets.flatMap((val, i) =>
+      collectSecretRedactions(val, other[i]),
+    );
+  }
+  if (withSecrets && typeof withSecrets === 'object') {
+    const other =
+      withoutSecrets && typeof withoutSecrets === 'object'
+        ? (withoutSecrets as Record<string, unknown>)
+        : {};
+    return Object.entries(withSecrets as Record<string, unknown>).flatMap(
+      ([key, val]) => collectSecretRedactions(val, other[key]),
+    );
+  }
+  return [];
+}
+
+/**
+ * Extracts all string values from a nested object structure.
+ * Used as a fallback when the comparison render fails.
+ */
+function extractStringValues(obj: unknown): string[] {
+  if (typeof obj === 'string') return [obj];
+  if (Array.isArray(obj)) return obj.flatMap(extractStringValues);
+  if (obj && typeof obj === 'object') {
+    return Object.entries(obj).flatMap(([key, val]) => [
+      key,
+      ...extractStringValues(val),
+    ]);
+  }
+  return [];
+}
 
 const isActionAuthorized = createConditionAuthorizer(
   Object.values(scaffolderActionRules),
@@ -129,6 +183,12 @@ const isActionAuthorized = createConditionAuthorizer(
 export class NunjucksWorkflowRunner implements WorkflowRunner {
   private readonly defaultTemplateFilters: Record<string, TemplateFilter>;
   private readonly options: NunjucksWorkflowRunnerOptions;
+  private environment: {
+    parameters: JsonObject;
+    secrets?: Record<string, string>;
+  } = { parameters: {}, secrets: {} };
+
+  private readonly tracker: ReturnType<typeof scaffoldingTracker>;
 
   constructor(options: NunjucksWorkflowRunnerOptions) {
     this.options = options;
@@ -137,9 +197,26 @@ export class NunjucksWorkflowRunner implements WorkflowRunner {
         integrations: this.options.integrations,
       }),
     );
+    this.tracker = scaffoldingTracker(options.metrics);
   }
 
-  private readonly tracker = scaffoldingTracker();
+  async getEnvironmentConfig(): Promise<{
+    parameters: JsonObject;
+    secrets?: TaskSecrets;
+  }> {
+    if (this.options.config) {
+      const defaultEnvironment = resolveDefaultEnvironment(this.options.config);
+      return {
+        parameters: defaultEnvironment.parameters,
+        secrets: defaultEnvironment.secrets,
+      };
+    }
+
+    return {
+      parameters: {},
+      secrets: {},
+    };
+  }
 
   private isSingleTemplateString(input: string) {
     const { parser, nodes } = nunjucks as unknown as {
@@ -241,6 +318,7 @@ export class NunjucksWorkflowRunner implements WorkflowRunner {
       if (
         step.if === false ||
         (typeof step.if === 'string' &&
+          step.each === undefined &&
           !isTruthy(this.render(step.if, context, renderTemplate)))
       ) {
         await stepTrack.skipFalsy();
@@ -254,11 +332,22 @@ export class NunjucksWorkflowRunner implements WorkflowRunner {
         task,
         step,
         rootLogger: this.options.logger,
+        redactions: {
+          ...task.secrets,
+          ...this.environment?.secrets,
+        },
       });
 
       if (task.isDryRun) {
         const redactedSecrets = Object.fromEntries(
           Object.entries(task.secrets ?? {}).map(secret => [secret[0], '***']),
+        );
+
+        const redactedEnvironmentSecrets = Object.fromEntries(
+          Object.entries(this.environment?.secrets ?? {}).map(secret => [
+            secret[0],
+            '***',
+          ]),
         );
         const debugInput =
           (step.input &&
@@ -266,14 +355,17 @@ export class NunjucksWorkflowRunner implements WorkflowRunner {
               step.input,
               {
                 ...context,
+                environment: {
+                  parameters: this.environment?.parameters || {},
+                  secrets: redactedEnvironmentSecrets,
+                },
                 secrets: redactedSecrets,
               },
               renderTemplate,
             )) ??
           {};
         taskLogger.info(
-          `Running ${
-            action.id
+          `Running ${action.id
           } in dry-run mode with inputs (secrets redacted): ${JSON.stringify(
             debugInput,
             undefined,
@@ -296,13 +388,18 @@ export class NunjucksWorkflowRunner implements WorkflowRunner {
         }
       }
 
+      const preIterationContext = {
+        ...context,
+        environment: {
+          parameters: this.environment?.parameters ?? {},
+          secrets: task.isDryRun ? {} : this.environment?.secrets ?? {},
+        },
+        secrets: task.isDryRun ? {} : task.secrets ?? {},
+      };
+
       const resolvedEach =
         step.each &&
-        this.render(
-          step.each,
-          { ...context, secrets: task.secrets ?? {} },
-          renderTemplate,
-        );
+        this.render(step.each, preIterationContext, renderTemplate);
 
       if (step.each && !resolvedEach) {
         throw new InputError(
@@ -313,24 +410,34 @@ export class NunjucksWorkflowRunner implements WorkflowRunner {
       const iterations = (
         resolvedEach
           ? Object.entries(resolvedEach).map(([key, value]) => ({
-              each: { key, value },
-            }))
+            each: { key, value },
+          }))
           : [{}]
-      ).map(i => ({
-        ...i,
-        // Secrets are only passed when templating the input to actions for security reasons
-        input: step.input
-          ? this.render(
-              step.input,
-              { ...context, secrets: task.secrets ?? {}, ...i },
-              renderTemplate,
-            )
-          : {},
-      }));
+      ).map(i => {
+        const fullContext = { ...preIterationContext, ...i };
+        // Evaluate if condition once per iteration, only when using 'each'
+        const shouldRun =
+          !('each' in i) ||
+          !step.if ||
+          isTruthy(this.render(step.if, fullContext, renderTemplate));
+
+        return {
+          ...i,
+          shouldRun,
+          // Secrets are only passed when templating the input to actions for security reasons
+          input: step.input
+            ? this.render(step.input, fullContext, renderTemplate)
+            : {},
+        };
+      });
       for (const iteration of iterations) {
-        const actionId = `${action.id}${
-          iteration.each ? `[${iteration.each.key}]` : ''
-        }`;
+        if (!iteration.shouldRun) {
+          // No need to check schema or authorization for iterations that will not run
+          continue;
+        }
+
+        const actionId = `${action.id}${iteration.each ? `[${iteration.each.key}]` : ''
+          }`;
 
         if (action.schema?.input) {
           const validateResult = validateJsonSchema(
@@ -365,13 +472,56 @@ export class NunjucksWorkflowRunner implements WorkflowRunner {
 
       for (const iteration of iterations) {
         if (iteration.each) {
+          if (!iteration.shouldRun) {
+            taskLogger.info(
+              `Skipping step each: ${JSON.stringify(
+                iteration.each,
+                (k, v) => (k ? String(v) : v),
+                0,
+              )}`,
+            );
+            continue;
+          }
           taskLogger.info(
             `Running step each: ${JSON.stringify(
               iteration.each,
-              (k, v) => (k ? v.toString() : v),
+              (k, v) => (k ? String(v) : v),
               0,
             )}`,
           );
+        }
+
+        // Redact any rendered values that were influenced by secrets.
+        // Re-render the input without secrets and diff against the real render
+        // to find values that changed due to secret interpolation.
+        if (step.input) {
+          const hasSecrets =
+            Object.keys(task.secrets ?? {}).length > 0 ||
+            Object.keys(this.environment?.secrets ?? {}).length > 0;
+
+          if (hasSecrets) {
+            try {
+              const contextNoSecrets = {
+                ...preIterationContext,
+                ...(iteration.each ? { each: iteration.each } : {}),
+                secrets: {},
+                environment: {
+                  ...preIterationContext.environment,
+                  secrets: {},
+                },
+              };
+              const inputWithoutSecrets = this.render(
+                step.input,
+                contextNoSecrets,
+                renderTemplate,
+              );
+              taskLogger.addRedactions(
+                collectSecretRedactions(iteration.input, inputWithoutSecrets),
+              );
+            } catch {
+              taskLogger.addRedactions(extractStringValues(iteration.input));
+            }
+          }
         }
 
         await action.handler({
@@ -485,6 +635,8 @@ export class NunjucksWorkflowRunner implements WorkflowRunner {
     const { additionalTemplateFilters, additionalTemplateGlobals } =
       this.options;
 
+    this.environment = await this.getEnvironmentConfig();
+
     const { render: renderTemplate, dispose } =
       await SecureTemplater.loadRenderer({
         templateFilters: {
@@ -502,6 +654,10 @@ export class NunjucksWorkflowRunner implements WorkflowRunner {
 
       const context: TemplateContext = {
         parameters: task.spec.parameters,
+        environment: {
+          parameters: this.environment?.parameters || {},
+          secrets: {},
+        },
         steps: {},
         user: task.spec.user,
         context: {
@@ -514,9 +670,9 @@ export class NunjucksWorkflowRunner implements WorkflowRunner {
       const [decision]: PolicyDecision[] =
         this.options.permissions && task.spec.steps.length
           ? await this.options.permissions.authorizeConditional(
-              [{ permission: actionExecutePermission }],
-              { credentials: await task.getInitiatorCredentials() },
-            )
+            [{ permission: actionExecutePermission }],
+            { credentials: await task.getInitiatorCredentials() },
+          )
           : [{ result: AuthorizeResult.ALLOW }];
 
       for (const step of task.spec.steps) {
@@ -532,6 +688,15 @@ export class NunjucksWorkflowRunner implements WorkflowRunner {
       }
 
       const output = this.render(task.spec.output, context, renderTemplate);
+
+      // Filter output links and text items based on their `if` condition
+      if (Array.isArray(output?.links)) {
+        output.links = filterConditionalItems(output.links);
+      }
+      if (Array.isArray(output?.text)) {
+        output.text = filterConditionalItems(output.text);
+      }
+
       await taskTrack.markSuccessful();
       await task.cleanWorkspace?.();
 
@@ -549,7 +714,7 @@ export class NunjucksWorkflowRunner implements WorkflowRunner {
   }
 }
 
-function scaffoldingTracker() {
+function scaffoldingTracker(metrics: MetricsService) {
   // prom-client metrics are deprecated in favour of OpenTelemetry metrics.
   const promTaskCount = createCounterMetric({
     name: 'scaffolder_task_count',
@@ -572,23 +737,22 @@ function scaffoldingTracker() {
     labelNames: ['template', 'step', 'result'],
   });
 
-  const meter = metrics.getMeter('default');
-  const taskCount = meter.createCounter('scaffolder.task.count', {
-    description: 'Count of task runs',
+  const taskCount = metrics.createCounter('scaffolder.task.count', {
+    description: 'Total number of scaffolder tasks executed',
   });
 
-  const taskDuration = meter.createHistogram('scaffolder.task.duration', {
-    description: 'Duration of a task run',
-    unit: 'seconds',
+  const taskDuration = metrics.createHistogram('scaffolder.task.duration', {
+    description: 'Time taken to complete a scaffolder task end-to-end',
+    unit: 's',
   });
 
-  const stepCount = meter.createCounter('scaffolder.step.count', {
-    description: 'Count of step runs',
+  const stepCount = metrics.createCounter('scaffolder.step.count', {
+    description: 'Total number of individual scaffolder action steps executed',
   });
 
-  const stepDuration = meter.createHistogram('scaffolder.step.duration', {
-    description: 'Duration of a step runs',
-    unit: 'seconds',
+  const stepDuration = metrics.createHistogram('scaffolder.step.duration', {
+    description: 'Time taken to complete a single scaffolder action step',
+    unit: 's',
   });
 
   async function taskStart(task: TaskContext) {

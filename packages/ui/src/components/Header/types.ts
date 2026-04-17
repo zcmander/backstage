@@ -14,51 +14,89 @@
  * limitations under the License.
  */
 
-import { TabsProps } from 'react-aria-components';
-import { TabMatchStrategy } from '../Tabs';
-
 /**
- * Props for the main Header component.
+ * Represents a single navigation tab in the header.
  *
  * @public
  */
-export interface HeaderProps {
-  icon?: React.ReactNode;
-  title?: string;
-  titleLink?: string;
-  customActions?: React.ReactNode;
-  tabs?: HeaderTab[];
-  onTabSelectionChange?: TabsProps['onSelectionChange'];
-  className?: string;
-}
-
-/**
- * Represents a tab item in the header navigation.
- *
- * @public
- */
-export interface HeaderTab {
+export interface HeaderNavTab {
   id: string;
   label: string;
   href: string;
-  /**
-   * Strategy for matching the current route to determine if this tab should be active.
-   * - 'exact': Tab href must exactly match the current pathname (default)
-   * - 'prefix': Tab is active if current pathname starts with tab href
-   */
-  matchStrategy?: TabMatchStrategy;
+}
+
+/** @internal */
+export interface HeaderNavLinkProps extends HeaderNavTab {
+  noTrack?: boolean;
+  active: boolean;
+  registerRef: (key: string, el: HTMLElement | null) => void;
+  onHighlight: (key: string | null) => void;
+  className?: string;
 }
 
 /**
- * Props for the HeaderToolbar component.
+ * Represents a group of navigation tabs rendered as a dropdown menu.
  *
- * @internal
+ * @public
  */
-export interface HeaderToolbarProps {
-  icon?: HeaderProps['icon'];
-  title?: HeaderProps['title'];
-  titleLink?: HeaderProps['titleLink'];
-  customActions?: HeaderProps['customActions'];
-  hasTabs?: boolean;
+export interface HeaderNavTabGroup {
+  id: string;
+  label: string;
+  items: HeaderNavTab[];
+}
+
+/**
+ * A navigation tab item — either a flat link or a dropdown group.
+ *
+ * @public
+ */
+export type HeaderNavTabItem = HeaderNavTab | HeaderNavTabGroup;
+
+/**
+ * Own props for the Header component.
+ *
+ * @public
+ */
+export interface HeaderOwnProps {
+  title?: string;
+  customActions?: React.ReactNode;
+  tabs?: HeaderNavTabItem[];
+  activeTabId?: string | null;
+  breadcrumbs?: HeaderBreadcrumb[];
   className?: string;
 }
+
+/**
+ * Props for the Header component.
+ *
+ * @public
+ */
+export interface HeaderProps extends HeaderOwnProps {}
+
+/**
+ * Represents a breadcrumb item in the header.
+ *
+ * @public
+ */
+export interface HeaderBreadcrumb {
+  label: string;
+  href: string;
+}
+
+/**
+ * @public
+ * @deprecated Use {@link HeaderOwnProps} instead.
+ */
+export type HeaderPageOwnProps = HeaderOwnProps;
+
+/**
+ * @public
+ * @deprecated Use {@link HeaderProps} instead.
+ */
+export type HeaderPageProps = HeaderProps;
+
+/**
+ * @public
+ * @deprecated Use {@link HeaderBreadcrumb} instead.
+ */
+export type HeaderPageBreadcrumb = HeaderBreadcrumb;

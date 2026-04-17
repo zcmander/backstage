@@ -15,72 +15,63 @@
  */
 
 import type { HeaderProps } from './types';
-import { HeaderToolbar } from './HeaderToolbar';
-import { Tabs, TabList, Tab } from '../Tabs';
-import { useStyles } from '../../hooks/useStyles';
+import { Text } from '../Text';
+import { RiArrowRightSLine } from '@remixicon/react';
+import { HeaderNav } from './HeaderNav';
+import { useDefinition } from '../../hooks/useDefinition';
 import { HeaderDefinition } from './definition';
-import { type NavigateOptions } from 'react-router-dom';
-import styles from './Header.module.css';
-import clsx from 'clsx';
-
-declare module 'react-aria-components' {
-  interface RouterConfig {
-    routerOptions: NavigateOptions;
-  }
-}
+import { Container } from '../Container';
+import { Link } from '../Link';
+import { Fragment } from 'react/jsx-runtime';
 
 /**
- * A component that renders a toolbar.
+ * A secondary header with title, breadcrumbs, tabs, and actions.
  *
  * @public
  */
 export const Header = (props: HeaderProps) => {
-  const { classNames, cleanedProps } = useStyles(HeaderDefinition, props);
-  const {
-    className,
-    tabs,
-    icon,
-    title,
-    titleLink,
-    customActions,
-    onTabSelectionChange,
-  } = cleanedProps;
-
-  const hasTabs = tabs && tabs.length > 0;
+  const { ownProps } = useDefinition(HeaderDefinition, props);
+  const { classes, title, tabs, activeTabId, customActions, breadcrumbs } =
+    ownProps;
 
   return (
-    <>
-      <HeaderToolbar
-        icon={icon}
-        title={title}
-        titleLink={titleLink}
-        customActions={customActions}
-        hasTabs={hasTabs}
-      />
-      {tabs && (
-        <div
-          className={clsx(
-            classNames.tabsWrapper,
-            styles[classNames.tabsWrapper],
-            className,
-          )}
-        >
-          <Tabs onSelectionChange={onTabSelectionChange}>
-            <TabList>
-              {tabs?.map(tab => (
-                <Tab
-                  key={tab.id}
-                  id={tab.id}
-                  href={tab.href}
-                  matchStrategy={tab.matchStrategy}
+    <Container className={classes.root}>
+      <div className={classes.content}>
+        <div className={classes.breadcrumbs}>
+          {breadcrumbs &&
+            breadcrumbs.map(breadcrumb => (
+              <Fragment key={breadcrumb.label}>
+                <Link
+                  href={breadcrumb.href}
+                  variant="title-small"
+                  weight="bold"
+                  color="secondary"
+                  truncate
+                  style={{ maxWidth: '240px' }}
+                  standalone
                 >
-                  {tab.label}
-                </Tab>
-              ))}
-            </TabList>
-          </Tabs>
+                  {breadcrumb.label}
+                </Link>
+                <RiArrowRightSLine size={16} color="var(--bui-fg-secondary)" />
+              </Fragment>
+            ))}
+          <Text variant="title-small" weight="bold" as="h2">
+            {title}
+          </Text>
+        </div>
+        <div className={classes.controls}>{customActions}</div>
+      </div>
+      {tabs && (
+        <div className={classes.tabsWrapper}>
+          <HeaderNav tabs={tabs} activeTabId={activeTabId} />
         </div>
       )}
-    </>
+    </Container>
   );
 };
+
+/**
+ * @public
+ * @deprecated Use {@link Header} instead.
+ */
+export const HeaderPage = Header;

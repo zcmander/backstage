@@ -48,28 +48,64 @@ add the `repoVisibility` key within a software template:
     repoVisibility: public # or 'internal' or 'private'
 ```
 
-## Disabling Docker in Docker situation (Optional)
+### Default Environment
 
-Software templates use the `fetch:template` action by default, which requires no
-external dependencies and offers a
-[Cookiecutter-compatible mode](https://backstage.io/docs/features/software-templates/builtin-actions#using-cookiecuttercompat-mode).
-There is also a `fetch:cookiecutter` action, which uses
-[Cookiecutter](https://github.com/cookiecutter/cookiecutter) directly for
-templating. By default, the `fetch:cookiecutter` action will use the
-[scaffolder-backend/Cookiecutter](https://github.com/backstage/backstage/blob/master/plugins/scaffolder-backend/scripts/Cookiecutter.dockerfile)
-docker image.
+The scaffolder supports a `defaultEnvironment` configuration that provides default parameters and secrets to all templates. This reduces template complexity and improves security by centralizing common values.
 
-If you are running Backstage from a Docker container and you want to avoid
-calling a container inside a container, you can set up Cookiecutter in your own
-image, this will use the local installation instead.
-
-You can do so by including the following lines in the last step of your
-`Dockerfile`:
-
-```Dockerfile
-RUN apt-get update && apt-get install -y python3 python3-pip
-RUN pip3 install cookiecutter
+```yaml
+scaffolder:
+  defaultEnvironment:
+    parameters:
+      region: eu-west-1
+      organizationName: acme-corp
+      defaultRegistry: registry.acme-corp.com
+    secrets:
+      AWS_ACCESS_KEY: ${AWS_ACCESS_KEY}
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+      DOCKER_REGISTRY_TOKEN: ${DOCKER_REGISTRY_TOKEN}
 ```
+
+#### Default parameters
+
+Default parameters are accessible via `${{ environment.parameters.* }}` in templates. Default parameters are isolated in their own context to avoid naming conflicts.
+
+```yaml
+ parameters:
+    - title: Fill in some steps
+      required:
+        - organizationName
+      properties:
+        organizationName:
+          title: organizationName
+          type: string
+          description: Unique name of the organization
+          ui:autofocus: true
+          ui:options:
+            rows: 5
+
+  steps:
+    - id: deploy
+      name: Deploy Application
+      action: aws:deploy
+      input:
+        region: ${{ environment.parameters.region }}  # Resolves to defaultEnvironment.parameters.region
+        organization: ${{ parameters.organizationName }}  # Resolves to frontend input value
+        otherOrganization: ${{ environment.parameters.organizationName }}  # Resolves to defaultEnvironment.parameters.organizationName
+```
+
+#### Secrets
+
+Default secrets are resolved from environment variables and accessible via `${{ environment.secrets.* }}` in template actions. Secrets are only available during action execution, not in frontend forms.
+
+```yaml
+- id: deploy
+  name: Deploy with credentials
+  action: aws:deploy
+  input:
+    accessKey: ${{ environment.secrets.AWS_ACCESS_KEY }} # Resolves to defaultEnvironment.secrets.AWS_ACCESS_KEY
+```
+
+**Security Note:** Secrets are automatically masked in logs and are only available to backend actions, never exposed to the frontend.
 
 ## Customizing the ScaffolderPage with Grouping and Filtering
 
