@@ -36,9 +36,21 @@ describe('SecureTemplater', () => {
         test: 'my-value',
       }),
     ).toThrow(/expected name as lookup value, got ./);
+
     dispose();
+
+    expect(() => render('${{ test }}', { test: 'my-value' })).toThrow(
+      /disposed/i,
+    );
   });
 
+  it('should allow dispose to be called more than once', async () => {
+    const { dispose } = await SecureTemplater.loadRenderer();
+
+    dispose();
+
+    expect(() => dispose()).not.toThrow();
+  });
   it('should make cookiecutter compatibility available when requested', async () => {
     const { render: renderWith, dispose: disposeWith } =
       await SecureTemplater.loadRenderer({
