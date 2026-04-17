@@ -202,8 +202,10 @@ export class SecureTemplater {
     await nunjucksScript.run(context);
 
     const render: SecureTemplateRenderer = (template, values) => {
-      if (!context) {
-        throw new Error('SecureTemplater has not been initialized');
+      if (!context || isolate.isDisposed) {
+        throw new Error(
+          'SecureTemplater has not been initialized or has been disposed',
+        );
       }
 
       contextGlobal.setSync('templateStr', String(template));
@@ -219,8 +221,10 @@ export class SecureTemplater {
     return {
       render,
       dispose: () => {
-        context.release();
-        isolate.dispose();
+        if (context && !isolate.isDisposed) {
+          context.release();
+          isolate.dispose();
+        }
       },
     };
   }
