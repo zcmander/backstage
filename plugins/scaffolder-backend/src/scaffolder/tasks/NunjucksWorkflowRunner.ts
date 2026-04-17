@@ -66,6 +66,11 @@ import {
   CheckpointState,
 } from '@backstage/plugin-scaffolder-node/alpha';
 import { resolveDefaultEnvironment } from '../../lib/defaultEnvironment';
+import { createDefaultFilters } from '../../lib/templating/filters/createDefaultFilters';
+import { scaffolderActionRules } from '../../service/rules';
+import { createCounterMetric, createHistogramMetric } from '../../util/metrics';
+import { convertFiltersToRecord } from '../../util/templating';
+import { BackstageLoggerTransport, WinstonLogger } from './logger';
 
 type NunjucksWorkflowRunnerOptions = {
   workingDirectory: string;
@@ -365,7 +370,9 @@ export class NunjucksWorkflowRunner implements WorkflowRunner {
             )) ??
           {};
         taskLogger.info(
-          `Running ${action.id} in dry-run mode with inputs (secrets redacted): ${JSON.stringify(
+          `Running ${
+            action.id
+          } in dry-run mode with inputs (secrets redacted): ${JSON.stringify(
             debugInput,
             undefined,
             2,
@@ -409,8 +416,8 @@ export class NunjucksWorkflowRunner implements WorkflowRunner {
       const iterations = (
         resolvedEach
           ? Object.entries(resolvedEach).map(([key, value]) => ({
-            each: { key, value },
-          }))
+              each: { key, value },
+            }))
           : [{}]
       ).map(i => {
         const fullContext = { ...preIterationContext, ...i };
@@ -435,7 +442,9 @@ export class NunjucksWorkflowRunner implements WorkflowRunner {
           continue;
         }
 
-        const actionId = `${action.id}${iteration.each ? `[${iteration.each.key}]` : ''}`;
+        const actionId = `${action.id}${
+          iteration.each ? `[${iteration.each.key}]` : ''
+        }`;
 
         if (action.schema?.input) {
           const validateResult = validateJsonSchema(
@@ -668,9 +677,9 @@ export class NunjucksWorkflowRunner implements WorkflowRunner {
       const [decision]: PolicyDecision[] =
         this.options.permissions && task.spec.steps.length
           ? await this.options.permissions.authorizeConditional(
-            [{ permission: actionExecutePermission }],
-            { credentials: await task.getInitiatorCredentials() },
-          )
+              [{ permission: actionExecutePermission }],
+              { credentials: await task.getInitiatorCredentials() },
+            )
           : [{ result: AuthorizeResult.ALLOW }];
 
       for (const step of task.spec.steps) {
