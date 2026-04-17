@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import { Isolate } from 'isolated-vm';
 import { resolvePackagePath } from '@backstage/backend-plugin-api';
 import {
   TemplateFilter,
   TemplateGlobal,
 } from '@backstage/plugin-scaffolder-node';
-import fs from 'fs-extra';
 import { JsonValue } from '@backstage/types';
+import fs from 'fs-extra';
+import { Isolate } from 'isolated-vm';
 import { getMajorNodeVersion, isNoNodeSnapshotOptionProvided } from './helpers';
 
 // language=JavaScript
@@ -215,6 +215,13 @@ export class SecureTemplater {
 
       return context.evalSync(`render(templateStr, templateValues)`);
     };
-    return render;
+
+    return {
+      render,
+      dispose: () => {
+        context.release();
+        isolate.dispose();
+      },
+    };
   }
 }

@@ -55,15 +55,15 @@ import {
   TemplateFilter,
   TemplateGlobal,
 } from '@backstage/plugin-scaffolder-node';
-import { createDefaultFilters } from '../../lib/templating/filters/createDefaultFilters';
-import { scaffolderActionRules } from '../../service/rules';
-import { createCounterMetric, createHistogramMetric } from '../../util/metrics';
-import { BackstageLoggerTransport, WinstonLogger } from './logger';
-import { convertFiltersToRecord } from '../../util/templating';
 import {
   CheckpointContext,
   CheckpointState,
 } from '@backstage/plugin-scaffolder-node/alpha';
+import { createDefaultFilters } from '../../lib/templating/filters/createDefaultFilters';
+import { scaffolderActionRules } from '../../service/rules';
+import { createCounterMetric, createHistogramMetric } from '../../util/metrics';
+import { convertFiltersToRecord } from '../../util/templating';
+import { BackstageLoggerTransport, WinstonLogger } from './logger';
 
 type NunjucksWorkflowRunnerOptions = {
   workingDirectory: string;
@@ -485,13 +485,14 @@ export class NunjucksWorkflowRunner implements WorkflowRunner {
     const { additionalTemplateFilters, additionalTemplateGlobals } =
       this.options;
 
-    const renderTemplate = await SecureTemplater.loadRenderer({
-      templateFilters: {
-        ...this.defaultTemplateFilters,
-        ...additionalTemplateFilters,
-      },
-      templateGlobals: additionalTemplateGlobals,
-    });
+    const { render: renderTemplate, dispose } =
+      await SecureTemplater.loadRenderer({
+        templateFilters: {
+          ...this.defaultTemplateFilters,
+          ...additionalTemplateFilters,
+        },
+        templateGlobals: additionalTemplateGlobals,
+      });
 
     try {
       await task.rehydrateWorkspace?.({ taskId, targetPath: workspacePath });
@@ -533,6 +534,7 @@ export class NunjucksWorkflowRunner implements WorkflowRunner {
       const output = this.render(task.spec.output, context, renderTemplate);
       await taskTrack.markSuccessful();
       await task.cleanWorkspace?.();
+      dispose();
 
       return { output };
     } finally {

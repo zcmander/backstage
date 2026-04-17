@@ -27,10 +27,10 @@ import {
 import fs from 'fs-extra';
 import globby from 'globby';
 import { isBinaryFile } from 'isbinaryfile';
-import { createDefaultFilters } from '../../../../lib/templating/filters/createDefaultFilters';
-import { convertFiltersToRecord } from '../../../../util/templating';
-import { SecureTemplater } from '../../../../lib/templating/SecureTemplater';
 import { extname } from 'path';
+import { createDefaultFilters } from '../../../../lib/templating/filters/createDefaultFilters';
+import { SecureTemplater } from '../../../../lib/templating/SecureTemplater';
+import { convertFiltersToRecord } from '../../../../util/templating';
 
 export type TemplateActionInput = {
   targetPath?: string;
@@ -107,15 +107,16 @@ export async function createTemplateActionHandler<
     ctx.input.values,
   );
 
-  const renderTemplate = await SecureTemplater.loadRenderer({
-    cookiecutterCompat: ctx.input.cookiecutterCompat,
-    templateFilters,
-    templateGlobals,
-    nunjucksConfigs: {
-      trimBlocks: ctx.input.trimBlocks,
-      lstripBlocks: ctx.input.lstripBlocks,
-    },
-  });
+  const { render: renderTemplate, dispose } =
+    await SecureTemplater.loadRenderer({
+      cookiecutterCompat: ctx.input.cookiecutterCompat,
+      templateFilters,
+      templateGlobals,
+      nunjucksConfigs: {
+        trimBlocks: ctx.input.trimBlocks,
+        lstripBlocks: ctx.input.lstripBlocks,
+      },
+    });
 
   for (const location of allEntriesInTemplate) {
     let renderContents: boolean;
@@ -186,6 +187,7 @@ export async function createTemplateActionHandler<
       }
     }
   }
+  dispose();
   ctx.logger.info(`Template result written to ${outputDir}`);
 }
 
