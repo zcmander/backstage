@@ -91,11 +91,14 @@ export async function createTemplateFileActionHandler<
       },
     });
 
-  const contents = await fs.readFile(filePath, 'utf-8');
-  const result = renderTemplate(contents, context);
-  await fs.ensureDir(path.dirname(outputPath));
-  await fs.outputFile(outputPath, result);
+  try {
+    const contents = await fs.readFile(filePath, 'utf-8');
+    const result = renderTemplate(contents, context);
+    await fs.ensureDir(path.dirname(outputPath));
+    await fs.outputFile(outputPath, result);
 
-  dispose();
-  ctx.logger.info(`Template file has been written to ${outputPath}`);
+    ctx.logger.info(`Template file has been written to ${outputPath}`);
+  } finally {
+    dispose();
+  }
 }
