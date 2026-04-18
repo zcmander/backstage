@@ -48,7 +48,7 @@ export interface CatalogExportSettings {
    *
    * Default columns are: name, type, owner and description.
    **/
-  columns?: CatalogExportSettingsColumn;
+  columns?: CatalogExportSettingsColumn[];
   /**
    * Map of custom export format handlers.
    *
