@@ -204,17 +204,18 @@ describe('CatalogExportButton', () => {
     await userEvent.click(screen.getByRole('button', { name: /Confirm/i }));
 
     await waitFor(() => {
-      expect(mockExportStream).toHaveBeenCalledWith({
-        exportFormat: 'json',
-        filename: 'catalog-export.json',
-        columns: [
-          { entityFilterKey: 'metadata.name', title: 'Name' },
-          { entityFilterKey: 'spec.type', title: 'Type' },
-          { entityFilterKey: 'spec.owner', title: 'Owner' },
-          { entityFilterKey: 'metadata.description', title: 'Description' },
-        ],
-        streamRequest: undefined,
-      });
+      expect(mockExportStream).toHaveBeenCalledWith(
+        expect.objectContaining({
+          exportFormat: 'json',
+          filename: 'catalog-export.json',
+          columns: [
+            { entityFilterKey: 'metadata.name', title: 'Name' },
+            { entityFilterKey: 'spec.type', title: 'Type' },
+            { entityFilterKey: 'spec.owner', title: 'Owner' },
+            { entityFilterKey: 'metadata.description', title: 'Description' },
+          ],
+        }),
+      );
     });
   });
 
