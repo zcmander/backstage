@@ -6,6 +6,7 @@
 import { AnyApiFactory } from '@backstage/frontend-plugin-api';
 import { AnyRouteRefParams } from '@backstage/frontend-plugin-api';
 import { ApiFactory } from '@backstage/frontend-plugin-api';
+import { ApiHolder } from '@backstage/core-plugin-api';
 import { CompoundEntityRef } from '@backstage/catalog-model';
 import { ConfigurableExtensionDataRef } from '@backstage/frontend-plugin-api';
 import { defaultEntityContentGroups } from '@backstage/plugin-catalog-react/alpha';
@@ -16,6 +17,7 @@ import { EntityContextMenuItemParams } from '@backstage/plugin-catalog-react/alp
 import { EntityListContextProps } from '@backstage/plugin-catalog-react';
 import { EntityListPagination } from '@backstage/plugin-catalog-react';
 import { EntityOwnerPickerProps } from '@backstage/plugin-catalog-react';
+import { ExtensionBlueprint } from '@backstage/frontend-plugin-api';
 import { ExtensionBlueprintParams } from '@backstage/frontend-plugin-api';
 import { ExtensionDataRef } from '@backstage/frontend-plugin-api';
 import { ExtensionInput } from '@backstage/frontend-plugin-api';
@@ -36,10 +38,68 @@ import { RouteRef as RouteRef_2 } from '@backstage/frontend-plugin-api';
 import { SearchResultItemExtensionComponent } from '@backstage/plugin-search-react/alpha';
 import { SearchResultItemExtensionPredicate } from '@backstage/plugin-search-react/alpha';
 import { SearchResultListItemBlueprintParams } from '@backstage/plugin-search-react/alpha';
+import type { StreamEntitiesRequest } from '@backstage/catalog-client';
 import { TableColumn } from '@backstage/core-components';
 import { TableProps } from '@backstage/core-components';
 import { TranslationRef } from '@backstage/frontend-plugin-api';
 import { UserListFilterKind } from '@backstage/plugin-catalog-react';
+
+// @public
+export const CatalogExportConfigBlueprint: ExtensionBlueprint<{
+  kind: 'catalog-export-config';
+  params: {
+    exporters?: CatalogExportSettings['exporters'];
+    columns?: CatalogExportSettings['columns'];
+    onSuccess?: CatalogExportSettings['onSuccess'];
+    onError?: CatalogExportSettings['onError'];
+  };
+  output: ExtensionDataRef<
+    {
+      exporters?: CatalogExportSettings['exporters'];
+      columns?: CatalogExportSettings['columns'];
+      onSuccess?: CatalogExportSettings['onSuccess'];
+      onError?: CatalogExportSettings['onError'];
+    },
+    'catalog.export-customization',
+    {}
+  >;
+  inputs: {};
+  config: {};
+  configInput: {};
+  dataRefs: never;
+}>;
+
+// @public
+export type CatalogExporter = (options: {
+  apis: ApiHolder;
+  columns: CatalogExportSettingsColumn[];
+  streamRequest?: StreamEntitiesRequest;
+}) => {
+  generator: AsyncGenerator<string, void, unknown>;
+  contentType: string;
+};
+
+// @public
+export interface CatalogExporterConfig {
+  exporter: CatalogExporter;
+  label?: string;
+}
+
+// @public
+export interface CatalogExportSettings {
+  columns?: CatalogExportSettingsColumn[];
+  disableBuiltinExporters?: boolean;
+  enabled?: boolean;
+  exporters?: Record<string, CatalogExporterConfig>;
+  onError?: (options: { error: Error }) => void;
+  onSuccess?: () => void;
+}
+
+// @public
+export interface CatalogExportSettingsColumn {
+  entityFilterKey: string;
+  title?: string;
+}
 
 // @public (undocumented)
 export function CatalogIndexPage(props: CatalogIndexPageProps): JSX_3.Element;
@@ -52,6 +112,8 @@ export interface CatalogIndexPageProps {
   columns?: TableColumn<CatalogTableRow>[] | CatalogTableColumnsFunc;
   // (undocumented)
   emptyContent?: ReactNode;
+  // (undocumented)
+  exportSettings?: CatalogExportSettings;
   // (undocumented)
   filters?: ReactNode;
   // (undocumented)
@@ -131,8 +193,8 @@ export const catalogTranslationRef: TranslationRef<
     readonly 'aboutCard.targetsField.label': 'Targets';
     readonly 'searchResultItem.type': 'Type';
     readonly 'searchResultItem.kind': 'Kind';
-    readonly 'searchResultItem.owner': 'Owner';
     readonly 'searchResultItem.lifecycle': 'Lifecycle';
+    readonly 'searchResultItem.owner': 'Owner';
     readonly 'catalogTable.allFilters': 'All';
     readonly 'catalogTable.warningPanelTitle': 'Could not fetch catalog entities.';
     readonly 'catalogTable.viewActionTitle': 'View';
@@ -152,20 +214,29 @@ export const catalogTranslationRef: TranslationRef<
     readonly 'entityContextMenu.unregisterMenuTitle': 'Unregister entity';
     readonly 'entityContextMenu.moreButtonAriaLabel': 'more';
     readonly 'entityLabelsCard.title': 'Labels';
-    readonly 'entityLabelsCard.readMoreButtonTitle': 'Read more';
     readonly 'entityLabelsCard.columnKeyLabel': 'Label';
     readonly 'entityLabelsCard.columnValueLabel': 'Value';
     readonly 'entityLabelsCard.emptyDescription': 'No labels defined for this entity. You can add labels to your entity YAML as shown in the highlighted example below:';
-    readonly 'entityLabels.ownerLabel': 'Owner';
+    readonly 'entityLabelsCard.readMoreButtonTitle': 'Read more';
     readonly 'entityLabels.warningPanelTitle': 'Entity not found';
+    readonly 'entityLabels.ownerLabel': 'Owner';
     readonly 'entityLabels.lifecycleLabel': 'Lifecycle';
     readonly 'entityLinksCard.title': 'Links';
-    readonly 'entityLinksCard.readMoreButtonTitle': 'Read more';
     readonly 'entityLinksCard.emptyDescription': 'No links defined for this entity. You can add links to your entity YAML as shown in the highlighted example below:';
+    readonly 'entityLinksCard.readMoreButtonTitle': 'Read more';
     readonly 'entityNotFound.title': 'Entity was not found';
     readonly 'entityNotFound.description': 'Want to help us build this? Check out our Getting Started documentation.';
     readonly 'entityNotFound.docButtonTitle': 'DOCS';
     readonly 'entityTabs.tabsAriaLabel': 'Tabs';
+    readonly 'catalogExportButton.errorMessage': 'Failed to export catalog: {{errorMessage}}';
+    readonly 'catalogExportButton.cancelButtonTitle': 'Cancel';
+    readonly 'catalogExportButton.dialogTitle': 'Export catalog selection';
+    readonly 'catalogExportButton.triggerButtonTitle': 'Export selection';
+    readonly 'catalogExportButton.formatLabel': 'Format';
+    readonly 'catalogExportButton.columnsLabel': 'Columns';
+    readonly 'catalogExportButton.confirmButtonTitle': 'Confirm';
+    readonly 'catalogExportButton.exportingButtonTitle': 'Exporting…';
+    readonly 'catalogExportButton.successMessage': 'Catalog exported successfully';
     readonly entityProcessingErrorsDescription: 'The error below originates from';
     readonly entityRelationWarningDescription: "This entity has relations to other entities, which can't be found in the catalog.\n Entities not found are: ";
     readonly 'hasComponentsCard.title': 'Has components';
@@ -1061,6 +1132,12 @@ const _default: OverridableFrontendPlugin<
               limit?: number | undefined;
               offset?: number | undefined;
             };
+        exportSettings:
+          | {
+              enabled?: boolean | undefined;
+              disableBuiltinExporters?: boolean | undefined;
+            }
+          | undefined;
         path: string | undefined;
         title: string | undefined;
       };
@@ -1071,6 +1148,12 @@ const _default: OverridableFrontendPlugin<
               mode: 'offset' | 'cursor';
               limit?: number | undefined;
               offset?: number | undefined;
+            }
+          | undefined;
+        exportSettings?:
+          | {
+              enabled?: boolean | undefined;
+              disableBuiltinExporters?: boolean | undefined;
             }
           | undefined;
         path?: string | undefined;
@@ -1133,6 +1216,25 @@ const _default: OverridableFrontendPlugin<
         >;
         filters: ExtensionInput<
           ConfigurableExtensionDataRef<JSX_2.Element, 'core.reactElement', {}>,
+          {
+            singleton: false;
+            optional: false;
+            internal: false;
+          }
+        >;
+        exportConfig: ExtensionInput<
+          ConfigurableExtensionDataRef<
+            {
+              exporters?: CatalogExportSettings['exporters'];
+              columns?: CatalogExportSettings['columns'];
+              onSuccess?: CatalogExportSettings['onSuccess'];
+              onError?: CatalogExportSettings['onError'];
+            },
+            'catalog.export-customization',
+            {
+              optional: true;
+            }
+          >,
           {
             singleton: false;
             optional: false;

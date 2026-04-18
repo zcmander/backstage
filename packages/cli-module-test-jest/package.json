@@ -19,6 +19,7 @@
   "license": "Apache-2.0",
   "main": "src/index.ts",
   "types": "src/index.ts",
+  "bin": "bin/backstage-cli-module-test-jest",
   "files": [
     "dist",
     "bin",
@@ -64,6 +65,5 @@
     "jsdom": {
       "optional": true
     }
-  },
-  "bin": "bin/backstage-cli-module-test-jest"
+  }
 }

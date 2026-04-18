@@ -71,6 +71,10 @@ app:
     - nav-item:app-visualizer
 
     # Pages
+    - page:catalog:
+        config:
+          exportSettings:
+            enabled: true
     - page:catalog/entity:
         config:
           showNavItemIcons: true
