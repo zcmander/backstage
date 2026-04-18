@@ -95,7 +95,7 @@ const yamlExporter: CatalogExporter = ({ apis, columns, streamRequest }) => {
 const catalogExportExtension = CatalogExportConfigBlueprint.make({
   params: {
     exporters: {
-      yaml: { fn: yamlExporter, label: 'YAML' },
+      yaml: { exporter: yamlExporter, label: 'YAML' },
     },
     columns: [{ entityFilterKey: 'metadata.name', title: 'Name' }],
     onSuccess: () => {
