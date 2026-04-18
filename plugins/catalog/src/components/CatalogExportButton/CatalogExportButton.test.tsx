@@ -436,7 +436,7 @@ describe('CatalogExportButton', () => {
       expect(mockExportStream).toHaveBeenCalledWith(
         expect.objectContaining({
           exportFormat: 'xml',
-          exporterFn: mockCustomExporterFn,
+          exporter: mockCustomExporterFn,
         }),
       );
     });
