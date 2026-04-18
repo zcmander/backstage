@@ -129,7 +129,7 @@ const app = createApp({
 
 The `CatalogExportConfigBlueprint` supports the following properties:
 
-- **`exporters`** - Record of custom export format configurations (e.g., XML, YAML), each with a `fn` exporter function and optional `label`
+- **`exporters`** - Record of custom export format configurations (e.g., XML, YAML), each using the `CatalogExporterConfig` shape with an `exporter` function and optional `label`
 - **`columns`** - Custom columns to include in the export. Each column specifies an entity field path (`entityFilterKey`) and an optional display `title`. If not provided, defaults to Name, Type, Owner, and Description
 - **`onSuccess`** - Callback function invoked on successful export
 - **`onError`** - Callback function invoked if export fails, receives `{ error: Error }`
