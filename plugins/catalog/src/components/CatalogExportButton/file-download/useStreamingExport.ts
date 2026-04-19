@@ -23,7 +23,10 @@ import {
   CatalogExportSettingsColumn,
 } from './serializeEntities';
 import { CatalogExportType } from '../CatalogExportButton';
-import type { StreamEntitiesRequest } from '@backstage/catalog-client';
+import type {
+  CatalogApi,
+  StreamEntitiesRequest,
+} from '@backstage/catalog-client';
 import { filtersToStreamRequest } from './filtersToStreamRequest';
 
 /**
@@ -62,7 +65,7 @@ async function* streamEntitiesCsvGenerator({
   columns,
   streamRequest,
 }: {
-  catalogApi: any;
+  catalogApi: CatalogApi;
   columns: CatalogExportSettingsColumn[];
   streamRequest?: StreamEntitiesRequest;
 }): AsyncGenerator<string, void, unknown> {
@@ -86,7 +89,7 @@ async function* streamEntitiesJsonGenerator({
   columns,
   streamRequest,
 }: {
-  catalogApi: any;
+  catalogApi: CatalogApi;
   columns: CatalogExportSettingsColumn[];
   streamRequest?: StreamEntitiesRequest;
 }): AsyncGenerator<string, void, unknown> {
