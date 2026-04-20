@@ -27,7 +27,7 @@ import type {
   CatalogApi,
   StreamEntitiesRequest,
 } from '@backstage/catalog-client';
-import { filtersToStreamRequest } from './filtersToStreamRequest';
+import { toStreamRequest } from './toStreamRequest';
 
 /**
  * A custom exporter function that returns an async generator for streaming exports.
@@ -145,7 +145,7 @@ export const useStreamingExport = (): {
       streamRequest,
       onSuccess,
       onError,
-      exporter: exporterFn,
+      exporter,
     }: StreamingExportOptions) => {
       setLoading(true);
       setError(null);
@@ -153,11 +153,10 @@ export const useStreamingExport = (): {
       try {
         // If caller didn't provide a streamRequest, derive it from the
         // current EntityList filters so exports reflect the user's view.
-        const resolvedStreamRequest =
-          streamRequest ?? filtersToStreamRequest(filters);
+        const resolvedStreamRequest = streamRequest ?? toStreamRequest(filters);
 
-        if (exporterFn) {
-          const { generator, contentType } = exporterFn({
+        if (exporter) {
+          const { generator, contentType } = exporter({
             apis,
             columns,
             streamRequest: resolvedStreamRequest,

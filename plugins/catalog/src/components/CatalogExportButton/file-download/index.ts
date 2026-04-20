@@ -15,4 +15,4 @@
  */
 export * from './useStreamingExport';
 export * from './serializeEntities';
-export * from './filtersToStreamRequest';
+export * from './toStreamRequest';

@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { filtersToStreamRequest } from './filtersToStreamRequest';
-import { DefaultEntityFilters } from '@backstage/plugin-catalog-react';
+import { toStreamRequest } from './toStreamRequest';
+import {
+  DefaultEntityFilters,
+  EntityTextFilter,
+  EntityOrderFilter,
+} from '@backstage/plugin-catalog-react';
 
-describe('filtersToStreamRequest', () => {
+describe('toStreamRequest', () => {
   describe('with no filters', () => {
     it('returns undefined for empty filters object', () => {
       const filters: DefaultEntityFilters = {};
-      const result = filtersToStreamRequest(filters);
+      const result = toStreamRequest(filters);
 
       expect(result).toBeUndefined();
     });
@@ -38,7 +42,7 @@ describe('filtersToStreamRequest', () => {
         kind: mockFilter as any,
       };
 
-      const result = filtersToStreamRequest(filters);
+      const result = toStreamRequest(filters);
 
       expect(result).toEqual({
         filter: {
@@ -65,7 +69,7 @@ describe('filtersToStreamRequest', () => {
         type: mockTypeFilter as any,
       };
 
-      const result = filtersToStreamRequest(filters);
+      const result = toStreamRequest(filters);
 
       expect(result).toEqual({
         filter: {
@@ -86,7 +90,7 @@ describe('filtersToStreamRequest', () => {
         kind: mockFilter as any,
       };
 
-      const result = filtersToStreamRequest(filters);
+      const result = toStreamRequest(filters);
 
       expect(result).toEqual({
         filter: {
@@ -111,7 +115,7 @@ describe('filtersToStreamRequest', () => {
         text: nonBackendFilter as any,
       };
 
-      const result = filtersToStreamRequest(filters);
+      const result = toStreamRequest(filters);
 
       expect(result).toEqual({
         filter: {
@@ -136,7 +140,7 @@ describe('filtersToStreamRequest', () => {
         owners: mockFilterWithNull as any,
       };
 
-      const result = filtersToStreamRequest(filters);
+      const result = toStreamRequest(filters);
 
       expect(result).toEqual({
         filter: {
@@ -157,7 +161,7 @@ describe('filtersToStreamRequest', () => {
         kind: mockFilter as any,
       };
 
-      const result = filtersToStreamRequest(filters);
+      const result = toStreamRequest(filters);
 
       expect(result).toEqual({
         filter: {
@@ -179,7 +183,7 @@ describe('filtersToStreamRequest', () => {
         kind: mockFilter as any,
       };
 
-      const result = filtersToStreamRequest(filters);
+      const result = toStreamRequest(filters);
 
       expect(result).toEqual({
         filter: {
@@ -198,7 +202,7 @@ describe('filtersToStreamRequest', () => {
         type: mockEmptyFilter as any,
       };
 
-      const result = filtersToStreamRequest(filters);
+      const result = toStreamRequest(filters);
 
       expect(result).toBeUndefined();
     });
@@ -215,13 +219,108 @@ describe('filtersToStreamRequest', () => {
         type: mockFilter as any,
       };
 
-      const result = filtersToStreamRequest(filters);
+      const result = toStreamRequest(filters);
 
       expect(result).toEqual({
         filter: {
           'spec.type': 'my-service',
           'metadata.namespace': 'default',
         },
+      });
+    });
+  });
+
+  describe('with text filters', () => {
+    it('extracts full text filter and returns StreamEntitiesRequest', () => {
+      const textFilter = new EntityTextFilter('search term');
+
+      const filters: DefaultEntityFilters = {
+        text: textFilter,
+      };
+
+      const result = toStreamRequest(filters);
+
+      expect(result).toEqual({
+        fullTextFilter: {
+          term: 'search term',
+          fields: [
+            'metadata.name',
+            'metadata.title',
+            'spec.profile.displayName',
+          ],
+        },
+      });
+    });
+  });
+
+  describe('with order filters', () => {
+    it('extracts order fields and returns StreamEntitiesRequest', () => {
+      const orderFilter = new EntityOrderFilter([['metadata.name', 'asc']]);
+
+      const filters: DefaultEntityFilters = {
+        order: orderFilter,
+      };
+
+      const result = toStreamRequest(filters);
+
+      expect(result).toEqual({
+        orderFields: [{ field: 'metadata.name', order: 'asc' }],
+      });
+    });
+
+    it('handles multiple order fields', () => {
+      const orderFilter = new EntityOrderFilter([
+        ['metadata.name', 'asc'],
+        ['spec.type', 'desc'],
+      ]);
+
+      const filters: DefaultEntityFilters = {
+        order: orderFilter,
+      };
+
+      const result = toStreamRequest(filters);
+
+      expect(result).toEqual({
+        orderFields: [
+          { field: 'metadata.name', order: 'asc' },
+          { field: 'spec.type', order: 'desc' },
+        ],
+      });
+    });
+  });
+
+  describe('with combined filters', () => {
+    it('combines backend, text, and order filters', () => {
+      const mockBackendFilter = {
+        getCatalogFilters: () => ({
+          kind: ['Component'],
+        }),
+      };
+
+      const textFilter = new EntityTextFilter('search term');
+      const orderFilter = new EntityOrderFilter([['metadata.name', 'asc']]);
+
+      const filters: DefaultEntityFilters = {
+        kind: mockBackendFilter as any,
+        text: textFilter,
+        order: orderFilter,
+      };
+
+      const result = toStreamRequest(filters);
+
+      expect(result).toEqual({
+        filter: {
+          kind: ['Component'],
+        },
+        fullTextFilter: {
+          term: 'search term',
+          fields: [
+            'metadata.name',
+            'metadata.title',
+            'spec.profile.displayName',
+          ],
+        },
+        orderFields: [{ field: 'metadata.name', order: 'asc' }],
       });
     });
   });

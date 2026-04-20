@@ -13,11 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { DefaultEntityFilters } from '@backstage/plugin-catalog-react';
-import type { StreamEntitiesRequest } from '@backstage/catalog-client';
+import {
+  DefaultEntityFilters,
+  EntityTextFilter,
+  EntityOrderFilter,
+} from '@backstage/plugin-catalog-react';
+import type {
+  StreamEntitiesRequest,
+  EntityOrderQuery,
+} from '@backstage/catalog-client';
 
 function isBackendFilter(f: any): f is { getCatalogFilters: () => any } {
   return typeof f?.getCatalogFilters === 'function';
+}
+
+function isEntityTextFilter(f: any): f is EntityTextFilter {
+  return !!(f as EntityTextFilter).getFullTextFilters;
+}
+
+function isEntityOrderFilter(f: any): f is EntityOrderFilter {
+  return !!(f as EntityOrderFilter).getOrderFilters;
 }
 
 function getBackendFilterObject(
@@ -47,13 +62,13 @@ function getBackendFilterObject(
  * Converts entity filters to a StreamEntitiesRequest that can be used
  * with the catalogApi.streamEntities method.
  *
- * This extracts all enabled backend filters and converts them to the
- * appropriate format for streaming.
+ * This extracts all enabled backend filters, full text filters, and order filters
+ * and converts them to the appropriate format for streaming.
  *
  * @param filters - The entity filters from useEntityList
- * @returns A StreamEntitiesRequest object, or undefined if no backend filters are enabled
+ * @returns A StreamEntitiesRequest object, or undefined if no filters are enabled
  */
-export const filtersToStreamRequest = (
+export const toStreamRequest = (
   filters: DefaultEntityFilters,
 ): StreamEntitiesRequest | undefined => {
   const backendFilters = Object.values(filters)
@@ -68,8 +83,29 @@ export const filtersToStreamRequest = (
       return { ...acc, ...getBackendFilterObject(f) };
     }, {} as Record<string, string | string[]>);
 
-  // Return undefined if no filters, which means stream all entities
-  return Object.keys(backendFilters).length > 0
-    ? { filter: backendFilters }
+  const fullTextFilter = Object.values(filters)
+    .find(isEntityTextFilter)
+    ?.getFullTextFilters();
+
+  const orderFieldsFilter = Object.values(filters).find(isEntityOrderFilter);
+  const orderFields = orderFieldsFilter
+    ? (orderFieldsFilter.getOrderFilters() as EntityOrderQuery)
     : undefined;
+
+  const request: StreamEntitiesRequest = {};
+
+  if (Object.keys(backendFilters).length > 0) {
+    request.filter = backendFilters;
+  }
+
+  if (fullTextFilter) {
+    request.fullTextFilter = fullTextFilter;
+  }
+
+  if (orderFields) {
+    request.orderFields = orderFields;
+  }
+
+  // Return undefined if no filters, which means stream all entities
+  return Object.keys(request).length > 0 ? request : undefined;
 };

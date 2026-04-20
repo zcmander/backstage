@@ -319,6 +319,8 @@ periodically.
 For more details on extension overrides and the different override patterns
 available, see the [extension overrides](../../frontend-system/architecture/25-extension-overrides.md) documentation.
 
+## Entity page
+
 ### Entity filters
 
 Many extensions that attach within the catalog entity pages accept a `filter` configuration. The purpose of the `filter` configuration is to select what entities the extension should be applied to or be present on. Many of these extension will have a default filter defined, but you can override it by providing your own. When defining filters in code you can use either a predicate function or a entity predicate query, while in configuration you can only use an entity predicate query.
