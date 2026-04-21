@@ -54,6 +54,30 @@ export { ApiEntityV1alpha1 };
 export const apiEntityV1alpha1Validator: KindValidator;
 
 // @public
+export type ApiEntityV1beta2 =
+  | ApiEntityV1beta2Default
+  | McpServerApiEntityV1beta2;
+
+// @public
+export interface ApiEntityV1beta2Default extends Entity {
+  // (undocumented)
+  apiVersion: 'backstage.io/v1beta2';
+  // (undocumented)
+  kind: 'API';
+  // (undocumented)
+  spec: {
+    type: string;
+    lifecycle: string;
+    owner: string;
+    system?: string;
+    definition: string;
+  };
+}
+
+// @public
+export const apiEntityV1beta2Validator: KindValidator;
+
+// @public
 export class CommonValidatorFunctions {
   static isJsonSafe(value: unknown): boolean;
   static isNonEmptyString(value: unknown): value is string;
@@ -273,6 +297,11 @@ export function isLocationEntity(
   entity: Entity,
 ): entity is LocationEntityV1alpha1;
 
+// @public
+export function isMcpServerApiEntity(
+  entity: ApiEntityV1beta2,
+): entity is McpServerApiEntityV1beta2;
+
 // @public (undocumented)
 export function isResourceEntity(
   entity: Entity,
@@ -331,6 +360,31 @@ export const locationEntityV1alpha1Validator: KindValidator;
 
 // @public
 export function makeValidator(overrides?: Partial<Validators>): Validators;
+
+// @public
+export interface McpServerApiEntityV1beta2 extends Entity {
+  // (undocumented)
+  apiVersion: 'backstage.io/v1beta2';
+  // (undocumented)
+  kind: 'API';
+  // (undocumented)
+  spec: {
+    type: 'mcp-server';
+    lifecycle: string;
+    owner: string;
+    system?: string;
+    remotes: McpServerRemote[];
+  };
+}
+
+// @public
+export const mcpServerApiEntityV1beta2Validator: KindValidator;
+
+// @public
+export type McpServerRemote = {
+  type: string;
+  url: string;
+};
 
 // @public
 export class NoForeignRootFieldsEntityPolicy implements EntityPolicy {
