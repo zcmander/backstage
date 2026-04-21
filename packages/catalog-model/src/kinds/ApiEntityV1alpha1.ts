@@ -17,6 +17,8 @@
 import { createCatalogModelLayer } from '../model/createCatalogModelLayer';
 import type { Entity } from '../entity/Entity';
 import jsonSchema from '../schema/kinds/API.v1alpha1.schema.json';
+import defaultSchemaV1beta2 from '../schema/kinds/API.v1beta2.schema.json';
+import mcpServerSchemaV1beta2 from '../schema/kinds/API.v1beta2.mcp-server.schema.json';
 import { ajvCompiledJsonSchemaValidator } from './util';
 
 /**
@@ -48,6 +50,22 @@ export interface ApiEntityV1alpha1 extends Entity {
 export const apiEntityV1alpha1Validator =
   ajvCompiledJsonSchemaValidator(jsonSchema);
 
+const apiRelationFields = [
+  {
+    selector: { path: 'spec.owner' },
+    relation: 'ownedBy',
+    defaultKind: 'Group',
+    defaultNamespace: 'inherit' as const,
+    allowedKinds: ['Group', 'User'],
+  },
+  {
+    selector: { path: 'spec.system' },
+    relation: 'partOf',
+    defaultKind: 'System',
+    defaultNamespace: 'inherit' as const,
+  },
+];
+
 /**
  * Extends the catalog model with the API kind.
  *
@@ -68,24 +86,21 @@ export const apiEntityModel = createCatalogModelLayer({
       versions: [
         {
           name: ['v1alpha1', 'v1beta1'],
-          relationFields: [
-            {
-              selector: { path: 'spec.owner' },
-              relation: 'ownedBy',
-              defaultKind: 'Group',
-              defaultNamespace: 'inherit',
-              allowedKinds: ['Group', 'User'],
-            },
-            {
-              selector: { path: 'spec.system' },
-              relation: 'partOf',
-              defaultKind: 'System',
-              defaultNamespace: 'inherit',
-            },
-          ],
-          schema: {
-            jsonSchema,
-          },
+          relationFields: apiRelationFields,
+          schema: { jsonSchema },
+        },
+        {
+          name: 'v1beta2',
+          relationFields: apiRelationFields,
+          schema: { jsonSchema: defaultSchemaV1beta2 },
+        },
+        {
+          name: 'v1beta2',
+          specType: 'mcp-server',
+          description:
+            'An MCP (Model Context Protocol) server exposed as an API entity.',
+          relationFields: apiRelationFields,
+          schema: { jsonSchema: mcpServerSchemaV1beta2 },
         },
       ],
     });

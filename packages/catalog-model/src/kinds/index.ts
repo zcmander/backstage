@@ -19,6 +19,17 @@ export type {
   ApiEntityV1alpha1 as ApiEntity,
   ApiEntityV1alpha1,
 } from './ApiEntityV1alpha1';
+export {
+  apiEntityV1beta2Validator,
+  isMcpServerApiEntity,
+  mcpServerApiEntityV1beta2Validator,
+} from './ApiEntityV1beta2';
+export type {
+  ApiEntityV1beta2,
+  ApiEntityV1beta2Default,
+  McpServerApiEntityV1beta2,
+  McpServerRemote,
+} from './ApiEntityV1beta2';
 export { componentEntityV1alpha1Validator } from './ComponentEntityV1alpha1';
 export type {
   ComponentEntityV1alpha1 as ComponentEntity,
