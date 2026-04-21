@@ -15,29 +15,29 @@
  */
 
 import type { Entity } from '../entity/Entity';
-import defaultSchema from '../schema/kinds/API.v1beta2.schema.json';
-import mcpServerSchema from '../schema/kinds/API.v1beta2.mcp-server.schema.json';
+import defaultSchema from '../schema/kinds/API.v1alpha2.schema.json';
+import mcpServerSchema from '../schema/kinds/API.v1alpha2.mcp-server.schema.json';
 import { ajvCompiledJsonSchemaValidator } from './util';
 
 /**
- * Backstage API kind entity, v1beta2. Introduces structured subtypes via
+ * Backstage API kind entity, v1alpha2. Introduces structured subtypes via
  * spec.type, starting with 'mcp-server'. Other values of spec.type continue
  * to use the string-definition shape.
  *
  * @public
  */
-export type ApiEntityV1beta2 =
-  | ApiEntityV1beta2Default
-  | McpServerApiEntityV1beta2;
+export type ApiEntityV1alpha2 =
+  | ApiEntityV1alpha2Default
+  | McpServerApiEntityV1alpha2;
 
 /**
- * The default (string-definition) shape for v1beta2 API entities. Applies
+ * The default (string-definition) shape for v1alpha2 API entities. Applies
  * when spec.type is anything other than a declared structured subtype.
  *
  * @public
  */
-export interface ApiEntityV1beta2Default extends Entity {
-  apiVersion: 'backstage.io/v1beta2';
+export interface ApiEntityV1alpha2Default extends Entity {
+  apiVersion: 'backstage.io/v1alpha2';
   kind: 'API';
   spec: {
     type: string;
@@ -50,12 +50,12 @@ export interface ApiEntityV1beta2Default extends Entity {
 
 /**
  * An MCP (Model Context Protocol) server represented as an API entity
- * (v1beta2, spec.type: 'mcp-server').
+ * (v1alpha2, spec.type: 'mcp-server').
  *
  * @public
  */
-export interface McpServerApiEntityV1beta2 extends Entity {
-  apiVersion: 'backstage.io/v1beta2';
+export interface McpServerApiEntityV1alpha2 extends Entity {
+  apiVersion: 'backstage.io/v1alpha2';
   kind: 'API';
   spec: {
     type: 'mcp-server';
@@ -77,28 +77,28 @@ export type McpServerRemote = {
 };
 
 /**
- * {@link KindValidator} for the default specType of {@link ApiEntityV1beta2}.
+ * {@link KindValidator} for the default specType of {@link ApiEntityV1alpha2}.
  *
  * @public
  */
-export const apiEntityV1beta2Validator =
+export const apiEntityV1alpha2Validator =
   ajvCompiledJsonSchemaValidator(defaultSchema);
 
 /**
- * {@link KindValidator} for the `mcp-server` specType of {@link ApiEntityV1beta2}.
+ * {@link KindValidator} for the `mcp-server` specType of {@link ApiEntityV1alpha2}.
  *
  * @public
  */
-export const mcpServerApiEntityV1beta2Validator =
+export const mcpServerApiEntityV1alpha2Validator =
   ajvCompiledJsonSchemaValidator(mcpServerSchema);
 
 /**
- * Type guard: narrows a v1beta2 API entity to the MCP server subtype.
+ * Type guard: narrows a v1alpha2 API entity to the MCP server subtype.
  *
  * @public
  */
 export function isMcpServerApiEntity(
-  entity: ApiEntityV1beta2,
-): entity is McpServerApiEntityV1beta2 {
+  entity: ApiEntityV1alpha2,
+): entity is McpServerApiEntityV1alpha2 {
   return entity.spec.type === 'mcp-server';
 }

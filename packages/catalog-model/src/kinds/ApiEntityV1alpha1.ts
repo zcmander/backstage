@@ -17,8 +17,8 @@
 import { createCatalogModelLayer } from '../model/createCatalogModelLayer';
 import type { Entity } from '../entity/Entity';
 import jsonSchema from '../schema/kinds/API.v1alpha1.schema.json';
-import defaultSchemaV1beta2 from '../schema/kinds/API.v1beta2.schema.json';
-import mcpServerSchemaV1beta2 from '../schema/kinds/API.v1beta2.mcp-server.schema.json';
+import defaultSchemaV1alpha2 from '../schema/kinds/API.v1alpha2.schema.json';
+import mcpServerSchemaV1alpha2 from '../schema/kinds/API.v1alpha2.mcp-server.schema.json';
 import { ajvCompiledJsonSchemaValidator } from './util';
 
 /**
@@ -90,17 +90,17 @@ export const apiEntityModel = createCatalogModelLayer({
           schema: { jsonSchema },
         },
         {
-          name: 'v1beta2',
+          name: 'v1alpha2',
           relationFields: apiRelationFields,
-          schema: { jsonSchema: defaultSchemaV1beta2 },
+          schema: { jsonSchema: defaultSchemaV1alpha2 },
         },
         {
-          name: 'v1beta2',
+          name: 'v1alpha2',
           specType: 'mcp-server',
           description:
             'An MCP (Model Context Protocol) server exposed as an API entity.',
           relationFields: apiRelationFields,
-          schema: { jsonSchema: mcpServerSchemaV1beta2 },
+          schema: { jsonSchema: mcpServerSchemaV1alpha2 },
         },
       ],
     });

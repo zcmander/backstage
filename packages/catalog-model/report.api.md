@@ -54,14 +54,14 @@ export { ApiEntityV1alpha1 };
 export const apiEntityV1alpha1Validator: KindValidator;
 
 // @public
-export type ApiEntityV1beta2 =
-  | ApiEntityV1beta2Default
-  | McpServerApiEntityV1beta2;
+export type ApiEntityV1alpha2 =
+  | ApiEntityV1alpha2Default
+  | McpServerApiEntityV1alpha2;
 
 // @public
-export interface ApiEntityV1beta2Default extends Entity {
+export interface ApiEntityV1alpha2Default extends Entity {
   // (undocumented)
-  apiVersion: 'backstage.io/v1beta2';
+  apiVersion: 'backstage.io/v1alpha2';
   // (undocumented)
   kind: 'API';
   // (undocumented)
@@ -75,7 +75,7 @@ export interface ApiEntityV1beta2Default extends Entity {
 }
 
 // @public
-export const apiEntityV1beta2Validator: KindValidator;
+export const apiEntityV1alpha2Validator: KindValidator;
 
 // @public
 export class CommonValidatorFunctions {
@@ -299,8 +299,8 @@ export function isLocationEntity(
 
 // @public
 export function isMcpServerApiEntity(
-  entity: ApiEntityV1beta2,
-): entity is McpServerApiEntityV1beta2;
+  entity: ApiEntityV1alpha2,
+): entity is McpServerApiEntityV1alpha2;
 
 // @public (undocumented)
 export function isResourceEntity(
@@ -362,9 +362,9 @@ export const locationEntityV1alpha1Validator: KindValidator;
 export function makeValidator(overrides?: Partial<Validators>): Validators;
 
 // @public
-export interface McpServerApiEntityV1beta2 extends Entity {
+export interface McpServerApiEntityV1alpha2 extends Entity {
   // (undocumented)
-  apiVersion: 'backstage.io/v1beta2';
+  apiVersion: 'backstage.io/v1alpha2';
   // (undocumented)
   kind: 'API';
   // (undocumented)
@@ -378,7 +378,7 @@ export interface McpServerApiEntityV1beta2 extends Entity {
 }
 
 // @public
-export const mcpServerApiEntityV1beta2Validator: KindValidator;
+export const mcpServerApiEntityV1alpha2Validator: KindValidator;
 
 // @public
 export type McpServerRemote = {

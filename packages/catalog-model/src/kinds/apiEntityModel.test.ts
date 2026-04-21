@@ -17,18 +17,18 @@
 import { compileCatalogModel } from '../model/compileCatalogModel';
 import { defaultCatalogEntityModel } from '../model/defaultCatalogEntityModel';
 
-describe('apiEntityModel v1beta2 dispatch', () => {
+describe('apiEntityModel v1alpha2 dispatch', () => {
   const model = compileCatalogModel([defaultCatalogEntityModel]);
 
-  it('routes mcp-server and non-mcp-server v1beta2 entities to different schemas', () => {
+  it('routes mcp-server and non-mcp-server v1alpha2 entities to different schemas', () => {
     const mcp = model.getKind({
       kind: 'API',
-      apiVersion: 'backstage.io/v1beta2',
+      apiVersion: 'backstage.io/v1alpha2',
       spec: { type: 'mcp-server' },
     });
     const openapi = model.getKind({
       kind: 'API',
-      apiVersion: 'backstage.io/v1beta2',
+      apiVersion: 'backstage.io/v1alpha2',
       spec: { type: 'openapi' },
     });
 

@@ -1,10 +1,10 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema",
-  "$id": "ApiV1beta2",
+  "$id": "ApiV1alpha2",
   "description": "An API describes an interface that can be exposed by a component. The API can be defined in different formats, like OpenAPI, AsyncAPI, GraphQL, gRPC, or other formats.",
   "examples": [
     {
-      "apiVersion": "backstage.io/v1beta2",
+      "apiVersion": "backstage.io/v1alpha2",
       "kind": "API",
       "metadata": {
         "name": "artist-api",
@@ -34,7 +34,7 @@
       "required": ["spec"],
       "properties": {
         "apiVersion": {
-          "enum": ["backstage.io/v1beta2"]
+          "enum": ["backstage.io/v1alpha2"]
         },
         "kind": {
           "enum": ["API"]
