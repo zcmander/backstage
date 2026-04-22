@@ -31,9 +31,9 @@ const DEFAULT_TIMEOUT_MS = 60_000;
 // By default, octokit/plugin-retry will retry 3 times with a 1 second delay
 // between retries.
 const DEFAULT_RETRY_ATTEMPTS = 3;
-const DEFAULT_RETRY_DELAY_MS = 1000;
+const DEFAULT_RETRY_DELAY_MS = 1_000;
 
-type RetryOptions = {
+export type RetryOptions = {
   // The number of retry attempts for failed requests
   retries?: number;
   // The delay in milliseconds between retry attempts
