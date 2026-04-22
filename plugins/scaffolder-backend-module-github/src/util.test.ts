@@ -35,36 +35,39 @@ const MockOctokit = Octokit as unknown as jest.MockedClass<typeof Octokit> & {
 };
 
 describe('isRetryEnabled', () => {
-  it('returns true when both params are undefined', () => {
-    expect(isRetryEnabled()).toBe(true);
-  });
-
-  it('returns true when retries is positive and retryAfter is undefined', () => {
-    expect(isRetryEnabled(3)).toBe(true);
-  });
-
-  it('returns true when retries is undefined and retryAfter is positive', () => {
-    expect(isRetryEnabled(undefined, 1000)).toBe(true);
-  });
-
-  it('returns true when both retries and retryAfter are positive', () => {
-    expect(isRetryEnabled(5, 2000)).toBe(true);
-  });
-
-  it('returns false when retries is 0', () => {
-    expect(isRetryEnabled(0)).toBe(false);
-  });
-
-  it('returns false when retryAfter is 0', () => {
-    expect(isRetryEnabled(undefined, 0)).toBe(false);
-  });
-
-  it('returns false when retries is 0 even if retryAfter is positive', () => {
-    expect(isRetryEnabled(0, 1000)).toBe(false);
-  });
-
-  it('returns false when retryAfter is 0 even if retries is positive', () => {
-    expect(isRetryEnabled(3, 0)).toBe(false);
+  it.each([
+    {
+      description: 'returns false when retries is == 0',
+      options: { retries: 0 },
+      expected: false,
+    },
+    {
+      description: 'returns false when retries is <= 0',
+      options: { retries: -10 },
+      expected: false,
+    },
+    {
+      description: 'returns false when retryAfter is == 0',
+      options: { retries: 1, retryAfter: 0 },
+      expected: false,
+    },
+    {
+      description: 'returns false when retryAfter is <= 0',
+      options: { retries: 1, retryAfter: -10 },
+      expected: false,
+    },
+    {
+      description: 'returns true when retryOptions is undefined',
+      options: undefined,
+      expected: true,
+    },
+    {
+      description: 'returns true when retries is > 0 and retryAfter is > 0',
+      options: { retries: 5, retryAfter: 5 },
+      expected: true,
+    },
+  ])('$description', ({ options, expected }) => {
+    expect(isRetryEnabled(options)).toBe(expected);
   });
 });
 
@@ -82,7 +85,8 @@ describe('getOctokitClient', () => {
   });
 
   it('returns a plain Octokit client when retries is 0', () => {
-    const client = getOctokitClient(octokitOptions, logger, 0);
+    const retryOptions = { retries: 0 };
+    const client = getOctokitClient(octokitOptions, logger, retryOptions);
 
     expect(MockOctokit.plugin).not.toHaveBeenCalled();
     expect(MockOctokit).toHaveBeenCalledWith({
@@ -93,7 +97,8 @@ describe('getOctokitClient', () => {
   });
 
   it('returns a plain Octokit client when retryAfter is 0', () => {
-    const client = getOctokitClient(octokitOptions, logger, 3, 0);
+    const retryOptions = { retries: 3, retryAfter: 0 };
+    const client = getOctokitClient(octokitOptions, logger, retryOptions);
 
     expect(MockOctokit.plugin).not.toHaveBeenCalled();
     expect(MockOctokit).toHaveBeenCalledWith({
@@ -103,7 +108,7 @@ describe('getOctokitClient', () => {
     expect(client).toBe(mockOctokitInstance);
   });
 
-  it('returns a retry-enabled Octokit client with default retries and delay', () => {
+  it('returns a retry-enabled Octokit client with default retries and delay when retryOptions is undefined', () => {
     const client = getOctokitClient(octokitOptions, logger);
 
     expect(MockOctokit.plugin).toHaveBeenCalledWith(retry);
@@ -119,7 +124,8 @@ describe('getOctokitClient', () => {
   });
 
   it('returns a retry-enabled Octokit client with custom retries and delay', () => {
-    const client = getOctokitClient(octokitOptions, logger, 5, 2000);
+    const retryOptions = { retries: 5, retryAfter: 2000 };
+    const client = getOctokitClient(octokitOptions, logger, retryOptions);
 
     expect(MockOctokit.plugin).toHaveBeenCalledWith(retry);
     expect(MockOctokit).toHaveBeenCalledWith({
@@ -139,7 +145,8 @@ describe('getOctokitClient', () => {
       request: { timeout: 60_000 },
     };
 
-    getOctokitClient(optionsWithRequest, logger, 3, 1000);
+    const retryOptions = { retries: 3, retryAfter: 1000 };
+    getOctokitClient(optionsWithRequest, logger, retryOptions);
 
     expect(MockOctokit).toHaveBeenCalledWith({
       ...optionsWithRequest,

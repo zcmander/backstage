@@ -33,26 +33,33 @@ const DEFAULT_TIMEOUT_MS = 60_000;
 const DEFAULT_RETRY_ATTEMPTS = 3;
 const DEFAULT_RETRY_DELAY_MS = 1000;
 
+type RetryOptions = {
+  // The number of retry attempts for failed requests
+  retries?: number;
+  // The delay in milliseconds between retry attempts
+  retryAfter?: number;
+};
+
 /**
  * Helper function to determine if retries are enabled based on the provided
  * options.
  *
- * Retries are enabled by default, but can be disabled by setting either `retries`
- * or `retryAfter` to 0.
+ * @param retryOptions - Optional retry configuration options, including the number
+ * of retries and the delay between retries.
  *
- * @param retries - The number of retry attempts for failed requests. Default is 3.
- * Setting to 0 will disable retries.
- * @param retryAfter - The delay in milliseconds between retry attempts.
- * Default is 1000ms. Setting to 0 will disable retries.
- *
- * @returns A boolean indicating whether retries are enabled or not.
+ * @returns False if retries/retryAfter are explicitly set to 0 or less.
+ * Returns true otherwise.
  */
-export function isRetryEnabled(retries?: number, retryAfter?: number): boolean {
-  if (retries === 0) {
+export function isRetryEnabled(retryOptions?: RetryOptions): boolean {
+  if (retryOptions === undefined) {
+    return true;
+  }
+
+  if (retryOptions.retries !== undefined && retryOptions.retries <= 0) {
     return false;
   }
 
-  if (retryAfter === 0) {
+  if (retryOptions.retryAfter !== undefined && retryOptions.retryAfter <= 0) {
     return false;
   }
 
@@ -72,22 +79,20 @@ export function isRetryEnabled(retries?: number, retryAfter?: number): boolean {
  * Generally provided by the `getOctokitOptions` helper.
  * @param logger - LoggerService instance for logging retry attempts and
  * failures.
- * @param retries - The number of retry attempts for failed requests.
- * Default is 3. Setting to 0 will disable retries.
- * @param retryAfter - The delay in milliseconds between retry attempts.
- * Default is 1000ms. Setting to 0 will disable retries.
+ * @param retryOptions - Optional retry configuration options, including the
+ * number of retries and the delay between retries.
+ *
  * @returns An authenticated Octokit client instance based on the provided
  * options.
  */
 export function getOctokitClient(
   octokitOptions: OctokitOptions,
   logger: LoggerService,
-  retries: number = DEFAULT_RETRY_ATTEMPTS,
-  retryAfter: number = DEFAULT_RETRY_DELAY_MS,
+  retryOptions?: RetryOptions,
 ): Octokit {
   // Default behavior is to enable retries, but allow callers to disable by
   // explicitly setting retries or retryAfter to 0
-  if (!isRetryEnabled(retries, retryAfter)) {
+  if (!isRetryEnabled(retryOptions)) {
     return new Octokit({
       ...octokitOptions,
       log: logger,
@@ -96,6 +101,16 @@ export function getOctokitClient(
 
   // Update the octokit options to include retry configuration with logging
   const OctokitClient = Octokit.plugin(retry);
+
+  // From the octokit/plugin-retry documentation, specifying these values will
+  // always retry regardless of the response code
+  const retries = retryOptions?.retries
+    ? retryOptions?.retries
+    : DEFAULT_RETRY_ATTEMPTS;
+  const retryAfter = retryOptions?.retryAfter
+    ? retryOptions?.retryAfter
+    : DEFAULT_RETRY_DELAY_MS;
+
   return new OctokitClient({
     ...octokitOptions,
     request: {
