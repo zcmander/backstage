@@ -34,7 +34,7 @@ const DEFAULT_RETRY_ATTEMPTS = 3;
 const DEFAULT_RETRY_DELAY_MS = 1_000;
 
 /**
- * Options used to override the default retry behavior of @octokit/plugin-retry.
+ * Options used to override plugin-retry defaults
  * @public
  */
 export type RetryOptions = {
