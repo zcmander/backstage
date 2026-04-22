@@ -39,7 +39,6 @@ const DEFAULT_RETRY_DELAY_MS = 1000;
  *
  * Retries are enabled by default, but can be disabled by setting either `retries`
  * or `retryAfter` to 0.
- * @public
  *
  * @param retries - The number of retry attempts for failed requests. Default is 3.
  * Setting to 0 will disable retries.
@@ -67,6 +66,7 @@ export function isRetryEnabled(retries?: number, retryAfter?: number): boolean {
  * If retries are enabled (default), the client will retry failed requests up
  * to the specified number of retries and delay.
  * To disable retries, set either `retries` or `retryAfter` to 0 in the options.
+ * @public
  *
  * @param octokitOptions - The options for configuring the Octokit client.
  * Generally provided by the `getOctokitOptions` helper.
