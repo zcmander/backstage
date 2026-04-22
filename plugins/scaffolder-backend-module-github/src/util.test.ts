@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The Backstage Authors
+ * Copyright 2026 The Backstage Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,15 +39,15 @@ describe('isRetryEnabled', () => {
     expect(isRetryEnabled()).toBe(true);
   });
 
-  it('returns true when retries is positive and retryDelay is undefined', () => {
+  it('returns true when retries is positive and retryAfter is undefined', () => {
     expect(isRetryEnabled(3)).toBe(true);
   });
 
-  it('returns true when retries is undefined and retryDelay is positive', () => {
+  it('returns true when retries is undefined and retryAfter is positive', () => {
     expect(isRetryEnabled(undefined, 1000)).toBe(true);
   });
 
-  it('returns true when both retries and retryDelay are positive', () => {
+  it('returns true when both retries and retryAfter are positive', () => {
     expect(isRetryEnabled(5, 2000)).toBe(true);
   });
 
@@ -55,15 +55,15 @@ describe('isRetryEnabled', () => {
     expect(isRetryEnabled(0)).toBe(false);
   });
 
-  it('returns false when retryDelay is 0', () => {
+  it('returns false when retryAfter is 0', () => {
     expect(isRetryEnabled(undefined, 0)).toBe(false);
   });
 
-  it('returns false when retries is 0 even if retryDelay is positive', () => {
+  it('returns false when retries is 0 even if retryAfter is positive', () => {
     expect(isRetryEnabled(0, 1000)).toBe(false);
   });
 
-  it('returns false when retryDelay is 0 even if retries is positive', () => {
+  it('returns false when retryAfter is 0 even if retries is positive', () => {
     expect(isRetryEnabled(3, 0)).toBe(false);
   });
 });
@@ -92,7 +92,7 @@ describe('getOctokitClient', () => {
     expect(client).toBe(mockOctokitInstance);
   });
 
-  it('returns a plain Octokit client when retryDelay is 0', () => {
+  it('returns a plain Octokit client when retryAfter is 0', () => {
     const client = getOctokitClient(octokitOptions, logger, 3, 0);
 
     expect(MockOctokit.plugin).not.toHaveBeenCalled();
