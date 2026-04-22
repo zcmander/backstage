@@ -22,8 +22,89 @@ import {
 } from '@backstage/integration';
 import { parseRepoUrl } from '@backstage/plugin-scaffolder-node';
 import { OctokitOptions } from '@octokit/core/dist-types/types';
+import { Octokit } from 'octokit';
+import { retry } from '@octokit/plugin-retry';
+import { LoggerService } from '@backstage/backend-plugin-api';
 
 const DEFAULT_TIMEOUT_MS = 60_000;
+
+// By default, octokit/plugin-retry will retry 3 times with a 1 second delay
+// between retries.
+const DEFAULT_RETRY_ATTEMPTS = 3;
+const DEFAULT_RETRY_DELAY_MS = 1000;
+
+/**
+ * Helper function to determine if retries are enabled based on the provided
+ * options.
+ *
+ * Retries are enabled by default, but can be disabled by setting either `retries`
+ * or `retryDelay` to 0.
+ *
+ * @param retries - The number of retry attempts for failed requests. Default is 3.
+ * Setting to 0 will disable retries.
+ * @param retryDelay - The delay in milliseconds between retry attempts.
+ * Default is 1000ms. Setting to 0 will disable retries.
+ *
+ * @returns A boolean indicating whether retries are enabled or not.
+ */
+export function isRetryEnabled(retries?: number, retryDelay?: number): boolean {
+  if (retries === 0) {
+    return false;
+  }
+
+  if (retryDelay === 0) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Helper for generating an authenticated Octokit client with (or without)
+ * retry capabilities.
+ *
+ * If retries are enabled (default), the client will retry failed requests up
+ * to the specified number of retries and delay.
+ * To disable retries, set either `retries` or `retryDelay` to 0 in the options.
+ *
+ * @param octokitOptions - The options for configuring the Octokit client.
+ * Generally provided by the `getOctokitOptions` helper.
+ * @param logger - LoggerService instance for logging retry attempts and
+ * failures.
+ * @param retries - The number of retry attempts for failed requests.
+ * Default is 3. Setting to 0 will disable retries.
+ * @param retryDelay - The delay in milliseconds between retry attempts.
+ * Default is 1000ms. Setting to 0 will disable retries.
+ * @returns An authenticated Octokit client instance based on the provided
+ * options.
+ */
+export function getOctokitClient(
+  octokitOptions: OctokitOptions,
+  logger: LoggerService,
+  retries: number = DEFAULT_RETRY_ATTEMPTS,
+  retryDelay: number = DEFAULT_RETRY_DELAY_MS,
+): Octokit {
+  // Default behavior is to enable retries, but allow callers to disable by
+  // explicitly setting retries or retryDelay to 0
+  if (!isRetryEnabled(retries, retryDelay)) {
+    return new Octokit({
+      ...octokitOptions,
+      log: logger,
+    });
+  }
+
+  // Update the octokit options to include retry configuration with logging
+  const MyOctokit = Octokit.plugin(retry);
+  return new MyOctokit({
+    ...octokitOptions,
+    request: {
+      ...octokitOptions.request,
+      retries,
+      retryAfter: retryDelay,
+    },
+    log: logger,
+  });
+}
 
 /**
  * Helper for generating octokit configuration options.
