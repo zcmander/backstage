@@ -33,6 +33,10 @@ const DEFAULT_TIMEOUT_MS = 60_000;
 const DEFAULT_RETRY_ATTEMPTS = 3;
 const DEFAULT_RETRY_DELAY_MS = 1_000;
 
+/**
+ * Options used to override the default retry behavior of @octokit/plugin-retry.
+ * @public
+ */
 export type RetryOptions = {
   // The number of retry attempts for failed requests
   retries?: number;
