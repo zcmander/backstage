@@ -21,6 +21,7 @@ import { Server as McpServer } from '@modelcontextprotocol/sdk/server/index.js';
 import {
   ListToolsRequestSchema,
   CallToolRequestSchema,
+  Tool,
   ToolSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { JsonObject } from '@backstage/types';
@@ -166,7 +167,7 @@ export class McpService {
           ? this.filterActions(allActions, serverConfig)
           : allActions;
 
-        const tools = [];
+        const tools: Tool[] = [];
         for (const action of actions) {
           const tool = {
             inputSchema: action.schema.input,
@@ -195,7 +196,7 @@ export class McpService {
             continue;
           }
 
-          tools.push(tool);
+          tools.push(parsed.data);
         }
 
         return { tools };
