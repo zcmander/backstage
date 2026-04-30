@@ -20,12 +20,8 @@ import { ctrlc } from 'ctrlc-windows';
 import { IpcServer, ServerDataStore } from '../ipc';
 import debounce from 'lodash/debounce';
 import { fileURLToPath } from 'node:url';
-import {
-  isAbsolute as isAbsolutePath,
-  resolve as resolvePath,
-} from 'node:path';
+import { isAbsolute as isAbsolutePath } from 'node:path';
 import { targetPaths } from '@backstage/cli-common';
-import { ConfigSources } from '@backstage/config-loader';
 
 import spawn from 'cross-spawn';
 import { startEmbeddedDb } from './startEmbeddedDb';
@@ -66,21 +62,14 @@ export async function runBackend(options: RunBackendOptions) {
 
   const extraEnv: Record<string, string> = {};
 
-  let embeddedDb: Awaited<ReturnType<typeof startEmbeddedDb>> | undefined;
-
-  const dbConfig = await readDatabaseConfig(
-    options.configPaths,
-    options.targetDir,
-  );
-  if (dbConfig?.client === 'embedded-postgres') {
-    embeddedDb = await startEmbeddedDb(dbConfig.connection);
-    const overrides: Record<string, unknown> = {
-      client: 'pg',
-    };
-    if (Object.keys(embeddedDb.defaultedConnection).length > 0) {
-      overrides.connection = embeddedDb.defaultedConnection;
-    }
-    extraEnv.APP_CONFIG_backend_database = JSON.stringify(overrides);
+  const embeddedDb = await startEmbeddedDb({
+    configPaths: options.configPaths,
+    targetDir: options.targetDir,
+  });
+  if (embeddedDb) {
+    extraEnv.APP_CONFIG_backend_database = JSON.stringify(
+      embeddedDb.configOverride,
+    );
   }
 
   let exiting = false;
@@ -222,60 +211,4 @@ export async function runBackend(options: RunBackendOptions) {
   });
 
   return () => exitPromise;
-}
-
-async function readDatabaseConfig(
-  configPaths?: string[],
-  targetDir?: string,
-): Promise<
-  | {
-      client: string;
-      connection?: import('./startEmbeddedDb').EmbeddedDbConnectionConfig;
-    }
-  | undefined
-> {
-  const rootDir = targetPaths.rootDir;
-  const configBaseDir = targetDir ?? rootDir;
-  const source = ConfigSources.default({
-    rootDir,
-    allowMissingDefaultConfig: true,
-    argv: (configPaths ?? []).flatMap(p => [
-      '--config',
-      isAbsolutePath(p) ? p : resolvePath(configBaseDir, p),
-    ]),
-  });
-
-  const config = await ConfigSources.toConfig(source);
-  try {
-    const client = config.getOptionalString('backend.database.client');
-    if (!client) {
-      return undefined;
-    }
-
-    // Only read structured connection config if the value is an object;
-    // it can also be a plain string (e.g. ':memory:' for better-sqlite3).
-    const rawConnection = config.getOptional('backend.database.connection');
-    if (typeof rawConnection === 'string' || rawConnection === undefined) {
-      return { client };
-    }
-
-    const host = config.getOptionalString('backend.database.connection.host');
-    const port = config.getOptionalNumber('backend.database.connection.port');
-    const user = config.getOptionalString('backend.database.connection.user');
-    const password = config.getOptionalString(
-      'backend.database.connection.password',
-    );
-
-    const connection =
-      host !== undefined ||
-      port !== undefined ||
-      user !== undefined ||
-      password !== undefined
-        ? { host, port, user, password }
-        : undefined;
-
-    return { client, connection };
-  } finally {
-    config.close();
-  }
 }
