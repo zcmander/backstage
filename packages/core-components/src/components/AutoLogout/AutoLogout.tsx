@@ -21,7 +21,7 @@ import {
   identityApiRef,
   useApi,
 } from '@backstage/core-plugin-api';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   EventsType,
   IIdleTimer,
@@ -231,6 +231,7 @@ const parseConfig = (
 export const AutoLogout = (props: AutoLogoutProps): JSX.Element | null => {
   const identityApi = useApi(identityApiRef);
   const configApi = useApi(configApiRef);
+  const isLoggedRef = useRef<boolean | null>(null);
   const [isLogged, setIsLogged] = useState<boolean | null>(null);
   const lastSeenOnlineStore: TimestampStore = useMemo(
     () => new DefaultTimestampStore(LAST_SEEN_ONLINE_STORAGE_KEY),
@@ -238,15 +239,23 @@ export const AutoLogout = (props: AutoLogoutProps): JSX.Element | null => {
   );
 
   useEffect(() => {
-    async function isLoggedIn(identity: IdentityApi) {
+    isLoggedRef.current = isLogged;
+  }, [isLogged]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const timeoutId = setTimeout(() => {
+      if (cancelled) return;
+      if (isLoggedRef.current === null || isLoggedRef.current === false) {
+        lastSeenOnlineStore.delete();
+      }
+    }, 3000);
+
+    async function checkLogin(identity: IdentityApi) {
       try {
-        // Add timeout if identity.getCredentials() hangs/takes too long to return
-        setTimeout(() => {
-          if (isLogged === null || isLogged === false) {
-            lastSeenOnlineStore.delete();
-          }
-        }, 3000);
         const creds = await identity.getCredentials();
+        if (cancelled) return;
         if (creds?.token) {
           setIsLogged(true);
         } else {
@@ -254,12 +263,18 @@ export const AutoLogout = (props: AutoLogoutProps): JSX.Element | null => {
           lastSeenOnlineStore.delete();
         }
       } catch (err) {
+        if (cancelled) return;
         setIsLogged(false);
         lastSeenOnlineStore.delete();
       }
     }
-    isLoggedIn(identityApi);
-  }, [isLogged, lastSeenOnlineStore, identityApi]);
+    checkLogin(identityApi);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [lastSeenOnlineStore, identityApi]);
 
   const {
     enabled,
