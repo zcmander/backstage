@@ -52,7 +52,14 @@ async function cleanStaleDatabases() {
   );
 }
 
-export async function startEmbeddedDb() {
+export interface EmbeddedDbConnectionConfig {
+  host?: string;
+  port?: number;
+  user?: string;
+  password?: string;
+}
+
+export async function startEmbeddedDb(userConfig?: EmbeddedDbConnectionConfig) {
   console.warn(
     chalk.yellow(
       'WARNING: Using embedded-postgres for local development is experimental and subject to change',
@@ -72,10 +79,10 @@ export async function startEmbeddedDb() {
 
   await cleanStaleDatabases();
 
-  const host = 'localhost';
-  const user = 'postgres';
-  const password = 'password';
-  const port = await getPortPromise();
+  const host = userConfig?.host ?? 'localhost';
+  const user = userConfig?.user ?? 'postgres';
+  const password = userConfig?.password ?? 'password';
+  const port = userConfig?.port ?? (await getPortPromise());
   const tmpDir = await fs.mkdtemp(resolvePath(os.tmpdir(), TEMP_DIR_PREFIX));
 
   const pg = new EmbeddedPostgres({
@@ -100,6 +107,20 @@ export async function startEmbeddedDb() {
     throw error;
   }
 
+  const defaultedConnection: Record<string, string | number> = {};
+  if (!userConfig?.host) {
+    defaultedConnection.host = host;
+  }
+  if (!userConfig?.user) {
+    defaultedConnection.user = user;
+  }
+  if (!userConfig?.password) {
+    defaultedConnection.password = password;
+  }
+  if (!userConfig?.port) {
+    defaultedConnection.port = port;
+  }
+
   return {
     connection: {
       host,
@@ -107,6 +128,7 @@ export async function startEmbeddedDb() {
       password,
       port,
     },
+    defaultedConnection,
     async close() {
       await pg.stop();
       await fs.remove(tmpDir);

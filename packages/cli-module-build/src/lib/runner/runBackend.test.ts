@@ -88,6 +88,7 @@ describe('runBackend', () => {
     mockToConfig.mockResolvedValue({
       close: jest.fn(),
       getOptionalString: () => undefined,
+      getOptionalNumber: () => undefined,
     });
     mockStartEmbeddedDb.mockReset();
   });
@@ -180,14 +181,21 @@ describe('runBackend', () => {
   });
 
   describe('embedded-postgres support', () => {
-    it('should start embedded DB and inject config when database client is embedded-postgres', async () => {
+    it('should start embedded DB and inject all defaults when no user connection config is provided', async () => {
       mockToConfig.mockResolvedValue({
         close: jest.fn(),
         getOptionalString: (key: string) =>
           key === 'backend.database.client' ? 'embedded-postgres' : undefined,
+        getOptionalNumber: () => undefined,
       });
       mockStartEmbeddedDb.mockResolvedValue({
         connection: {
+          host: 'localhost',
+          user: 'postgres',
+          password: 'password',
+          port: 5555,
+        },
+        defaultedConnection: {
           host: 'localhost',
           user: 'postgres',
           password: 'password',
@@ -199,8 +207,7 @@ describe('runBackend', () => {
       runBackend({ entry: 'src/index' });
       await jest.advanceTimersByTimeAsync(100);
 
-      expect(mockStartEmbeddedDb).toHaveBeenCalled();
-      expect(mockSpawn).toHaveBeenCalled();
+      expect(mockStartEmbeddedDb).toHaveBeenCalledWith(undefined);
       const spawnEnv = mockSpawn.mock.calls[0][2]?.env as Record<
         string,
         string
@@ -217,10 +224,112 @@ describe('runBackend', () => {
       });
     });
 
+    it('should forward user-provided connection config and only inject defaults for missing values', async () => {
+      const configValues: Record<string, string | number> = {
+        'backend.database.client': 'embedded-postgres',
+        'backend.database.connection.host': '0.0.0.0',
+        'backend.database.connection.port': 15432,
+      };
+      mockToConfig.mockResolvedValue({
+        close: jest.fn(),
+        getOptionalString: (key: string) => {
+          const val = configValues[key];
+          return typeof val === 'string' ? val : undefined;
+        },
+        getOptionalNumber: (key: string) => {
+          const val = configValues[key];
+          return typeof val === 'number' ? val : undefined;
+        },
+      });
+      mockStartEmbeddedDb.mockResolvedValue({
+        connection: {
+          host: '0.0.0.0',
+          user: 'postgres',
+          password: 'password',
+          port: 15432,
+        },
+        defaultedConnection: {
+          user: 'postgres',
+          password: 'password',
+        },
+        close: jest.fn(),
+      });
+
+      runBackend({ entry: 'src/index' });
+      await jest.advanceTimersByTimeAsync(100);
+
+      expect(mockStartEmbeddedDb).toHaveBeenCalledWith({
+        host: '0.0.0.0',
+        port: 15432,
+        user: undefined,
+        password: undefined,
+      });
+      const spawnEnv = mockSpawn.mock.calls[0][2]?.env as Record<
+        string,
+        string
+      >;
+      const injected = JSON.parse(spawnEnv.APP_CONFIG_backend_database);
+      expect(injected).toEqual({
+        client: 'pg',
+        connection: {
+          user: 'postgres',
+          password: 'password',
+        },
+      });
+    });
+
+    it('should not inject connection overrides when all values are user-provided', async () => {
+      const configValues: Record<string, string | number> = {
+        'backend.database.client': 'embedded-postgres',
+        'backend.database.connection.host': '0.0.0.0',
+        'backend.database.connection.port': 15432,
+        'backend.database.connection.user': 'myuser',
+        'backend.database.connection.password': 'mypass',
+      };
+      mockToConfig.mockResolvedValue({
+        close: jest.fn(),
+        getOptionalString: (key: string) => {
+          const val = configValues[key];
+          return typeof val === 'string' ? val : undefined;
+        },
+        getOptionalNumber: (key: string) => {
+          const val = configValues[key];
+          return typeof val === 'number' ? val : undefined;
+        },
+      });
+      mockStartEmbeddedDb.mockResolvedValue({
+        connection: {
+          host: '0.0.0.0',
+          user: 'myuser',
+          password: 'mypass',
+          port: 15432,
+        },
+        defaultedConnection: {},
+        close: jest.fn(),
+      });
+
+      runBackend({ entry: 'src/index' });
+      await jest.advanceTimersByTimeAsync(100);
+
+      expect(mockStartEmbeddedDb).toHaveBeenCalledWith({
+        host: '0.0.0.0',
+        port: 15432,
+        user: 'myuser',
+        password: 'mypass',
+      });
+      const spawnEnv = mockSpawn.mock.calls[0][2]?.env as Record<
+        string,
+        string
+      >;
+      const injected = JSON.parse(spawnEnv.APP_CONFIG_backend_database);
+      expect(injected).toEqual({ client: 'pg' });
+    });
+
     it('should resolve config paths relative to targetDir', async () => {
       mockToConfig.mockResolvedValue({
         close: jest.fn(),
         getOptionalString: () => undefined,
+        getOptionalNumber: () => undefined,
       });
 
       runBackend({
@@ -242,13 +351,13 @@ describe('runBackend', () => {
         close: jest.fn(),
         getOptionalString: (key: string) =>
           key === 'backend.database.client' ? 'better-sqlite3' : undefined,
+        getOptionalNumber: () => undefined,
       });
 
       runBackend({ entry: 'src/index' });
       await jest.advanceTimersByTimeAsync(100);
 
       expect(mockStartEmbeddedDb).not.toHaveBeenCalled();
-      expect(mockSpawn).toHaveBeenCalled();
       const spawnEnv = mockSpawn.mock.calls[0][2]?.env as Record<
         string,
         string

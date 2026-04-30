@@ -68,16 +68,19 @@ export async function runBackend(options: RunBackendOptions) {
 
   let embeddedDb: Awaited<ReturnType<typeof startEmbeddedDb>> | undefined;
 
-  const dbClient = await readDatabaseClient(
+  const dbConfig = await readDatabaseConfig(
     options.configPaths,
     options.targetDir,
   );
-  if (dbClient === 'embedded-postgres') {
-    embeddedDb = await startEmbeddedDb();
-    extraEnv.APP_CONFIG_backend_database = JSON.stringify({
+  if (dbConfig?.client === 'embedded-postgres') {
+    embeddedDb = await startEmbeddedDb(dbConfig.connection);
+    const overrides: Record<string, unknown> = {
       client: 'pg',
-      connection: embeddedDb.connection,
-    });
+    };
+    if (Object.keys(embeddedDb.defaultedConnection).length > 0) {
+      overrides.connection = embeddedDb.defaultedConnection;
+    }
+    extraEnv.APP_CONFIG_backend_database = JSON.stringify(overrides);
   }
 
   let exiting = false;
@@ -221,10 +224,16 @@ export async function runBackend(options: RunBackendOptions) {
   return () => exitPromise;
 }
 
-async function readDatabaseClient(
+async function readDatabaseConfig(
   configPaths?: string[],
   targetDir?: string,
-): Promise<string | undefined> {
+): Promise<
+  | {
+      client: string;
+      connection?: import('./startEmbeddedDb').EmbeddedDbConnectionConfig;
+    }
+  | undefined
+> {
   const rootDir = targetPaths.rootDir;
   const configBaseDir = targetDir ?? rootDir;
   const source = ConfigSources.default({
@@ -238,7 +247,27 @@ async function readDatabaseClient(
 
   const config = await ConfigSources.toConfig(source);
   try {
-    return config.getOptionalString('backend.database.client');
+    const client = config.getOptionalString('backend.database.client');
+    if (!client) {
+      return undefined;
+    }
+
+    const host = config.getOptionalString('backend.database.connection.host');
+    const port = config.getOptionalNumber('backend.database.connection.port');
+    const user = config.getOptionalString('backend.database.connection.user');
+    const password = config.getOptionalString(
+      'backend.database.connection.password',
+    );
+
+    const connection =
+      host !== undefined ||
+      port !== undefined ||
+      user !== undefined ||
+      password !== undefined
+        ? { host, port, user, password }
+        : undefined;
+
+    return { client, connection };
   } finally {
     config.close();
   }
