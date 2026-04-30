@@ -43,12 +43,14 @@ export const useLogoutDisconnectedUserEffect = ({
      * Considers disconnected users as inactive users.
      * If all Backstage tabs are closed and idleTimeoutMinutes are passed then logout the user anyway.
      */
+    const shouldCheckDisconnectedUser = autologoutIsEnabled && enableEffect;
+
     // Prevent lastSeen getting deleted before logged state is checked
-    if (isLoggedIn === null) {
+    if (shouldCheckDisconnectedUser && isLoggedIn === null) {
       return;
     }
 
-    if (autologoutIsEnabled && isLoggedIn && enableEffect) {
+    if (shouldCheckDisconnectedUser && isLoggedIn) {
       const lastSeenOnline = lastSeenOnlineStore.get();
       if (lastSeenOnline) {
         const now = new Date();
