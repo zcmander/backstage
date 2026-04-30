@@ -87,6 +87,7 @@ describe('runBackend', () => {
 
     mockToConfig.mockResolvedValue({
       close: jest.fn(),
+      getOptional: () => undefined,
       getOptionalString: () => undefined,
       getOptionalNumber: () => undefined,
     });
@@ -184,6 +185,7 @@ describe('runBackend', () => {
     it('should start embedded DB and inject all defaults when no user connection config is provided', async () => {
       mockToConfig.mockResolvedValue({
         close: jest.fn(),
+        getOptional: () => undefined,
         getOptionalString: (key: string) =>
           key === 'backend.database.client' ? 'embedded-postgres' : undefined,
         getOptionalNumber: () => undefined,
@@ -232,6 +234,7 @@ describe('runBackend', () => {
       };
       mockToConfig.mockResolvedValue({
         close: jest.fn(),
+        getOptional: () => ({ host: '0.0.0.0', port: 15432 }),
         getOptionalString: (key: string) => {
           const val = configValues[key];
           return typeof val === 'string' ? val : undefined;
@@ -288,6 +291,12 @@ describe('runBackend', () => {
       };
       mockToConfig.mockResolvedValue({
         close: jest.fn(),
+        getOptional: () => ({
+          host: '0.0.0.0',
+          port: 15432,
+          user: 'myuser',
+          password: 'mypass',
+        }),
         getOptionalString: (key: string) => {
           const val = configValues[key];
           return typeof val === 'string' ? val : undefined;
@@ -328,6 +337,7 @@ describe('runBackend', () => {
     it('should resolve config paths relative to targetDir', async () => {
       mockToConfig.mockResolvedValue({
         close: jest.fn(),
+        getOptional: () => undefined,
         getOptionalString: () => undefined,
         getOptionalNumber: () => undefined,
       });
@@ -346,9 +356,10 @@ describe('runBackend', () => {
       );
     });
 
-    it('should not start embedded DB for other database clients', async () => {
+    it('should not start embedded DB for other database clients with a string connection', async () => {
       mockToConfig.mockResolvedValue({
         close: jest.fn(),
+        getOptional: () => ':memory:',
         getOptionalString: (key: string) =>
           key === 'backend.database.client' ? 'better-sqlite3' : undefined,
         getOptionalNumber: () => undefined,

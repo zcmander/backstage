@@ -252,6 +252,13 @@ async function readDatabaseConfig(
       return undefined;
     }
 
+    // Only read structured connection config if the value is an object;
+    // it can also be a plain string (e.g. ':memory:' for better-sqlite3).
+    const rawConnection = config.getOptional('backend.database.connection');
+    if (typeof rawConnection === 'string' || rawConnection === undefined) {
+      return { client };
+    }
+
     const host = config.getOptionalString('backend.database.connection.host');
     const port = config.getOptionalNumber('backend.database.connection.port');
     const user = config.getOptionalString('backend.database.connection.user');
