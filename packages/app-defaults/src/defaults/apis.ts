@@ -66,6 +66,16 @@ import {
   IdentityPermissionApi,
 } from '@backstage/plugin-permission-react';
 
+// Internal import to avoid code duplication.
+// This is imported from the new frontend system module.
+// eslint-disable-next-line @backstage/no-relative-monorepo-imports
+import {
+  ToastApiForwarder,
+  toastApiForwarderRef,
+} from '../../../../plugins/app/src/apis';
+// eslint-disable-next-line @backstage/no-relative-monorepo-imports
+import { toastApiRef } from '../../../frontend-plugin-api/src/apis';
+
 export const apis = [
   createApiFactory({
     api: discoveryApiRef,
@@ -303,5 +313,15 @@ export const apis = [
     },
     factory: ({ config, discovery, identity }) =>
       IdentityPermissionApi.create({ config, discovery, identity }),
+  }),
+  createApiFactory({
+    api: toastApiForwarderRef,
+    deps: {},
+    factory: () => new ToastApiForwarder(),
+  }),
+  createApiFactory({
+    api: toastApiRef,
+    deps: { forwarder: toastApiForwarderRef },
+    factory: ({ forwarder }) => forwarder,
   }),
 ];
