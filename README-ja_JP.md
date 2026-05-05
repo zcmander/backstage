@@ -6,32 +6,32 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![CNCF Status](https://img.shields.io/badge/cncf%20status-incubation-blue.svg)](https://www.cncf.io/projects)
-[![Discord](https://img.shields.io/discord/687207715902193673?logo=discord\&label=Discord\&color=5865F2\&logoColor=white)](https://discord.gg/backstage-687207715902193673)
+[![Discord](https://img.shields.io/discord/687207715902193673?logo=discord&label=Discord&color=5865F2&logoColor=white)](https://discord.gg/backstage-687207715902193673)
 ![Code style](https://img.shields.io/badge/code_style-prettier-ff69b4.svg)
 [![Codecov](https://img.shields.io/codecov/c/github/backstage/backstage)](https://codecov.io/gh/backstage/backstage)
 [![](https://img.shields.io/github/v/release/backstage/backstage)](https://github.com/backstage/backstage/releases)
 [![OpenSSF Best Practices](https://bestpractices.coreinfrastructure.org/projects/7678/badge)](https://bestpractices.coreinfrastructure.org/projects/7678)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/backstage/backstage/badge)](https://securityscorecards.dev/viewer/?uri=github.com/backstage/backstage)
 
-## Backstageとは何か
+## Backstage とは何か
 
-[Backstage](https://backstage.io/) は、開発者ポータルの構築のためのオープンソースフレームワークです。一元化されたソフトウェアカタログを基盤とすることで、Backstageはマイクロサービスやインフラの秩序をもたらし、プロダクトチームが自律性を損なうことなく、高品質なコードを迅速にリリースできるようにします。
+[Backstage](https://backstage.io/) は、開発者ポータルの構築のためのオープンソースフレームワークです。一元化されたソフトウェアカタログを基盤とすることで、Backstage はマイクロサービスやインフラの秩序をもたらし、プロダクトチームが自律性を損なうことなく、高品質なコードを迅速にリリースできるようにします。
 
-Backstageは、すべてのインフラストラクチャツール、サービス、ドキュメントを統合し、エンドツーエンドで効率的な開発環境を構築します。
+Backstage は、すべてのインフラストラクチャツール、サービス、ドキュメントを統合し、エンドツーエンドで効率的な開発環境を構築します。
 
 ![software-catalog](docs/assets/header.png)
 
-Backstageは、以下の標準機能が含まれます:
+Backstage は、以下の標準機能が含まれます:
 
-* [Backstage Software Catalog](https://backstage.io/docs/features/software-catalog/) — マイクロサービス、ライブラリ、データパイプライン、ウェブサイト、ML（機械学習）モデルなど、すべてのソフトウェアを管理します
+- [Backstage Software Catalog](https://backstage.io/docs/features/software-catalog/) — マイクロサービス、ライブラリ、データパイプライン、ウェブサイト、ML（機械学習）モデルなど、すべてのソフトウェアを管理します
 
-* [Backstage Software Templates](https://backstage.io/docs/features/software-templates/) — 新規プロジェクトの迅速な立ち上げと、組織のベストプラクティスに基づいたツールを標準化します
+- [Backstage Software Templates](https://backstage.io/docs/features/software-templates/) — 新規プロジェクトの迅速な立ち上げと、組織のベストプラクティスに基づいたツールを標準化します
 
-* [Backstage TechDocs](https://backstage.io/docs/features/techdocs/) — 「コードとしてのドキュメント（docs like code）」アプローチを採用し、技術ドキュメントの作成・維持・検索・活用を容易にします
+- [Backstage TechDocs](https://backstage.io/docs/features/techdocs/) — 「コードとしてのドキュメント（docs like code）」アプローチを採用し、技術ドキュメントの作成・維持・検索・活用を容易にします
 
-* さらに、Backstageのカスタマイズ性と機能性をさらに拡張する[オープンソースプラグイン](https://github.com/backstage/backstage/tree/master/plugins)のエコシステムも成長を続けています
+- さらに、Backstage のカスタマイズ性と機能性をさらに拡張する[オープンソースプラグイン](https://github.com/backstage/backstage/tree/master/plugins)のエコシステムも成長を続けています
 
-BackstageはSpotifyによって作成されましたが、現在は[Cloud Native Computing Foundation (CNCF)](https://www.cncf.io) によってインキュベーションレベルプロジェクトとしてホストされています。詳細については、[アナウンスメント](https://backstage.io/blog/2022/03/16/backstage-turns-two#out-of-the-sandbox-and-into-incubation)をご覧ください。
+Backstage は Spotify によって作成されましたが、現在は[Cloud Native Computing Foundation (CNCF)](https://www.cncf.io) によってインキュベーションレベルプロジェクトとしてホストされています。詳細については、[アナウンスメント](https://backstage.io/blog/2022/03/16/backstage-turns-two#out-of-the-sandbox-and-into-incubation)をご覧ください。
 
 ## プロジェクトロードマップ
 
@@ -39,45 +39,45 @@ BackstageはSpotifyによって作成されましたが、現在は[Cloud Native
 
 ## はじめに
 
-Backstageの使用を開始するには、[Getting Started ドキュメント](https://backstage.io/docs/getting-started)をご覧ください。
+Backstage の使用を開始するには、[Getting Started ドキュメント](https://backstage.io/docs/getting-started)をご覧ください。
 
 ## ドキュメント
 
-Backstageのドキュメントには以下のが含まれます:
+Backstage のドキュメントには以下のが含まれます:
 
-* [メインドキュメント](https://backstage.io/docs)
+- [メインドキュメント](https://backstage.io/docs)
 
-* [ソフトウェアカタログ](https://backstage.io/docs/features/software-catalog/)
+- [ソフトウェアカタログ](https://backstage.io/docs/features/software-catalog/)
 
-* [アーキテクチャ](https://backstage.io/docs/overview/architecture-overview) ([決定](https://backstage.io/docs/architecture-decisions/))
+- [アーキテクチャ](https://backstage.io/docs/overview/architecture-overview) ([決定](https://backstage.io/docs/architecture-decisions/))
 
-* [Backstage のためのデザイン](https://backstage.io/docs/dls/design)
+- [Backstage のためのデザイン](https://backstage.io/docs/dls/design)
 
-* [Storybook - UIコンポーネント](https://backstage.io/storybook)
+- [Storybook - UI コンポーネント](https://backstage.io/storybook)
 
 ## コミュニティ
 
 コミュニティへの参加には、以下のリソースをご活用ください：
 
-* [Discord チャットルーム](https://discord.gg/backstage-687207715902193673) — サポートの取得やプロジェクトの議論
+- [Discord チャットルーム](https://discord.gg/backstage-687207715902193673) — サポートの取得やプロジェクトの議論
 
-* [Backstage への貢献](https://github.com/backstage/backstage/blob/master/CONTRIBUTING.md) — 貢献を始める際はここからスタート
+- [Backstage への貢献](https://github.com/backstage/backstage/blob/master/CONTRIBUTING.md) — 貢献を始める際はここからスタート
 
-* [RFC](https://github.com/backstage/backstage/labels/rfc) — テクニカルディレクションの策定に参加
+- [RFC](https://github.com/backstage/backstage/labels/rfc) — テクニカルディレクションの策定に参加
 
-* [FAQ](https://backstage.io/docs/faq) — よくある質問
+- [FAQ](https://backstage.io/docs/faq) — よくある質問
 
-* [行動規範](CODE_OF_CONDUCT.md) — コミュニティの行動指針
+- [行動規範](CODE_OF_CONDUCT.md) — コミュニティの行動指針
 
-* [採用企業](ADOPTERS.md) — 既にBackstageを導入している企業
+- [採用企業](ADOPTERS.md) — 既に Backstage を導入している企業
 
-* [ブログ](https://backstage.io/blog/) — アナウンスおよびアップデート情報
+- [ブログ](https://backstage.io/blog/) — アナウンスおよびアップデート情報
 
-* [ニュースレター](https://spoti.fi/backstagenewsletter) — メールニュースレターを購読
+- [ニュースレター](https://spoti.fi/backstagenewsletter) — メールニュースレターを購読
 
-* [Backstage コミュニティセッション](https://github.com/backstage/community) — 月次ミートアップへの参加とBackstageコミュニティの探索
+- [Backstage コミュニティセッション](https://github.com/backstage/community) — 月次ミートアップへの参加と Backstage コミュニティの探索
 
-* スターをください ⭐️ — Backstageをご利用中、または興味深いプロジェクトだと思っていただけたなら、スターをいただけると嬉しいです ❤️
+- スターをください ⭐️ — Backstage をご利用中、または興味深いプロジェクトだと思っていただけたなら、スターをいただけると嬉しいです ❤️
 
 ## ガバナンス
 
