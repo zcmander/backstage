@@ -36,6 +36,7 @@ import { OidcService } from '../service/OidcService';
 import { TokenIssuer } from '../identity/types';
 import { OfflineAccessService } from './OfflineAccessService';
 import { CimdClientInfo, validateCimdUrl } from './CimdClient';
+import { catalogServiceMock } from '@backstage/plugin-catalog-node/testUtils';
 
 jest.mock('./CimdClient', () => {
   const actual = jest.requireActual('./CimdClient');
@@ -137,7 +138,10 @@ describe('OidcRouter', () => {
     };
   }
 
-  async function createRouterWithOfflineAccess(databaseId: TestDatabaseId) {
+  async function createRouterWithOfflineAccess(
+    databaseId: TestDatabaseId,
+    refreshTokenConfig?: Record<string, unknown>,
+  ) {
     const knex = await databases.init(databaseId);
 
     await knex.migrate.latest({
@@ -166,6 +170,7 @@ describe('OidcRouter', () => {
 
     const mockAuth = mockServices.auth.mock();
     const mockHttpAuth = mockServices.httpAuth.mock();
+    const mockCatalog = catalogServiceMock.mock();
     const mockConfig = mockServices.rootConfig({
       data: {
         auth: {
@@ -174,6 +179,7 @@ describe('OidcRouter', () => {
           },
           experimentalRefreshToken: {
             enabled: true,
+            ...refreshTokenConfig,
           },
         },
       },
@@ -186,6 +192,8 @@ describe('OidcRouter', () => {
       database: { getClient: async () => knex },
       logger: mockServices.logger.mock(),
       lifecycle: mockLifecycle,
+      catalog: mockCatalog,
+      auth: mockAuth,
     });
 
     const oidcService = OidcService.create({
@@ -221,6 +229,7 @@ describe('OidcRouter', () => {
         userInfo: userInfoDatabase,
         service: oidcService,
         tokenIssuer: mockTokenIssuer,
+        catalog: mockCatalog,
       },
     };
   }
@@ -922,8 +931,14 @@ describe('OidcRouter', () => {
     });
 
     describe('refresh tokens', () => {
-      async function doAuthFlowWithOfflineAccess(databaseId_: TestDatabaseId) {
-        const result = await createRouterWithOfflineAccess(databaseId_);
+      async function doAuthFlowWithOfflineAccess(
+        databaseId_: TestDatabaseId,
+        refreshTokenConfig?: Record<string, unknown>,
+      ) {
+        const result = await createRouterWithOfflineAccess(
+          databaseId_,
+          refreshTokenConfig,
+        );
         const {
           mocks: { auth, service, tokenIssuer, httpAuth },
           router,
@@ -1120,6 +1135,151 @@ describe('OidcRouter', () => {
             refresh_token: originalRefreshToken,
           })
           .expect(400);
+      });
+
+      describe('catalog user validation', () => {
+        it('should refresh a token when catalog user exists', async () => {
+          const { server, tokenResponse, mocks } =
+            await doAuthFlowWithOfflineAccess(databaseId, {
+              validateCatalogUserExistence: true,
+            });
+
+          mocks.catalog.getEntityByRef.mockResolvedValueOnce({
+            apiVersion: 'backstage.io/v1alpha1',
+            kind: 'User',
+            metadata: { name: 'test-user', namespace: 'default' },
+            spec: {},
+          });
+          mocks.tokenIssuer.issueToken.mockResolvedValue({
+            token: 'mock-refreshed-token',
+          });
+
+          const refreshResponse = await request(server)
+            .post('/api/auth/v1/token')
+            .send({
+              grant_type: 'refresh_token',
+              refresh_token: tokenResponse.body.refresh_token,
+            })
+            .expect(200);
+
+          expect(refreshResponse.body).toEqual({
+            access_token: 'mock-refreshed-token',
+            token_type: 'Bearer',
+            expires_in: 3600,
+            refresh_token: expect.any(String),
+          });
+        });
+
+        it('should reject refresh when catalog user does not exist', async () => {
+          const { server, tokenResponse, mocks } =
+            await doAuthFlowWithOfflineAccess(databaseId, {
+              validateCatalogUserExistence: true,
+            });
+
+          mocks.catalog.getEntityByRef.mockResolvedValueOnce(undefined);
+
+          await request(server)
+            .post('/api/auth/v1/token')
+            .send({
+              grant_type: 'refresh_token',
+              refresh_token: tokenResponse.body.refresh_token,
+            })
+            .expect(400);
+        });
+
+        it('should reject refresh when catalog is unavailable', async () => {
+          const { server, tokenResponse, mocks } =
+            await doAuthFlowWithOfflineAccess(databaseId, {
+              validateCatalogUserExistence: true,
+            });
+
+          mocks.catalog.getEntityByRef.mockRejectedValueOnce(
+            new Error('Catalog unavailable'),
+          );
+
+          await request(server)
+            .post('/api/auth/v1/token')
+            .send({
+              grant_type: 'refresh_token',
+              refresh_token: tokenResponse.body.refresh_token,
+            })
+            .expect(400);
+        });
+
+        it('should allow retry after transient catalog failure', async () => {
+          const { server, tokenResponse, mocks } =
+            await doAuthFlowWithOfflineAccess(databaseId, {
+              validateCatalogUserExistence: true,
+            });
+
+          mocks.catalog.getEntityByRef.mockRejectedValueOnce(
+            new Error('Catalog unavailable'),
+          );
+
+          // First refresh fails due to catalog error
+          await request(server)
+            .post('/api/auth/v1/token')
+            .send({
+              grant_type: 'refresh_token',
+              refresh_token: tokenResponse.body.refresh_token,
+            })
+            .expect(400);
+
+          // Retry with same token succeeds because session was preserved
+          mocks.catalog.getEntityByRef.mockResolvedValueOnce({
+            apiVersion: 'backstage.io/v1alpha1',
+            kind: 'User',
+            metadata: { name: 'test-user', namespace: 'default' },
+            spec: {},
+          });
+          mocks.tokenIssuer.issueToken.mockResolvedValue({
+            token: 'mock-refreshed-token',
+          });
+
+          const retryResponse = await request(server)
+            .post('/api/auth/v1/token')
+            .send({
+              grant_type: 'refresh_token',
+              refresh_token: tokenResponse.body.refresh_token,
+            })
+            .expect(200);
+
+          expect(retryResponse.body.access_token).toBe('mock-refreshed-token');
+        });
+
+        it('should not allow retry after user entity not found', async () => {
+          const { server, tokenResponse, mocks } =
+            await doAuthFlowWithOfflineAccess(databaseId, {
+              validateCatalogUserExistence: true,
+            });
+
+          mocks.catalog.getEntityByRef.mockResolvedValueOnce(undefined);
+
+          // First refresh fails and session is revoked
+          await request(server)
+            .post('/api/auth/v1/token')
+            .send({
+              grant_type: 'refresh_token',
+              refresh_token: tokenResponse.body.refresh_token,
+            })
+            .expect(400);
+
+          // Retry fails because session was deleted
+          mocks.catalog.getEntityByRef.mockResolvedValueOnce({
+            apiVersion: 'backstage.io/v1alpha1',
+            kind: 'User',
+            metadata: { name: 'test-user', namespace: 'default' },
+            spec: {},
+          });
+
+          await request(server)
+            .post('/api/auth/v1/token')
+            .send({
+              grant_type: 'refresh_token',
+              refresh_token: tokenResponse.body.refresh_token,
+            })
+            .expect(400);
+        });
       });
     });
 

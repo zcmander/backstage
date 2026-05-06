@@ -133,6 +133,14 @@ export interface Config {
        * @visibility backend
        */
       maxTokensPerUser?: number;
+      /**
+       * Whether to validate that the user's catalog entity exists when
+       * refreshing a token. When enabled, tokens for users removed from
+       * the catalog will be rejected and revoked.
+       * @default false
+       * @visibility backend
+       */
+      validateCatalogUserExistence?: boolean;
     };
 
     /**
