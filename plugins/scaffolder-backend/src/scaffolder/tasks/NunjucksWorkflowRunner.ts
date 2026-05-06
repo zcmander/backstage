@@ -650,23 +650,24 @@ export class NunjucksWorkflowRunner implements WorkflowRunner {
     // Track whether a status check global (always/failure) was invoked during rendering
     const statusCheckInvoked = { value: false };
 
-    const { render: renderTemplate, dispose } = await SecureTemplater.loadRenderer({
-      templateFilters: {
-        ...this.defaultTemplateFilters,
-        ...additionalTemplateFilters,
-      },
-      templateGlobals: {
-        ...additionalTemplateGlobals,
-        always: () => {
-          statusCheckInvoked.value = true;
-          return true;
+    const { render: renderTemplate, dispose } =
+      await SecureTemplater.loadRenderer({
+        templateFilters: {
+          ...this.defaultTemplateFilters,
+          ...additionalTemplateFilters,
         },
-        failure: () => {
-          statusCheckInvoked.value = true;
-          return taskState.failed;
+        templateGlobals: {
+          ...additionalTemplateGlobals,
+          always: () => {
+            statusCheckInvoked.value = true;
+            return true;
+          },
+          failure: () => {
+            statusCheckInvoked.value = true;
+            return taskState.failed;
+          },
         },
-      },
-    });
+      });
 
     try {
       await task.rehydrateWorkspace?.({ taskId, targetPath: workspacePath });
