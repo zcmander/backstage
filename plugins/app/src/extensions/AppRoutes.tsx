@@ -27,7 +27,12 @@ function RedirectWithParams({ to }: { to: string }) {
   const params = useParams() as Record<string, string>;
   let target = to;
   for (const [name, value] of Object.entries(params)) {
-    target = target.replaceAll(name === '*' ? '*' : `:${name}`, value ?? '');
+    // Use \b (word boundary) for named params so that `:a` doesn't
+    // accidentally match inside `:ab` when both are present.
+    target = target.replace(
+      name === '*' ? /\*/g : new RegExp(`:${name}\\b`, 'g'),
+      value ?? '',
+    );
   }
   return <Navigate to={target} replace />;
 }

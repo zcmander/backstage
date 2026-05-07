@@ -539,6 +539,53 @@ describe('AppRoutes', () => {
     });
   });
 
+  it('should not corrupt a longer param when a shorter param is a prefix of it', async () => {
+    const LocationDisplay = () => {
+      const location = useLocation();
+      return <div data-testid="location">{location.pathname}</div>;
+    };
+
+    const targetPage = PageBlueprint.make({
+      name: 'target',
+      params: {
+        path: '/target/:ab/:a',
+        loader: async () => (
+          <div>
+            Target Page
+            <LocationDisplay />
+          </div>
+        ),
+      },
+    });
+
+    renderTestApp({
+      extensions: [targetPage],
+      initialRouteEntries: ['/source/bar/foo'],
+      config: {
+        ...DEFAULT_CONFIG,
+        app: {
+          ...DEFAULT_CONFIG.app,
+          extensions: [
+            {
+              'app/routes': {
+                config: {
+                  redirects: [{ from: '/source/:ab/:a', to: '/target/:ab/:a' }],
+                },
+              },
+            },
+          ],
+        },
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Target Page')).toBeInTheDocument();
+      expect(screen.getByTestId('location')).toHaveTextContent(
+        '/target/bar/foo',
+      );
+    });
+  });
+
   it('should not interfere with normal routes when redirects are configured', async () => {
     const homePage = PageBlueprint.make({
       name: 'home',
