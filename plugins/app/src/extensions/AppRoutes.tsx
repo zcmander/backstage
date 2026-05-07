@@ -21,7 +21,16 @@ import {
   createExtensionInput,
   NotFoundErrorPage,
 } from '@backstage/frontend-plugin-api';
-import { Navigate, useRoutes } from 'react-router-dom';
+import { Navigate, useParams, useRoutes } from 'react-router-dom';
+
+function RedirectWithParams({ to }: { to: string }) {
+  const params = useParams() as Record<string, string>;
+  let target = to;
+  for (const [name, value] of Object.entries(params)) {
+    target = target.replaceAll(name === '*' ? '*' : `:${name}`, value ?? '');
+  }
+  return <Navigate to={target} replace />;
+}
 
 export const AppRoutes = createExtension({
   name: 'routes',
@@ -54,7 +63,7 @@ export const AppRoutes = createExtension({
             redirect.from === '/'
               ? redirect.from
               : `${redirect.from.replace(/\/$/, '')}/*`,
-          element: <Navigate to={redirect.to} replace />,
+          element: <RedirectWithParams to={redirect.to} />,
         })),
         ...inputs.routes.map(route => {
           const routePath = route.get(coreExtensionData.routePath);

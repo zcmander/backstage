@@ -443,6 +443,102 @@ describe('AppRoutes', () => {
     });
   });
 
+  it('should substitute named path params in redirect target', async () => {
+    const LocationDisplay = () => {
+      const location = useLocation();
+      return <div data-testid="location">{location.pathname}</div>;
+    };
+
+    const profilePage = PageBlueprint.make({
+      name: 'profile',
+      params: {
+        path: '/profile/:userId',
+        loader: async () => (
+          <div>
+            Profile Page
+            <LocationDisplay />
+          </div>
+        ),
+      },
+    });
+
+    renderTestApp({
+      extensions: [profilePage],
+      initialRouteEntries: ['/users/alice'],
+      config: {
+        ...DEFAULT_CONFIG,
+        app: {
+          ...DEFAULT_CONFIG.app,
+          extensions: [
+            {
+              'app/routes': {
+                config: {
+                  redirects: [
+                    { from: '/users/:userId', to: '/profile/:userId' },
+                  ],
+                },
+              },
+            },
+          ],
+        },
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Profile Page')).toBeInTheDocument();
+      expect(screen.getByTestId('location')).toHaveTextContent(
+        '/profile/alice',
+      );
+    });
+  });
+
+  it('should substitute splat param in redirect target', async () => {
+    const LocationDisplay = () => {
+      const location = useLocation();
+      return <div data-testid="location">{location.pathname}</div>;
+    };
+
+    const docsPage = PageBlueprint.make({
+      name: 'docs',
+      params: {
+        path: '/docs',
+        loader: async () => (
+          <div>
+            Docs Page
+            <LocationDisplay />
+          </div>
+        ),
+      },
+    });
+
+    renderTestApp({
+      extensions: [docsPage],
+      initialRouteEntries: ['/d/default/component/my-entity'],
+      config: {
+        ...DEFAULT_CONFIG,
+        app: {
+          ...DEFAULT_CONFIG.app,
+          extensions: [
+            {
+              'app/routes': {
+                config: {
+                  redirects: [{ from: '/d', to: '/docs/*' }],
+                },
+              },
+            },
+          ],
+        },
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Docs Page')).toBeInTheDocument();
+      expect(screen.getByTestId('location')).toHaveTextContent(
+        '/docs/default/component/my-entity',
+      );
+    });
+  });
+
   it('should not interfere with normal routes when redirects are configured', async () => {
     const homePage = PageBlueprint.make({
       name: 'home',
