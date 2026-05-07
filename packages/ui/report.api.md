@@ -2361,6 +2361,7 @@ export const PasswordFieldDefinition: {
     readonly inputIcon: 'bui-PasswordFieldIcon';
     readonly inputVisibility: 'bui-PasswordFieldVisibility';
   };
+  readonly bg: 'consumer';
   readonly propDefs: {
     readonly size: {
       readonly dataAttribute: true;
