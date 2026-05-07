@@ -41,7 +41,7 @@ import { TokenIssuer } from '../identity/types';
 export class OfflineAccessService {
   readonly #offlineSessionDb: OfflineSessionDatabase;
   readonly #logger: LoggerService;
-  readonly #validateCatalogUserExistence: boolean;
+  readonly #dangerouslyDisableCatalogPresenceCheck: boolean;
   readonly #catalog: CatalogService;
   readonly #auth: AuthService;
 
@@ -105,9 +105,9 @@ export class OfflineAccessService {
       );
     }
 
-    const validateCatalogUserExistence =
+    const dangerouslyDisableCatalogPresenceCheck =
       config.getOptionalBoolean(
-        'auth.experimentalRefreshToken.validateCatalogUserExistence',
+        'auth.experimentalRefreshToken.dangerouslyDisableCatalogPresenceCheck',
       ) ?? false;
 
     const knex = await database.getClient();
@@ -150,7 +150,7 @@ export class OfflineAccessService {
     return new OfflineAccessService(
       offlineSessionDb,
       logger,
-      validateCatalogUserExistence,
+      dangerouslyDisableCatalogPresenceCheck,
       options.catalog,
       options.auth,
     );
@@ -159,13 +159,14 @@ export class OfflineAccessService {
   private constructor(
     offlineSessionDb: OfflineSessionDatabase,
     logger: LoggerService,
-    validateCatalogUserExistence: boolean,
+    dangerouslyDisableCatalogPresenceCheck: boolean,
     catalog: CatalogService,
     auth: AuthService,
   ) {
     this.#offlineSessionDb = offlineSessionDb;
     this.#logger = logger;
-    this.#validateCatalogUserExistence = validateCatalogUserExistence;
+    this.#dangerouslyDisableCatalogPresenceCheck =
+      dangerouslyDisableCatalogPresenceCheck;
     this.#catalog = catalog;
     this.#auth = auth;
   }
@@ -236,7 +237,7 @@ export class OfflineAccessService {
       throw new AuthenticationError('Invalid refresh token');
     }
 
-    if (this.#validateCatalogUserExistence) {
+    if (!this.#dangerouslyDisableCatalogPresenceCheck) {
       try {
         const entity = await this.#catalog.getEntityByRef(
           session.userEntityRef,
@@ -252,7 +253,7 @@ export class OfflineAccessService {
           );
         }
       } catch (error) {
-        if (error instanceof AuthenticationError) {
+        if (error.name === 'AuthenticationError') {
           throw error;
         }
         this.#logger.warn(

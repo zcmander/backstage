@@ -134,13 +134,16 @@ export interface Config {
        */
       maxTokensPerUser?: number;
       /**
-       * Whether to validate that the user's catalog entity exists when
-       * refreshing a token. When enabled, tokens for users removed from
-       * the catalog will be rejected and revoked.
+       * Disables the check that verifies the user's catalog entity still
+       * exists when refreshing a token. This is an escape hatch for
+       * Backstage instances that allow sign-in without a corresponding
+       * catalog user entity. Without the check, refresh tokens for
+       * removed or offboarded users remain valid until they naturally
+       * expire.
        * @default false
        * @visibility backend
        */
-      validateCatalogUserExistence?: boolean;
+      dangerouslyDisableCatalogPresenceCheck?: boolean;
     };
 
     /**
