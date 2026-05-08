@@ -16,12 +16,85 @@
 
 import { Knex } from 'knex';
 import { createGaugeMetric } from '../util/metrics';
-import { DbRelationsRow, DbLocationsRow, DbSearchRow } from './tables';
+import { DbRelationsRow, DbLocationsRow } from './tables';
 import { MetricsService } from '@backstage/backend-plugin-api/alpha';
+
+const ENTITIES_COUNT_TTL_MS = 30_000;
+
+/**
+ * Returns a function that produces a Map of entity kind -> count, using
+ * a short in-process TTL cache.
+ *
+ * The OpenTelemetry observable gauge and the legacy Prometheus gauge are
+ * both registered to emit the same `catalog_entities_count` series, and
+ * both fire on every metrics scrape. Without the cache, that means two
+ * identical heavy queries per scrape per pod, which can pile up against
+ * the database faster than they complete.
+ *
+ * @internal exported for testing
+ */
+export function createEntitiesCountByKind(
+  knex: Knex,
+  options?: { ttlMs?: number },
+): () => Promise<Map<string, number>> {
+  const ttlMs = options?.ttlMs ?? ENTITIES_COUNT_TTL_MS;
+  let cache: { at: number; data: Map<string, number> } | undefined;
+  return async () => {
+    const now = Date.now();
+    if (cache && now - cache.at < ttlMs) {
+      return cache.data;
+    }
+    const data = await queryEntitiesCountByKind(knex);
+    cache = { at: now, data };
+    return data;
+  };
+}
+
+/**
+ * Reads kind counts straight from `final_entities` (one row per entity)
+ * rather than from `search` (one row per entity per indexed key, often
+ * 20-30x larger). The kind is parsed out of `entity_ref`, which is the
+ * canonical lowercased `kind:namespace/name` form -- producing the same
+ * lowercased labels the previous search-based query did.
+ *
+ * Rows where `final_entity` is null are excluded. They represent entities
+ * that haven't been stitched yet, or tombstones for in-progress deletions.
+ * Counting them would over-report by including entities the rest of the
+ * catalog API treats as not present.
+ *
+ * @internal exported for testing
+ */
+export async function queryEntitiesCountByKind(
+  knex: Knex,
+): Promise<Map<string, number>> {
+  const kindExpr = entityRefKindExpression(knex);
+
+  const rows: { kind: string; count: string | number }[] = await knex(
+    'final_entities',
+  )
+    .whereNotNull('final_entity')
+    .select({ kind: kindExpr, count: knex.raw('count(*)') })
+    .groupBy(kindExpr);
+
+  return new Map(rows.map(row => [String(row.kind), Number(row.count)]));
+}
+
+function entityRefKindExpression(knex: Knex): Knex.Raw {
+  const client = knex.client.config.client as string;
+  if (client.includes('pg')) {
+    return knex.raw(`split_part(entity_ref, ':', 1)`);
+  }
+  if (client.includes('mysql')) {
+    return knex.raw(`substring_index(entity_ref, ':', 1)`);
+  }
+  // sqlite (better-sqlite3, sqlite3)
+  return knex.raw(`substr(entity_ref, 1, instr(entity_ref, ':') - 1)`);
+}
 
 export function initDatabaseMetrics(knex: Knex, metrics: MetricsService) {
   const seenProm = new Set<string>();
   const seen = new Set<string>();
+  const getEntitiesCountByKind = createEntitiesCountByKind(knex);
 
   return {
     entities_count_prom: createGaugeMetric({
@@ -29,24 +102,20 @@ export function initDatabaseMetrics(knex: Knex, metrics: MetricsService) {
       help: 'Total amount of entities in the catalog. DEPRECATED: Please use opentelemetry metrics instead.',
       labelNames: ['kind'],
       async collect() {
-        const results = await knex<DbSearchRow>('search')
-          .where('key', '=', 'kind')
-          .whereNotNull('value')
-          .select({ kind: 'value', count: knex.raw('count(*)') })
-          .groupBy('value');
+        const results = await getEntitiesCountByKind();
 
-        results.forEach(({ kind, count }) => {
+        for (const [kind, count] of results) {
           seenProm.add(kind);
-          this.set({ kind }, Number(count));
-        });
+          this.set({ kind }, count);
+        }
 
         // Set all the entities that were not seenProm to 0 and delete them from the seenProm set.
-        seenProm.forEach(kind => {
-          if (!results.some(r => r.kind === kind)) {
+        for (const kind of seenProm) {
+          if (!results.has(kind)) {
             this.set({ kind }, 0);
             seenProm.delete(kind);
           }
-        });
+        }
       },
     }),
     registered_locations_prom: createGaugeMetric({
@@ -74,24 +143,20 @@ export function initDatabaseMetrics(knex: Knex, metrics: MetricsService) {
         description: 'Total amount of entities in the catalog',
       })
       .addCallback(async gauge => {
-        const results = await knex<DbSearchRow>('search')
-          .where('key', '=', 'kind')
-          .whereNotNull('value')
-          .select({ kind: 'value', count: knex.raw('count(*)') })
-          .groupBy('value');
+        const results = await getEntitiesCountByKind();
 
-        results.forEach(({ kind, count }) => {
+        for (const [kind, count] of results) {
           seen.add(kind);
-          gauge.observe(Number(count), { kind });
-        });
+          gauge.observe(count, { kind });
+        }
 
         // Set all the entities that were not seen to 0 and delete them from the seen set.
-        seen.forEach(kind => {
-          if (!results.some(r => r.kind === kind)) {
+        for (const kind of seen) {
+          if (!results.has(kind)) {
             gauge.observe(0, { kind });
             seen.delete(kind);
           }
-        });
+        }
       }),
     registered_locations: metrics
       .createObservableGauge('catalog_registered_locations_count', {
