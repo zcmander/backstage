@@ -122,5 +122,41 @@ describe('metrics', () => {
         expect(Object.fromEntries(refreshed)).toEqual({ component: 2 });
       },
     );
+
+    it.each(databases.eachSupportedId())(
+      'coalesces overlapping callers into a single underlying query, %p',
+      async databaseId => {
+        const knex = await createDatabase(databaseId);
+        const getCount = createEntitiesCountByKind(knex, { ttlMs: 50 });
+
+        await insertEntity(knex, {
+          entityRef: 'component:default/one',
+          finalEntity: '{}',
+        });
+
+        const finalEntitiesQueries: string[] = [];
+        knex.on('query', (q: { sql: string }) => {
+          if (
+            /from\s+["`]?final_entities["`]?/i.test(q.sql) &&
+            /^\s*select/i.test(q.sql)
+          ) {
+            finalEntitiesQueries.push(q.sql);
+          }
+        });
+
+        // Five concurrent callers should result in one query, not five.
+        const results = await Promise.all([
+          getCount(),
+          getCount(),
+          getCount(),
+          getCount(),
+          getCount(),
+        ]);
+        expect(finalEntitiesQueries).toHaveLength(1);
+        for (const r of results) {
+          expect(Object.fromEntries(r)).toEqual({ component: 1 });
+        }
+      },
+    );
   });
 });

@@ -22,14 +22,21 @@ import { MetricsService } from '@backstage/backend-plugin-api/alpha';
 const ENTITIES_COUNT_TTL_MS = 30_000;
 
 /**
- * Returns a function that produces a Map of entity kind -> count, using
- * a short in-process TTL cache.
+ * Returns a function that produces a Map of entity kind -> count, with
+ * a single-flight cache that coalesces overlapping calls.
  *
  * The OpenTelemetry observable gauge and the legacy Prometheus gauge are
  * both registered to emit the same `catalog_entities_count` series, and
- * both fire on every metrics scrape. Without the cache, that means two
+ * both fire on every metrics scrape. Without coalescing, that means two
  * identical heavy queries per scrape per pod, which can pile up against
  * the database faster than they complete.
+ *
+ * Concurrent callers share the same in-flight promise, so a query is
+ * never overlapped by another instance of itself. The TTL is the
+ * minimum age at which the next caller is allowed to start a fresh
+ * query; if a query is still running when the TTL would have elapsed,
+ * waiting callers continue to share that one rather than starting a
+ * duplicate.
  *
  * @internal exported for testing
  */
@@ -38,15 +45,25 @@ export function createEntitiesCountByKind(
   options?: { ttlMs?: number },
 ): () => Promise<Map<string, number>> {
   const ttlMs = options?.ttlMs ?? ENTITIES_COUNT_TTL_MS;
-  let cache: { at: number; data: Map<string, number> } | undefined;
-  return async () => {
-    const now = Date.now();
-    if (cache && now - cache.at < ttlMs) {
-      return cache.data;
+  let inflight: Promise<Map<string, number>> | undefined;
+  let cached: { at: number; data: Map<string, number> } | undefined;
+  return () => {
+    if (inflight) {
+      return inflight;
     }
-    const data = await queryEntitiesCountByKind(knex);
-    cache = { at: now, data };
-    return data;
+    if (cached && Date.now() - cached.at < ttlMs) {
+      return Promise.resolve(cached.data);
+    }
+    inflight = (async () => {
+      try {
+        const data = await queryEntitiesCountByKind(knex);
+        cached = { at: Date.now(), data };
+        return data;
+      } finally {
+        inflight = undefined;
+      }
+    })();
+    return inflight;
   };
 }
 
