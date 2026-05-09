@@ -273,33 +273,39 @@ export class DefaultEntitiesCatalog implements EntitiesCatalog {
     const sortField = cursor.orderFields.at(0);
 
     // The first part of the query builder is a subquery that applies all of the
-    // filtering.
+    // filtering. When a sort field is specified, the search table for that key
+    // drives the query via INNER JOIN so that the (key, value, entity_id)
+    // index walks rows in sort order, letting LIMIT short-circuit. Entities
+    // that lack the sort field are excluded from both the result set and the
+    // count — this is a deliberate choice that aligns totalItems with the
+    // number of entities actually reachable through cursor pagination.
     const dbQuery = this.database.with(
       'filtered',
       ['entity_id', 'final_entity', ...(sortField ? ['value'] : [])],
       inner => {
-        inner
-          .from<DbFinalEntitiesRow>('final_entities')
-          .whereNotNull('final_entity');
-
         if (sortField) {
           inner
-            .distinct()
-            .leftOuterJoin('search', qb =>
-              qb
-                .on('search.entity_id', 'final_entities.entity_id')
-                .andOnVal('search.key', sortField.field),
+            .from('search')
+            .innerJoin(
+              'final_entities',
+              'final_entities.entity_id',
+              'search.entity_id',
             )
+            .where('search.key', sortField.field)
+            .whereNotNull('final_entities.final_entity')
             .select({
               entity_id: 'final_entities.entity_id',
               final_entity: 'final_entities.final_entity',
               value: 'search.value',
             });
         } else {
-          inner.select({
-            entity_id: 'final_entities.entity_id',
-            final_entity: 'final_entities.final_entity',
-          });
+          inner
+            .from<DbFinalEntitiesRow>('final_entities')
+            .whereNotNull('final_entity')
+            .select({
+              entity_id: 'final_entities.entity_id',
+              final_entity: 'final_entities.final_entity',
+            });
         }
 
         // Add regular filters and/or predicate query, if given
