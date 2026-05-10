@@ -4,9 +4,9 @@
 
 Added a migration that removes duplicate rows from the `search` table, creates covering indices for improved query performance, and adds a `UNIQUE` constraint on `(entity_id, key, value)`.
 
-This is a long-running migration on large catalogs. On PostgreSQL with millions of search rows, the index creation may take 5-15 minutes. During this time, other pods running the previous version will continue to serve traffic normally — the index creation does not block reads or writes. If the pod is restarted during the migration, the next startup will clean up and retry automatically.
+This is a long-running migration on large catalogs. On PostgreSQL with millions of search rows, the index creation may take 5-15 minutes per index. During this time, other pods running the previous version will continue to serve traffic normally — the index creation does not block reads or writes. However, if a Kubernetes liveness probe kills the pod before the index build completes, the build is lost and the next startup will start over. On large tables this can repeat indefinitely.
 
-**For large installations**, you can run the following SQL commands against your PostgreSQL database before deploying to avoid the startup delay. If these have already completed, the migration will detect the existing indices and skip all work.
+**For large installations**, it is recommended to run the following SQL commands against your PostgreSQL database **before deploying** this version. Each index build takes a few minutes but does not block reads or writes. If these have already completed, the migration will detect the existing indices and skip all work — startup will be instant.
 
 ```sql
 -- Step 1: Remove duplicate search rows

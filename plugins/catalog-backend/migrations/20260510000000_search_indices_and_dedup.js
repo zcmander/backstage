@@ -22,19 +22,21 @@
  *
  * On PostgreSQL this uses CREATE INDEX CONCURRENTLY which avoids blocking
  * reads/writes but can take several minutes on large tables (13M+ rows).
- * The migration is fully rerun-safe: each step checks the current state
- * and skips work that is already done or cleans up INVALID indices left by
- * a previous interrupted attempt.
+ * Each step is idempotent: it checks the current state and skips work
+ * already done, or cleans up INVALID indices left by an interrupted
+ * attempt before retrying. However, an interrupted index build does NOT
+ * leave partial progress — each retry starts from scratch. If the
+ * Kubernetes liveness probe kills the pod before an index build completes,
+ * the next startup will drop the INVALID index and restart the build. On
+ * large tables this can repeat indefinitely. To prevent this, either
+ * increase the liveness probe timeout for this one-time upgrade, or run
+ * the SQL commands below manually before deploying.
  *
- * ## Important note for large installations
+ * ## Recommended: run manually before deploying (large installations)
  *
- * If your search table has millions of rows, this migration may take
- * 5-15 minutes. During this time the pod will appear unready. Other pods
- * running the previous version of Backstage will continue to serve
- * traffic normally — the index creation does not block reads or writes.
- *
- * To avoid the startup delay, you can run the following commands against
- * your PostgreSQL database BEFORE deploying this version:
+ * For PostgreSQL installations with millions of search rows, run these
+ * commands against your database BEFORE deploying this version. Each
+ * index build takes a few minutes but does not block reads or writes.
  *
  *   -- 1. Remove duplicate search rows
  *   WITH cte AS (
