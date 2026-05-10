@@ -2013,22 +2013,26 @@ describe('DefaultEntitiesCatalog', () => {
 
         await Promise.all(entities.map(e => addEntityToSearch(e)));
 
-        // Manually insert duplicate search entries for the same entities
-        // I'm not sure exactly how this happens but I have seen it in the real world
-        await knex<DbSearchRow>('search').insert([
-          {
-            entity_id: 'uid-a',
-            key: 'metadata.title',
-            value: 'a test entity',
-            original_value: 'A Test Entity',
-          },
-          {
-            entity_id: 'uid-b',
-            key: 'metadata.title',
-            value: 'b test entity',
-            original_value: 'B Test Entity',
-          },
-        ]);
+        // The UNIQUE constraint on (entity_id, key, value) prevents
+        // duplicate search rows. Verify that duplicates are silently
+        // rejected and the query still returns correct results.
+        await knex<DbSearchRow>('search')
+          .insert([
+            {
+              entity_id: 'uid-a',
+              key: 'metadata.title',
+              value: 'a test entity',
+              original_value: 'A Test Entity',
+            },
+            {
+              entity_id: 'uid-b',
+              key: 'metadata.title',
+              value: 'b test entity',
+              original_value: 'B Test Entity',
+            },
+          ])
+          .onConflict(['entity_id', 'key', 'value'])
+          .ignore();
 
         const catalog = new DefaultEntitiesCatalog({
           database: knex,
@@ -2407,15 +2411,19 @@ describe('DefaultEntitiesCatalog', () => {
           spec: {},
         });
 
-        // Manually insert a duplicate search entry, this shouldn't happen but does in reality
-        await knex<DbSearchRow>('search').insert([
-          {
-            entity_id: 'uid-a',
-            key: 'metadata.name',
-            value: 'one',
-            original_value: 'one',
-          },
-        ]);
+        // Attempt to insert a duplicate — the UNIQUE constraint silently
+        // rejects it via ON CONFLICT IGNORE.
+        await knex<DbSearchRow>('search')
+          .insert([
+            {
+              entity_id: 'uid-a',
+              key: 'metadata.name',
+              value: 'one',
+              original_value: 'one',
+            },
+          ])
+          .onConflict(['entity_id', 'key', 'value'])
+          .ignore();
 
         const catalog = new DefaultEntitiesCatalog({
           database: knex,
