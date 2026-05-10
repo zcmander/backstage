@@ -80,10 +80,45 @@ exports.up = async function up(knex) {
 /**
  * @param {import('knex').Knex} knex
  */
-exports.down = async function down(_knex) {
-  // Intentionally a no-op. The old non-covering indices are not worth
-  // recreating, and the UNIQUE constraint should not be removed since the
-  // code now relies on ON CONFLICT for correctness.
+exports.down = async function down(knex) {
+  const client = knex.client.config.client;
+
+  if (client.includes('pg')) {
+    // Remove the new indices and restore the old ones
+    await knex.raw(
+      'DROP INDEX CONCURRENTLY IF EXISTS search_entity_key_value_idx',
+    );
+    await knex.raw(
+      'DROP INDEX CONCURRENTLY IF EXISTS search_key_value_entity_idx',
+    );
+    await knex.raw(
+      'DROP INDEX CONCURRENTLY IF EXISTS search_facets_covering_idx',
+    );
+    await knex.raw(
+      'CREATE INDEX CONCURRENTLY IF NOT EXISTS search_key_value_idx ON search (key, value)',
+    );
+    await knex.raw(
+      'CREATE INDEX CONCURRENTLY IF NOT EXISTS search_key_original_value_idx ON search (key, original_value)',
+    );
+  } else if (client.includes('mysql')) {
+    await mysqlDropIndexIfExists(knex, 'search_entity_key_value_idx');
+    await mysqlDropIndexIfExists(knex, 'search_key_value_entity_idx');
+    await mysqlDropIndexIfExists(knex, 'search_facets_covering_idx');
+    await knex.schema.alterTable('search', table => {
+      table.index(['key', 'value'], 'search_key_value_idx');
+      table.index(['key', 'original_value'], 'search_key_original_value_idx');
+    });
+  } else {
+    await knex.raw('DROP INDEX IF EXISTS search_entity_key_value_idx');
+    await knex.raw('DROP INDEX IF EXISTS search_key_value_entity_idx');
+    await knex.raw('DROP INDEX IF EXISTS search_facets_covering_idx');
+    await knex.raw(
+      'CREATE INDEX IF NOT EXISTS search_key_value_idx ON search (key, value)',
+    );
+    await knex.raw(
+      'CREATE INDEX IF NOT EXISTS search_key_original_value_idx ON search (key, original_value)',
+    );
+  }
 };
 
 exports.config = { transaction: false };
