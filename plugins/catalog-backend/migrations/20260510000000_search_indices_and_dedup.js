@@ -37,13 +37,19 @@
  * The dedup step is skipped entirely if the UNIQUE index already exists and
  * is valid — a valid unique index guarantees no duplicates can be present.
  *
- * When dedup is needed the migration uses a two-phase approach to avoid
- * the O(N) full-table re-scan that a plain window-function CTE would
- * require on every batch iteration:
+ * When dedup is needed the migration uses a two-phase approach that avoids
+ * a full heap scan by leveraging the pre-existing
+ * search_key_value_entity_idx (key, value, entity_id) covering index:
  *
- *   Phase 1 (one scan):  collect all duplicate ctids into a temp table.
- *   Phase 2 (no re-scan): drain the temp table in small batches using
- *                          cheap ctid lookups — no further full scans.
+ *   Phase 1 (index-only scan):
+ *     GROUP BY entity_id, key, value on the covering index — zero heap
+ *     fetches — to build a small temp table of only the duplicate groups.
+ *
+ *   Phase 2 (index scan, dup rows only):
+ *     For each duplicate group in the temp table, LATERAL index-scan back
+ *     into search to find the per-group ctids, then DELETE them in one
+ *     statement. Only the ~2× duplicate rows are touched; clean rows are
+ *     never read from the heap.
  *
  * ## Recommended: run manually before deploying (large installations)
  *
@@ -53,15 +59,40 @@
  * The migration detects that the indices already exist and skips all work,
  * so startup is instant.
  *
- *   -- 1. Remove duplicate search rows (adjust LIMIT / loop as needed for
- *   --    very large tables to avoid long-running single transactions)
- *   WITH cte AS (
- *     SELECT ctid,
- *            row_number() OVER (PARTITION BY entity_id, key, value) AS rn
+ *   -- 1. Remove duplicate search rows using the same index-friendly
+ *   --    two-phase strategy used by the migration itself.
+ *   CREATE TEMP TABLE _search_dedup_groups AS
+ *     SELECT entity_id, key, value
  *     FROM search
- *   )
- *   DELETE FROM search USING cte
- *   WHERE search.ctid = cte.ctid AND cte.rn > 1;
+ *     GROUP BY entity_id, key, value
+ *     HAVING COUNT(*) > 1;
+ *   CREATE INDEX ON _search_dedup_groups (key, value, entity_id);
+ *
+ *   DELETE FROM search WHERE ctid IN (
+ *     SELECT s.ctid FROM _search_dedup_groups g
+ *     CROSS JOIN LATERAL (
+ *       SELECT ctid FROM (
+ *         SELECT ctid,
+ *                row_number() OVER (ORDER BY ctid) AS rn
+ *         FROM search
+ *         WHERE key = g.key AND entity_id = g.entity_id
+ *           AND value = g.value
+ *       ) sub WHERE rn > 1
+ *     ) s WHERE g.value IS NOT NULL
+ *     UNION ALL
+ *     SELECT s.ctid FROM _search_dedup_groups g
+ *     CROSS JOIN LATERAL (
+ *       SELECT ctid FROM (
+ *         SELECT ctid,
+ *                row_number() OVER (ORDER BY ctid) AS rn
+ *         FROM search
+ *         WHERE key = g.key AND entity_id = g.entity_id
+ *           AND value IS NULL
+ *       ) sub WHERE rn > 1
+ *     ) s WHERE g.value IS NULL
+ *   );
+ *
+ *   DROP TABLE _search_dedup_groups;
  *
  *   -- 2. Create indices (run each separately)
  *   CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS
@@ -155,13 +186,13 @@ async function upPostgres(knex) {
   // duplicates. Skip dedup entirely — this makes restarts essentially free
   // for installations that created the index manually beforehand.
   //
-  // Slow path (index absent or invalid): use a two-phase approach that scans
-  // the table exactly once.
-  //   Phase 1: one full scan to collect every duplicate ctid into a temp
-  //            table. The window function's PARTITION BY treats NULLs as
-  //            equal, so NULL-value duplicates are handled correctly.
-  //   Phase 2: drain the temp table in small batches. Each iteration is a
-  //            cheap ctid lookup with no further full-table scans.
+  // Slow path (index absent or invalid): two-phase approach.
+  //   Phase 1: index-only GROUP BY scan over search_key_value_entity_idx
+  //            (key, value, entity_id) — zero heap fetches — to build a
+  //            temp table of only the duplicate groups.
+  //   Phase 2: LATERAL + index scan to find ctids within each group, then
+  //            a single DELETE. Only the duplicate rows (~2× their count)
+  //            are ever read from the heap; the full table is never scanned.
   const uniqueCheck = await knex.raw(
     `SELECT indisvalid
      FROM pg_index
@@ -173,40 +204,58 @@ async function upPostgres(knex) {
   const needsDedup = !uniqueCheck.rows[0]?.indisvalid;
 
   if (needsDedup) {
-    // Phase 1: one scan — populate temp table with all duplicate ctids.
+    // Phase 1: index-only GROUP BY scan — no heap fetches.
+    // search_key_value_entity_idx (key, value, entity_id) covers all three
+    // dedup columns, so PostgreSQL resolves COUNT(*) without touching the
+    // heap at all (Heap Fetches: 0 in EXPLAIN). The result is a small temp
+    // table of only the duplicate (entity_id, key, value) groups.
     await knex.raw(`
-      CREATE TEMP TABLE _search_dedup_batch AS
-      SELECT ctid AS dup_ctid
-      FROM (
-        SELECT ctid,
-               row_number() OVER (PARTITION BY entity_id, key, value ORDER BY ctid) AS rn
-        FROM search
-      ) sub
-      WHERE rn > 1
+      CREATE TEMP TABLE _search_dedup_groups AS
+      SELECT entity_id, key, value
+      FROM search
+      GROUP BY entity_id, key, value
+      HAVING COUNT(*) > 1
     `);
-    await knex.raw(`CREATE INDEX ON _search_dedup_batch (dup_ctid)`);
+    await knex.raw(
+      `CREATE INDEX ON _search_dedup_groups (key, value, entity_id)`,
+    );
 
-    // Phase 2: drain the temp table, deleting from search in small batches.
-    // The inner CTE deletes a chunk from the temp table and returns the ctids;
-    // the outer DELETE removes those rows from search. PostgreSQL guarantees
-    // all data-modifying CTEs execute exactly once regardless of whether
-    // their output is consumed, so both DELETEs always fire.
-    for (;;) {
-      const { rows } = await knex.raw(`
-        WITH batch AS (
-          DELETE FROM _search_dedup_batch
-          WHERE dup_ctid IN (SELECT dup_ctid FROM _search_dedup_batch LIMIT 10000)
-          RETURNING dup_ctid
-        ),
-        removed AS (
-          DELETE FROM search USING batch WHERE search.ctid = batch.dup_ctid
-        )
-        SELECT count(*) AS n FROM batch
-      `);
-      if (Number(rows[0].n) === 0) break;
-    }
+    // Phase 2: for each duplicate group, LATERAL-join back into search via
+    // the covering index (Nested Loop + Index Scan), row_number within that
+    // tiny per-group result, then DELETE rows where rn > 1. Only the ~2×
+    // duplicate rows are ever read from the heap; all clean rows are skipped.
+    //
+    // NULL values need a separate arm because `value = NULL` is always false
+    // in SQL — `value IS NULL` is required for the index condition.
+    await knex.raw(`
+      DELETE FROM search WHERE ctid IN (
+        SELECT s.ctid FROM _search_dedup_groups g
+        CROSS JOIN LATERAL (
+          SELECT ctid FROM (
+            SELECT ctid,
+                   row_number() OVER (ORDER BY ctid) AS rn
+            FROM search
+            WHERE key = g.key AND entity_id = g.entity_id
+              AND value = g.value
+          ) sub WHERE rn > 1
+        ) s WHERE g.value IS NOT NULL
 
-    await knex.raw('DROP TABLE IF EXISTS _search_dedup_batch');
+        UNION ALL
+
+        SELECT s.ctid FROM _search_dedup_groups g
+        CROSS JOIN LATERAL (
+          SELECT ctid FROM (
+            SELECT ctid,
+                   row_number() OVER (ORDER BY ctid) AS rn
+            FROM search
+            WHERE key = g.key AND entity_id = g.entity_id
+              AND value IS NULL
+          ) sub WHERE rn > 1
+        ) s WHERE g.value IS NULL
+      )
+    `);
+
+    await knex.raw('DROP TABLE IF EXISTS _search_dedup_groups');
   }
 
   // Step 2: Create covering indices. Each call is idempotent — it checks
