@@ -86,7 +86,14 @@ exports.down = async function down(knex) {
   const client = knex.client.config.client;
 
   if (client.includes('pg')) {
-    // Remove the new indices and restore the old ones
+    // Restore the old indices first so there is no window without coverage,
+    // then drop the new ones.
+    await knex.raw(
+      'CREATE INDEX CONCURRENTLY IF NOT EXISTS search_key_value_idx ON search (key, value)',
+    );
+    await knex.raw(
+      'CREATE INDEX CONCURRENTLY IF NOT EXISTS search_key_original_value_idx ON search (key, original_value)',
+    );
     await knex.raw(
       'DROP INDEX CONCURRENTLY IF EXISTS search_entity_key_value_idx',
     );
@@ -96,30 +103,24 @@ exports.down = async function down(knex) {
     await knex.raw(
       'DROP INDEX CONCURRENTLY IF EXISTS search_facets_covering_idx',
     );
-    await knex.raw(
-      'CREATE INDEX CONCURRENTLY IF NOT EXISTS search_key_value_idx ON search (key, value)',
-    );
-    await knex.raw(
-      'CREATE INDEX CONCURRENTLY IF NOT EXISTS search_key_original_value_idx ON search (key, original_value)',
-    );
   } else if (client.includes('mysql')) {
-    await mysqlDropIndexIfExists(knex, 'search_entity_key_value_idx');
-    await mysqlDropIndexIfExists(knex, 'search_key_value_entity_idx');
-    await mysqlDropIndexIfExists(knex, 'search_facets_covering_idx');
     await knex.schema.alterTable('search', table => {
       table.index(['key', 'value'], 'search_key_value_idx');
       table.index(['key', 'original_value'], 'search_key_original_value_idx');
     });
+    await mysqlDropIndexIfExists(knex, 'search_entity_key_value_idx');
+    await mysqlDropIndexIfExists(knex, 'search_key_value_entity_idx');
+    await mysqlDropIndexIfExists(knex, 'search_facets_covering_idx');
   } else {
-    await knex.raw('DROP INDEX IF EXISTS search_entity_key_value_idx');
-    await knex.raw('DROP INDEX IF EXISTS search_key_value_entity_idx');
-    await knex.raw('DROP INDEX IF EXISTS search_facets_covering_idx');
     await knex.raw(
       'CREATE INDEX IF NOT EXISTS search_key_value_idx ON search (key, value)',
     );
     await knex.raw(
       'CREATE INDEX IF NOT EXISTS search_key_original_value_idx ON search (key, original_value)',
     );
+    await knex.raw('DROP INDEX IF EXISTS search_entity_key_value_idx');
+    await knex.raw('DROP INDEX IF EXISTS search_key_value_entity_idx');
+    await knex.raw('DROP INDEX IF EXISTS search_facets_covering_idx');
   }
 };
 
