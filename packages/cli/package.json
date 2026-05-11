@@ -94,7 +94,7 @@
     "@backstage/plugin-scaffolder-node-test-utils": "workspace:^",
     "@backstage/test-utils": "workspace:^",
     "@backstage/theme": "workspace:^",
-    "@jest/environment-jsdom-abstract": "^30.0.0",
+    "@jest/environment-jsdom-abstract": "~30.3.0",
     "@types/fs-extra": "^11.0.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.13.14",
