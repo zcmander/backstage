@@ -188,7 +188,7 @@ async function ensurePgIndex(knex, opts) {
     SELECT indisunique, indisvalid
     FROM pg_index
     WHERE indexrelid = (
-      SELECT oid FROM pg_class WHERE relname = ?
+      SELECT oid FROM pg_class WHERE relname = ? AND relkind = 'i'
     )
   `,
     [name],
@@ -217,7 +217,7 @@ async function ensurePgIndex(knex, opts) {
 async function dropPgIndexIfExists(knex, name) {
   const result = await knex.raw(
     `
-    SELECT 1 FROM pg_class WHERE relname = ?
+    SELECT 1 FROM pg_class WHERE relname = ? AND relkind = 'i'
   `,
     [name],
   );
