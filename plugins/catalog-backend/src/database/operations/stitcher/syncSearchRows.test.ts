@@ -245,21 +245,24 @@ describe.each(databases.eachSupportedId())('syncSearchRows, %p', databaseId => {
     );
   });
 
-  it('overwrites original_value on conflict via ON CONFLICT DO UPDATE', async () => {
+  it('restores original_value when re-syncing after it was corrupted', async () => {
     await syncSearchRows(knex, 'e1', [row('a', 'x', 'X')]);
 
-    // Simulate a concurrent stitcher inserting the same (entity_id, key, value)
-    // with a different original_value casing. Unlike DO NOTHING, DO UPDATE
-    // requires an explicit conflict target — the column list is not optional.
-    await knex<DbSearchRow>('search')
-      .insert({ entity_id: 'e1', key: 'a', value: 'x', original_value: 'x' })
-      .onConflict(['entity_id', 'key', 'value'])
-      .merge(['original_value']);
+    // Corrupt the stored original_value (simulates stale or wrong data left
+    // by a previous stitcher run) without changing the key or value.
+    await knex('search')
+      .where({ entity_id: 'e1', key: 'a', value: 'x' })
+      .update({ original_value: 'corrupted' });
+
+    // Re-syncing the same desired rows should overwrite original_value back to
+    // 'X' via the ON CONFLICT DO UPDATE SET original_value = EXCLUDED.original_value
+    // clause inside syncSearchRows.
+    await syncSearchRows(knex, 'e1', [row('a', 'x', 'X')]);
 
     const rows = await getSearchRows();
     expect(rows).toHaveLength(1);
     expect(rows[0]).toEqual(
-      expect.objectContaining({ key: 'a', value: 'x', original_value: 'x' }),
+      expect.objectContaining({ key: 'a', value: 'x', original_value: 'X' }),
     );
   });
 
