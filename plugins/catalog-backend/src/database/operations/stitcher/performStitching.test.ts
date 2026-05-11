@@ -31,300 +31,291 @@ jest.setTimeout(60_000);
 
 const databases = TestDatabases.create();
 
-describe.each(databases.eachSupportedId())(
-  'performStitching, %p',
-  databaseId => {
+it.each(databases.eachSupportedId())(
+  'runs the happy path for %p',
+  async databaseId => {
+    const knex = await databases.init(databaseId);
+    await applyDatabaseMigrations(knex);
     const logger = mockServices.logger.mock();
 
-    // NOTE(freben): Testing the deferred path since it's a superset of the immediate one
-    it('runs the happy path in deferred mode', async () => {
-      const knex = await databases.init(databaseId);
-      await applyDatabaseMigrations(knex);
+    let entities: DbFinalEntitiesRow[];
+    let entity: Entity;
 
-      let entities: DbFinalEntitiesRow[];
-      let entity: Entity;
+    await knex<DbRefreshStateRow>('refresh_state').insert([
+      {
+        entity_id: 'my-id',
+        entity_ref: 'k:ns/n',
+        unprocessed_entity: JSON.stringify({}),
+        processed_entity: JSON.stringify({
+          apiVersion: 'a',
+          kind: 'k',
+          metadata: {
+            name: 'n',
+            namespace: 'ns',
+          },
+          spec: {
+            k: 'v',
+          },
+        }),
+        errors: '[]',
+        next_update_at: knex.fn.now(),
+        last_discovery_at: knex.fn.now(),
+      },
+    ]);
+    await knex<DbRefreshStateReferencesRow>(
+      'refresh_state_references',
+    ).insert([{ source_key: 'a', target_entity_ref: 'k:ns/n' }]);
+    await knex<DbRelationsRow>('relations').insert([
+      {
+        originating_entity_id: 'my-id',
+        source_entity_ref: 'k:ns/n',
+        type: 'looksAt',
+        target_entity_ref: 'k:ns/other',
+      },
+      // handles and ignores duplicates
+      {
+        originating_entity_id: 'my-id',
+        source_entity_ref: 'k:ns/n',
+        type: 'looksAt',
+        target_entity_ref: 'k:ns/other',
+      },
+    ]);
 
-      await knex<DbRefreshStateRow>('refresh_state').insert([
+    await markForStitching({
+      knex,
+      entityRefs: ['k:ns/n'],
+    });
+
+    await performStitching({
+      knex,
+      logger,
+      entityRef: 'k:ns/n',
+      stitchTicket: (
+        await knex('stitch_queue')
+          .where('entity_ref', 'k:ns/n')
+          .select('stitch_ticket')
+          .first()
+      )?.stitch_ticket,
+    });
+
+    entities = await knex<DbFinalEntitiesRow>('final_entities');
+
+    expect(entities.length).toBe(1);
+    entity = JSON.parse(entities[0].final_entity!);
+    expect(entity).toEqual({
+      relations: [
+        {
+          type: 'looksAt',
+          targetRef: 'k:ns/other',
+        },
+      ],
+      apiVersion: 'a',
+      kind: 'k',
+      metadata: {
+        name: 'n',
+        namespace: 'ns',
+        etag: expect.any(String),
+        uid: 'my-id',
+      },
+      spec: {
+        k: 'v',
+      },
+    });
+
+    expect(entity.metadata.etag).toEqual(entities[0].hash);
+    const last_updated_at = entities[0].last_updated_at;
+    expect(last_updated_at).not.toBeNull();
+    const firstHash = entities[0].hash;
+
+    const search = await knex<DbSearchRow>('search');
+    expect(search).toEqual(
+      expect.arrayContaining([
         {
           entity_id: 'my-id',
-          entity_ref: 'k:ns/n',
-          unprocessed_entity: JSON.stringify({}),
-          processed_entity: JSON.stringify({
-            apiVersion: 'a',
-            kind: 'k',
-            metadata: {
-              name: 'n',
-              namespace: 'ns',
-            },
-            spec: {
-              k: 'v',
-            },
-          }),
-          errors: '[]',
-          next_update_at: knex.fn.now(),
-          last_discovery_at: knex.fn.now(),
+          key: 'relations.looksat',
+          original_value: 'k:ns/other',
+          value: 'k:ns/other',
         },
-      ]);
-      await knex<DbRefreshStateReferencesRow>(
-        'refresh_state_references',
-      ).insert([{ source_key: 'a', target_entity_ref: 'k:ns/n' }]);
-      await knex<DbRelationsRow>('relations').insert([
         {
-          originating_entity_id: 'my-id',
-          source_entity_ref: 'k:ns/n',
-          type: 'looksAt',
-          target_entity_ref: 'k:ns/other',
+          entity_id: 'my-id',
+          key: 'apiversion',
+          original_value: 'a',
+          value: 'a',
         },
-        // handles and ignores duplicates
         {
-          originating_entity_id: 'my-id',
-          source_entity_ref: 'k:ns/n',
-          type: 'looksAt',
-          target_entity_ref: 'k:ns/other',
+          entity_id: 'my-id',
+          key: 'kind',
+          original_value: 'k',
+          value: 'k',
         },
-      ]);
-
-      const deferredStrategy = {
-        mode: 'deferred' as const,
-        pollingInterval: { seconds: 1 },
-        stitchTimeout: { seconds: 1 },
-      };
-
-      await markForStitching({
-        knex,
-        strategy: deferredStrategy,
-        entityRefs: ['k:ns/n'],
-      });
-
-      await performStitching({
-        knex,
-        logger,
-        strategy: deferredStrategy,
-        entityRef: 'k:ns/n',
-        stitchTicket: (
-          await knex('stitch_queue')
-            .where('entity_ref', 'k:ns/n')
-            .select('stitch_ticket')
-            .first()
-        )?.stitch_ticket,
-      });
-
-      entities = await knex<DbFinalEntitiesRow>('final_entities');
-
-      expect(entities.length).toBe(1);
-      entity = JSON.parse(entities[0].final_entity!);
-      expect(entity).toEqual({
-        relations: [
-          {
-            type: 'looksAt',
-            targetRef: 'k:ns/other',
-          },
-        ],
-        apiVersion: 'a',
-        kind: 'k',
-        metadata: {
-          name: 'n',
-          namespace: 'ns',
-          etag: expect.any(String),
-          uid: 'my-id',
-        },
-        spec: {
-          k: 'v',
-        },
-      });
-
-      expect(entity.metadata.etag).toEqual(entities[0].hash);
-      const last_updated_at = entities[0].last_updated_at;
-      expect(last_updated_at).not.toBeNull();
-      const firstHash = entities[0].hash;
-
-      const search = await knex<DbSearchRow>('search');
-      expect(search).toEqual(
-        expect.arrayContaining([
-          {
-            entity_id: 'my-id',
-            key: 'relations.looksat',
-            original_value: 'k:ns/other',
-            value: 'k:ns/other',
-          },
-          {
-            entity_id: 'my-id',
-            key: 'apiversion',
-            original_value: 'a',
-            value: 'a',
-          },
-          {
-            entity_id: 'my-id',
-            key: 'kind',
-            original_value: 'k',
-            value: 'k',
-          },
-          {
-            entity_id: 'my-id',
-            key: 'metadata.name',
-            original_value: 'n',
-            value: 'n',
-          },
-          {
-            entity_id: 'my-id',
-            key: 'metadata.namespace',
-            original_value: 'ns',
-            value: 'ns',
-          },
-          {
-            entity_id: 'my-id',
-            key: 'metadata.uid',
-            original_value: 'my-id',
-            value: 'my-id',
-          },
-          {
-            entity_id: 'my-id',
-            key: 'spec.k',
-            original_value: 'v',
-            value: 'v',
-          },
-        ]),
-      );
-
-      // Re-stitch without any changes
-      await markForStitching({
-        knex,
-        strategy: deferredStrategy,
-        entityRefs: ['k:ns/n'],
-      });
-
-      await performStitching({
-        knex,
-        logger,
-        strategy: deferredStrategy,
-        entityRef: 'k:ns/n',
-        stitchTicket: (
-          await knex('stitch_queue')
-            .where('entity_ref', 'k:ns/n')
-            .select('stitch_ticket')
-            .first()
-        )?.stitch_ticket,
-      });
-
-      entities = await knex<DbFinalEntitiesRow>('final_entities');
-      expect(entities.length).toBe(1);
-      entity = JSON.parse(entities[0].final_entity!);
-      expect(entities[0].hash).toEqual(firstHash);
-      expect(entity.metadata.etag).toEqual(firstHash);
-
-      // Now add one more relation and re-stitch
-      await knex<DbRelationsRow>('relations').insert([
         {
-          originating_entity_id: 'my-id',
-          source_entity_ref: 'k:ns/n',
-          type: 'looksAt',
-          target_entity_ref: 'k:ns/third',
+          entity_id: 'my-id',
+          key: 'metadata.name',
+          original_value: 'n',
+          value: 'n',
         },
-      ]);
-
-      await markForStitching({
-        knex,
-        strategy: deferredStrategy,
-        entityRefs: ['k:ns/n'],
-      });
-
-      await performStitching({
-        knex,
-        logger,
-        strategy: deferredStrategy,
-        entityRef: 'k:ns/n',
-        stitchTicket: (
-          await knex('stitch_queue')
-            .where('entity_ref', 'k:ns/n')
-            .select('stitch_ticket')
-            .first()
-        )?.stitch_ticket,
-      });
-
-      entities = await knex<DbFinalEntitiesRow>('final_entities');
-
-      expect(entities.length).toBe(1);
-      entity = JSON.parse(entities[0].final_entity!);
-      expect(entity).toEqual({
-        relations: expect.arrayContaining([
-          {
-            type: 'looksAt',
-            targetRef: 'k:ns/other',
-          },
-          {
-            type: 'looksAt',
-            targetRef: 'k:ns/third',
-          },
-        ]),
-        apiVersion: 'a',
-        kind: 'k',
-        metadata: {
-          name: 'n',
-          namespace: 'ns',
-          etag: expect.any(String),
-          uid: 'my-id',
+        {
+          entity_id: 'my-id',
+          key: 'metadata.namespace',
+          original_value: 'ns',
+          value: 'ns',
         },
-        spec: {
-          k: 'v',
+        {
+          entity_id: 'my-id',
+          key: 'metadata.uid',
+          original_value: 'my-id',
+          value: 'my-id',
         },
-      });
+        {
+          entity_id: 'my-id',
+          key: 'spec.k',
+          original_value: 'v',
+          value: 'v',
+        },
+      ]),
+    );
 
-      expect(entities[0].hash).not.toEqual(firstHash);
-      expect(entities[0].hash).toEqual(entity.metadata.etag);
-
-      expect(await knex<DbSearchRow>('search')).toEqual(
-        expect.arrayContaining([
-          {
-            entity_id: 'my-id',
-            key: 'relations.looksat',
-            original_value: 'k:ns/other',
-            value: 'k:ns/other',
-          },
-          {
-            entity_id: 'my-id',
-            key: 'relations.looksat',
-            original_value: 'k:ns/third',
-            value: 'k:ns/third',
-          },
-          {
-            entity_id: 'my-id',
-            key: 'apiversion',
-            original_value: 'a',
-            value: 'a',
-          },
-          {
-            entity_id: 'my-id',
-            key: 'kind',
-            original_value: 'k',
-            value: 'k',
-          },
-          {
-            entity_id: 'my-id',
-            key: 'metadata.name',
-            original_value: 'n',
-            value: 'n',
-          },
-          {
-            entity_id: 'my-id',
-            key: 'metadata.namespace',
-            original_value: 'ns',
-            value: 'ns',
-          },
-          {
-            entity_id: 'my-id',
-            key: 'metadata.uid',
-            original_value: 'my-id',
-            value: 'my-id',
-          },
-          {
-            entity_id: 'my-id',
-            key: 'spec.k',
-            original_value: 'v',
-            value: 'v',
-          },
-        ]),
-      );
+    // Re-stitch without any changes
+    await markForStitching({
+      knex,
+      entityRefs: ['k:ns/n'],
     });
+
+    await performStitching({
+      knex,
+      logger,
+      entityRef: 'k:ns/n',
+      stitchTicket: (
+        await knex('stitch_queue')
+          .where('entity_ref', 'k:ns/n')
+          .select('stitch_ticket')
+          .first()
+      )?.stitch_ticket,
+    });
+
+    entities = await knex<DbFinalEntitiesRow>('final_entities');
+    expect(entities.length).toBe(1);
+    entity = JSON.parse(entities[0].final_entity!);
+    expect(entities[0].hash).toEqual(firstHash);
+    expect(entity.metadata.etag).toEqual(firstHash);
+
+    // Now add one more relation and re-stitch
+    await knex<DbRelationsRow>('relations').insert([
+      {
+        originating_entity_id: 'my-id',
+        source_entity_ref: 'k:ns/n',
+        type: 'looksAt',
+        target_entity_ref: 'k:ns/third',
+      },
+    ]);
+
+    await markForStitching({
+      knex,
+      entityRefs: ['k:ns/n'],
+    });
+
+    await performStitching({
+      knex,
+      logger,
+      entityRef: 'k:ns/n',
+      stitchTicket: (
+        await knex('stitch_queue')
+          .where('entity_ref', 'k:ns/n')
+          .select('stitch_ticket')
+          .first()
+      )?.stitch_ticket,
+    });
+
+    entities = await knex<DbFinalEntitiesRow>('final_entities');
+
+    expect(entities.length).toBe(1);
+    entity = JSON.parse(entities[0].final_entity!);
+    expect(entity).toEqual({
+      relations: expect.arrayContaining([
+        {
+          type: 'looksAt',
+          targetRef: 'k:ns/other',
+        },
+        {
+          type: 'looksAt',
+          targetRef: 'k:ns/third',
+        },
+      ]),
+      apiVersion: 'a',
+      kind: 'k',
+      metadata: {
+        name: 'n',
+        namespace: 'ns',
+        etag: expect.any(String),
+        uid: 'my-id',
+      },
+      spec: {
+        k: 'v',
+      },
+    });
+
+    expect(entities[0].hash).not.toEqual(firstHash);
+    expect(entities[0].hash).toEqual(entity.metadata.etag);
+
+    expect(await knex<DbSearchRow>('search')).toEqual(
+      expect.arrayContaining([
+        {
+          entity_id: 'my-id',
+          key: 'relations.looksat',
+          original_value: 'k:ns/other',
+          value: 'k:ns/other',
+        },
+        {
+          entity_id: 'my-id',
+          key: 'relations.looksat',
+          original_value: 'k:ns/third',
+          value: 'k:ns/third',
+        },
+        {
+          entity_id: 'my-id',
+          key: 'apiversion',
+          original_value: 'a',
+          value: 'a',
+        },
+        {
+          entity_id: 'my-id',
+          key: 'kind',
+          original_value: 'k',
+          value: 'k',
+        },
+        {
+          entity_id: 'my-id',
+          key: 'metadata.name',
+          original_value: 'n',
+          value: 'n',
+        },
+        {
+          entity_id: 'my-id',
+          key: 'metadata.namespace',
+          original_value: 'ns',
+          value: 'ns',
+        },
+        {
+          entity_id: 'my-id',
+          key: 'metadata.uid',
+          original_value: 'my-id',
+          value: 'my-id',
+        },
+        {
+          entity_id: 'my-id',
+          key: 'spec.k',
+          original_value: 'v',
+          value: 'v',
+        },
+      ]),
+    );
+  },
+);
+
+describe.each(databases.eachSupportedId())(
+  'performStitching edge cases, %p',
+  databaseId => {
+    const logger = mockServices.logger.mock();
 
     it('handles conflicts with past stitches', async () => {
       if (databaseId === 'MYSQL_8') {
@@ -380,7 +371,6 @@ describe.each(databases.eachSupportedId())(
         performStitching({
           knex,
           logger: stitchLogger,
-          strategy: { mode: 'immediate' },
           entityRef: 'k:ns/n',
         }),
       ).resolves.toBe('abandoned');
@@ -430,7 +420,6 @@ describe.each(databases.eachSupportedId())(
         performStitching({
           knex,
           logger: stitchLogger,
-          strategy: { mode: 'immediate' },
           entityRef: 'k:ns/n',
         }),
       ).resolves.toBe('changed');
