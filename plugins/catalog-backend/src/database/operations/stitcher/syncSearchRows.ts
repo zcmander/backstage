@@ -50,11 +50,15 @@ export async function syncSearchRows(
 ): Promise<void> {
   // Dedup by (key, value) — the UNIQUE constraint on (entity_id, key, value)
   // rejects duplicates, and the same lowercased value with different original
-  // casing is semantically a single entry. Keep the last occurrence so that
-  // if the entity data has e.g. tags: ['Java', 'java'], the later one wins.
+  // casing is semantically a single entry. Keep the first occurrence, which
+  // matches the first-wins semantics of buildEntitySearch so that both layers
+  // consistently pick the same original_value for a given input order.
   const dedupMap = new Map<string, DbSearchRow>();
   for (const entry of searchEntries) {
-    dedupMap.set(`${entry.key}\0${entry.value ?? ''}`, entry);
+    const k = `${entry.key}\0${entry.value === null ? '\x01' : entry.value}`;
+    if (!dedupMap.has(k)) {
+      dedupMap.set(k, entry);
+    }
   }
   const deduped = [...dedupMap.values()];
 

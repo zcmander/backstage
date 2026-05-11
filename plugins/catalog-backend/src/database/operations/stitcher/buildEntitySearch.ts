@@ -235,7 +235,7 @@ export function buildEntitySearch(
   // violate the unique constraint on (entity_id, key, value).
   const seen = new Set<string>();
   return rows.filter(row => {
-    const k = `${row.key}\0${row.value ?? ''}`;
+    const k = `${row.key}\0${row.value === null ? '\x01' : row.value}`;
     if (seen.has(k)) return false;
     seen.add(k);
     return true;
