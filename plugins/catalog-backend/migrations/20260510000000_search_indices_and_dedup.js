@@ -179,7 +179,18 @@ exports.config = { transaction: false };
 
 /** @param {import('knex').Knex} knex */
 async function upPostgres(knex) {
-  // Step 1: Remove duplicate search rows.
+  // Step 1: Ensure the covering index exists before deduplication.
+  // This non-unique index on (key, value, entity_id) covers all three dedup
+  // columns, enabling an index-only GROUP BY scan with zero heap fetches in
+  // Phase 1 of the dedup. Creating it here guarantees this is true even on
+  // vanilla installations that have never run any preparatory SQL manually.
+  await ensurePgIndex(knex, {
+    name: 'search_key_value_entity_idx',
+    columns: '(key, value, entity_id)',
+    unique: false,
+  });
+
+  // Step 2: Remove duplicate search rows.
   //
   // Fast path: if the UNIQUE index already exists and is valid, Postgres has
   // been enforcing uniqueness since the index was created, so there are no
@@ -258,17 +269,13 @@ async function upPostgres(knex) {
     await knex.raw('DROP TABLE IF EXISTS _search_dedup_groups');
   }
 
-  // Step 2: Create covering indices. Each call is idempotent — it checks
-  // the index state and only does work if needed.
+  // Step 3: Create remaining covering indices. Each call is idempotent —
+  // it checks the index state and only does work if needed.
+  // search_key_value_entity_idx was already created in Step 1.
   await ensurePgIndex(knex, {
     name: 'search_entity_key_value_idx',
     columns: '(entity_id, key, value)',
     unique: true,
-  });
-  await ensurePgIndex(knex, {
-    name: 'search_key_value_entity_idx',
-    columns: '(key, value, entity_id)',
-    unique: false,
   });
   await ensurePgIndex(knex, {
     name: 'search_facets_covering_idx',
@@ -277,7 +284,7 @@ async function upPostgres(knex) {
     unique: false,
   });
 
-  // Step 3: Drop superseded indices.
+  // Step 4: Drop superseded indices.
   await dropPgIndexIfExists(knex, 'search_key_value_idx');
   await dropPgIndexIfExists(knex, 'search_key_original_value_idx');
 }
