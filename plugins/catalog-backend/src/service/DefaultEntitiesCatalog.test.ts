@@ -2031,7 +2031,7 @@ describe('DefaultEntitiesCatalog', () => {
               original_value: 'B Test Entity',
             },
           ])
-          .onConflict(['entity_id', 'key', 'value'])
+          .onConflict()
           .ignore();
 
         const catalog = new DefaultEntitiesCatalog({
@@ -2422,7 +2422,7 @@ describe('DefaultEntitiesCatalog', () => {
               original_value: 'one',
             },
           ])
-          .onConflict(['entity_id', 'key', 'value'])
+          .onConflict()
           .ignore();
 
         const catalog = new DefaultEntitiesCatalog({

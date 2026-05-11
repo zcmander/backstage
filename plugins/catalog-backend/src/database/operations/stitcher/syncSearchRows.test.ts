@@ -224,6 +224,26 @@ describe.each(databases.eachSupportedId())('syncSearchRows, %p', databaseId => {
     expect(rows.map(r => r.value).sort()).toEqual(['java', 'python', 'rust']);
   });
 
+  it('silently rejects a direct duplicate insert via the UNIQUE constraint', async () => {
+    await syncSearchRows(knex, 'e1', [row('a', 'x'), row('b', 'y')]);
+
+    // Simulate a concurrent process inserting a duplicate directly —
+    // the UNIQUE constraint on (entity_id, key, value) should reject it
+    // silently. ON CONFLICT without a column list covers any unique
+    // constraint on the table, which is safe since (entity_id, key, value)
+    // is the only one.
+    await knex<DbSearchRow>('search')
+      .insert({ entity_id: 'e1', key: 'a', value: 'x', original_value: 'x' })
+      .onConflict()
+      .ignore();
+
+    const rows = await getSearchRows();
+    expect(rows).toHaveLength(2);
+    expect(rows.find(r => r.key === 'a')).toEqual(
+      expect.objectContaining({ key: 'a', value: 'x' }),
+    );
+  });
+
   it('simulates the typical steady-state case with one changed row', async () => {
     // Build a realistic-ish set of search rows
     const initial = [
