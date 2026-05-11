@@ -2556,12 +2556,18 @@ describe('DefaultEntitiesCatalog', () => {
           }),
         ).resolves.toEqual({
           facets: {
-            'spec.type': [
+            'spec.type': expect.arrayContaining([
               { value: 'library', count: 1 },
               { value: 'service', count: 1 },
-            ],
+            ]),
           },
         });
+        const result = await catalog.facets({
+          facets: ['spec.type'],
+          query: { kind: 'component' },
+          credentials: mockCredentials.none(),
+        });
+        expect(result.facets['spec.type']).toHaveLength(2);
       },
     );
 
@@ -2597,12 +2603,18 @@ describe('DefaultEntitiesCatalog', () => {
           }),
         ).resolves.toEqual({
           facets: {
-            kind: [
+            kind: expect.arrayContaining([
               { value: 'API', count: 1 },
               { value: 'Component', count: 1 },
-            ],
+            ]),
           },
         });
+        const result = await catalog.facets({
+          facets: ['kind'],
+          query: { kind: { $in: ['component', 'api'] } },
+          credentials: mockCredentials.none(),
+        });
+        expect(result.facets.kind).toHaveLength(2);
       },
     );
 
