@@ -193,14 +193,15 @@ describe.each(databases.eachSupportedId())('syncSearchRows, %p', databaseId => {
   it('keeps one row when original_value casing differs for same key+value', async () => {
     // Two entries with the same lowercased (key, value) but different
     // original_value casing are deduplicated — the UNIQUE constraint on
-    // (entity_id, key, value) allows only one. The last occurrence wins.
+    // (entity_id, key, value) allows only one. The first occurrence wins,
+    // matching the first-wins semantics of buildEntitySearch.
     await syncSearchRows(knex, 'e1', [row('a', 'v', 'V')]);
     await syncSearchRows(knex, 'e1', [row('a', 'v', 'V'), row('a', 'v', 'v')]);
 
     const rows = await getSearchRows();
     expect(rows).toHaveLength(1);
     expect(rows[0]).toEqual(
-      expect.objectContaining({ key: 'a', value: 'v', original_value: 'v' }),
+      expect.objectContaining({ key: 'a', value: 'v', original_value: 'V' }),
     );
   });
 
