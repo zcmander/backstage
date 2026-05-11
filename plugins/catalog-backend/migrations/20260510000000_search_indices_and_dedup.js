@@ -32,13 +32,29 @@
  * increase the liveness probe timeout for this one-time upgrade, or run
  * the SQL commands below manually before deploying.
  *
+ * ## Deduplication strategy
+ *
+ * The dedup step is skipped entirely if the UNIQUE index already exists and
+ * is valid — a valid unique index guarantees no duplicates can be present.
+ *
+ * When dedup is needed the migration uses a two-phase approach to avoid
+ * the O(N) full-table re-scan that a plain window-function CTE would
+ * require on every batch iteration:
+ *
+ *   Phase 1 (one scan):  collect all duplicate ctids into a temp table.
+ *   Phase 2 (no re-scan): drain the temp table in small batches using
+ *                          cheap ctid lookups — no further full scans.
+ *
  * ## Recommended: run manually before deploying (large installations)
  *
  * For PostgreSQL installations with millions of search rows, run these
  * commands against your database BEFORE deploying this version. Each
  * index build takes a few minutes but does not block reads or writes.
+ * The migration detects that the indices already exist and skips all work,
+ * so startup is instant.
  *
- *   -- 1. Remove duplicate search rows
+ *   -- 1. Remove duplicate search rows (adjust LIMIT / loop as needed for
+ *   --    very large tables to avoid long-running single transactions)
  *   WITH cte AS (
  *     SELECT ctid,
  *            row_number() OVER (PARTITION BY entity_id, key, value) AS rn
@@ -132,19 +148,66 @@ exports.config = { transaction: false };
 
 /** @param {import('knex').Knex} knex */
 async function upPostgres(knex) {
-  // Step 1: Remove duplicate search rows. The window function's
-  // PARTITION BY treats NULLs as equal, so this handles both NULL-value
-  // and non-NULL-value duplicates. Idempotent: deletes 0 rows if clean.
-  await knex.raw(`
-    WITH cte AS (
-      SELECT ctid,
-             row_number() OVER (PARTITION BY entity_id, key, value) AS rn
-      FROM search
-    )
-    DELETE FROM search
-    USING cte
-    WHERE search.ctid = cte.ctid AND cte.rn > 1
-  `);
+  // Step 1: Remove duplicate search rows.
+  //
+  // Fast path: if the UNIQUE index already exists and is valid, Postgres has
+  // been enforcing uniqueness since the index was created, so there are no
+  // duplicates. Skip dedup entirely — this makes restarts essentially free
+  // for installations that created the index manually beforehand.
+  //
+  // Slow path (index absent or invalid): use a two-phase approach that scans
+  // the table exactly once.
+  //   Phase 1: one full scan to collect every duplicate ctid into a temp
+  //            table. The window function's PARTITION BY treats NULLs as
+  //            equal, so NULL-value duplicates are handled correctly.
+  //   Phase 2: drain the temp table in small batches. Each iteration is a
+  //            cheap ctid lookup with no further full-table scans.
+  const uniqueCheck = await knex.raw(
+    `SELECT indisvalid
+     FROM pg_index
+     WHERE indexrelid = (
+       SELECT oid FROM pg_class WHERE relname = ? AND relkind = 'i'
+     ) AND indisunique = true`,
+    ['search_entity_key_value_idx'],
+  );
+  const needsDedup = !uniqueCheck.rows[0]?.indisvalid;
+
+  if (needsDedup) {
+    // Phase 1: one scan — populate temp table with all duplicate ctids.
+    await knex.raw(`
+      CREATE TEMP TABLE _search_dedup_batch AS
+      SELECT ctid AS dup_ctid
+      FROM (
+        SELECT ctid,
+               row_number() OVER (PARTITION BY entity_id, key, value ORDER BY ctid) AS rn
+        FROM search
+      ) sub
+      WHERE rn > 1
+    `);
+    await knex.raw(`CREATE INDEX ON _search_dedup_batch (dup_ctid)`);
+
+    // Phase 2: drain the temp table, deleting from search in small batches.
+    // The inner CTE deletes a chunk from the temp table and returns the ctids;
+    // the outer DELETE removes those rows from search. PostgreSQL guarantees
+    // all data-modifying CTEs execute exactly once regardless of whether
+    // their output is consumed, so both DELETEs always fire.
+    for (;;) {
+      const { rows } = await knex.raw(`
+        WITH batch AS (
+          DELETE FROM _search_dedup_batch
+          WHERE dup_ctid IN (SELECT dup_ctid FROM _search_dedup_batch LIMIT 10000)
+          RETURNING dup_ctid
+        ),
+        removed AS (
+          DELETE FROM search USING batch WHERE search.ctid = batch.dup_ctid
+        )
+        SELECT count(*) AS n FROM batch
+      `);
+      if (Number(rows[0].n) === 0) break;
+    }
+
+    await knex.raw('DROP TABLE IF EXISTS _search_dedup_batch');
+  }
 
   // Step 2: Create covering indices. Each call is idempotent — it checks
   // the index state and only does work if needed.
