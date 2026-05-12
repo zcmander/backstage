@@ -1,5 +1,15 @@
 # @backstage/plugin-catalog
 
+## 2.0.5-next.1
+
+### Patch Changes
+
+- 728629c: Fixed an issue where navigating to an unknown sub-path on an entity page (for example `/catalog/default/component/foo/blob`) would silently render the first available route. Unknown paths now show the standard not-found page instead.
+- Updated dependencies
+  - @backstage/ui@0.15.0-next.3
+  - @backstage/plugin-scaffolder-common@2.2.0-next.1
+  - @backstage/plugin-catalog-react@2.1.5-next.1
+
 ## 2.0.5-next.0
 
 ### Patch Changes

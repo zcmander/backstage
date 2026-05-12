@@ -1,5 +1,16 @@
 # example-app-legacy
 
+## 0.2.121-next.1
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/plugin-scaffolder-react@1.21.0-next.1
+  - @backstage/plugin-scaffolder@1.37.0-next.2
+  - @backstage/plugin-catalog@2.0.5-next.1
+  - @backstage/ui@0.15.0-next.3
+  - @backstage/plugin-catalog-react@2.1.5-next.1
+
 ## 0.2.121-next.0
 
 ### Patch Changes

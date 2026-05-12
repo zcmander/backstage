@@ -1,5 +1,14 @@
 # @backstage/plugin-kubernetes-backend
 
+## 0.21.4-next.1
+
+### Patch Changes
+
+- 1ecc3ca: Fixed spelling mistakes in internal code
+- Updated dependencies
+  - @backstage/integration-aws-node@0.2.0-next.1
+  - @backstage/backend-plugin-api@1.9.1-next.1
+
 ## 0.21.4-next.0
 
 ### Patch Changes

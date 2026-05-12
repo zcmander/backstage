@@ -1,5 +1,26 @@
 # @backstage/plugin-scaffolder-backend
 
+## 4.0.0-next.2
+
+### Major Changes
+
+- c78b3b6: Add explicit memory management to SecureTemplater usage
+
+### Minor Changes
+
+- 8006acf: The template parameter schema response now exposes a `formDecorators` field
+  instead of `EXPERIMENTAL_formDecorators`. Templates that still declare
+  `spec.EXPERIMENTAL_formDecorators` are read transparently and surfaced under
+  the new field.
+
+### Patch Changes
+
+- 1ecc3ca: Fixed spelling mistakes in internal code
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.9.1-next.1
+  - @backstage/plugin-scaffolder-common@2.2.0-next.1
+  - @backstage/plugin-scaffolder-node@0.13.3-next.2
+
 ## 3.5.0-next.1
 
 ### Minor Changes
