@@ -65,16 +65,39 @@ import {
   permissionApiRef,
   IdentityPermissionApi,
 } from '@backstage/plugin-permission-react';
+import { ToastApiMessage, toastApiRef } from '@backstage/frontend-plugin-api';
+import { isValidElement } from 'react';
 
-// Internal import to avoid code duplication.
-// This is imported from the new frontend system module.
-// eslint-disable-next-line @backstage/no-relative-monorepo-imports
-import {
-  ToastApiForwarder,
-  toastApiForwarderRef,
-} from '../../../../plugins/app/src/apis';
-// eslint-disable-next-line @backstage/no-relative-monorepo-imports
-import { toastApiRef } from '../../../frontend-plugin-api/src/apis';
+const reactNodeToString = (
+  node: React.ReactNode | null | undefined,
+): string => {
+  if (node === null || node === undefined) {
+    return '';
+  }
+  if (typeof node === 'string') {
+    return node;
+  }
+  if (Array.isArray(node)) {
+    return node.map(reactNodeToString).join(' ');
+  }
+  if (isValidElement(node)) {
+    return reactNodeToString(node.props.children);
+  }
+  return '';
+};
+
+const toastStatusToSeverity = (message: ToastApiMessage) => {
+  // 'success' | 'info' | 'warning' | 'error'
+  const toastStatus = message.status ?? 'success';
+  switch (toastStatus) {
+    case 'warning':
+      return 'warning';
+    case 'danger':
+      return 'error';
+    default:
+      return 'info';
+  }
+};
 
 export const apis = [
   createApiFactory({
@@ -315,13 +338,21 @@ export const apis = [
       IdentityPermissionApi.create({ config, discovery, identity }),
   }),
   createApiFactory({
-    api: toastApiForwarderRef,
-    deps: {},
-    factory: () => new ToastApiForwarder(),
-  }),
-  createApiFactory({
     api: toastApiRef,
-    deps: { forwarder: toastApiForwarderRef },
-    factory: ({ forwarder }) => forwarder,
+    deps: { alertApi: alertApiRef },
+    factory: ({ alertApi }) => ({
+      post(toast: ToastApiMessage) {
+        const message = reactNodeToString(toast?.title);
+        alertApi.post({
+          message,
+          severity: toastStatusToSeverity(toast),
+          display: 'transient',
+        });
+
+        return {
+          close: () => {},
+        };
+      },
+    }),
   }),
 ];
