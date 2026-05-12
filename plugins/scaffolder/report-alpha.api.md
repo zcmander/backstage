@@ -552,10 +552,12 @@ const _default: OverridableFrontendPlugin<
     }>;
     'sub-page:scaffolder/templates': OverridableExtensionDefinition<{
       config: {
+        enableBackstageUi: boolean;
         path: string | undefined;
         title: string | undefined;
       };
       configInput: {
+        enableBackstageUi?: boolean | undefined;
         path?: string | undefined;
         title?: string | undefined;
       };
