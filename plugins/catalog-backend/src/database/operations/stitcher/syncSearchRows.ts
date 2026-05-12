@@ -16,15 +16,7 @@
 
 import { Knex } from 'knex';
 import { DbSearchRow } from '../../tables';
-import { BATCH_SIZE } from './util';
-
-// The Postgres sync uses COALESCE(x, NULL_SENTINEL) to allow Postgres to
-// include nullable columns in the Hash Cond of anti-joins (IS NOT DISTINCT
-// FROM prevents this). As a consequence, values that are exactly this
-// sentinel character are not searchable — they would be treated as NULL.
-// This is the SOH (Start of Heading) control character which does not
-// appear in real entity metadata.
-const NULL_SENTINEL = '\x01';
+import { BATCH_SIZE, NULL_SENTINEL } from './util';
 
 function filterSentinelValues(entries: DbSearchRow[]): DbSearchRow[] {
   return entries.filter(
@@ -55,7 +47,9 @@ export async function syncSearchRows(
   // consistently pick the same original_value for a given input order.
   const dedupMap = new Map<string, DbSearchRow>();
   for (const entry of searchEntries) {
-    const k = `${entry.key}\0${entry.value === null ? '\x01' : entry.value}`;
+    const k = `${entry.key}\0${
+      entry.value === null ? NULL_SENTINEL : entry.value
+    }`;
     if (!dedupMap.has(k)) {
       dedupMap.set(k, entry);
     }
