@@ -741,6 +741,185 @@ describe('DefaultEntitiesCatalog', () => {
         ).resolves.toEqual(['n4', 'n3', 'n1', 'n2']);
       },
     );
+
+    it.each(databases.eachSupportedId())(
+      'paginates correctly through single-field ordering, %p',
+      async databaseId => {
+        await createDatabase(databaseId);
+
+        // All four entities have metadata.name — fast path uses Phase 1 only
+        for (const name of ['n1', 'n2', 'n3', 'n4']) {
+          await addEntityToSearch({
+            apiVersion: 'a',
+            kind: 'k',
+            metadata: { name },
+          });
+        }
+
+        const catalog = new DefaultEntitiesCatalog({
+          database: knex,
+          logger: mockServices.logger.mock(),
+          stitcher,
+        });
+
+        async function page(limit: number, offset?: number): Promise<string[]> {
+          const r = await catalog.entities({
+            order: [{ field: 'metadata.name', order: 'asc' }],
+            pagination: { limit, offset },
+            credentials: mockCredentials.none(),
+          });
+          return entitiesResponseToObjects(r.entities).map(
+            e => e!.metadata.name,
+          );
+        }
+
+        async function hasNext(
+          limit: number,
+          offset?: number,
+        ): Promise<boolean> {
+          const r = await catalog.entities({
+            order: [{ field: 'metadata.name', order: 'asc' }],
+            pagination: { limit, offset },
+            credentials: mockCredentials.none(),
+          });
+          return r.pageInfo.hasNextPage;
+        }
+
+        await expect(page(2)).resolves.toEqual(['n1', 'n2']);
+        expect(await hasNext(2)).toBe(true);
+
+        await expect(page(2, 2)).resolves.toEqual(['n3', 'n4']);
+        expect(await hasNext(2, 2)).toBe(false);
+
+        await expect(page(2, 1)).resolves.toEqual(['n2', 'n3']);
+        expect(await hasNext(2, 1)).toBe(true);
+
+        await expect(page(100)).resolves.toEqual(['n1', 'n2', 'n3', 'n4']);
+      },
+    );
+
+    it.each(databases.eachSupportedId())(
+      'paginates across the Phase 1 / Phase 2 boundary, %p',
+      async databaseId => {
+        await createDatabase(databaseId);
+
+        // n1 and n2 have spec.b (Phase 1); n3 and n4 do not (Phase 2).
+        // Explicit UIDs pin Phase 2 ordering (entity_id ASC) to a known sequence.
+        await addEntityToSearch({
+          apiVersion: 'a',
+          kind: 'k',
+          metadata: { name: 'n1' },
+          spec: { b: 'alpha' },
+        });
+        await addEntityToSearch({
+          apiVersion: 'a',
+          kind: 'k',
+          metadata: { name: 'n2' },
+          spec: { b: 'beta' },
+        });
+        await addEntityToSearch({
+          apiVersion: 'a',
+          kind: 'k',
+          metadata: { name: 'n3', uid: 'aaaa-n3' },
+        });
+        await addEntityToSearch({
+          apiVersion: 'a',
+          kind: 'k',
+          metadata: { name: 'n4', uid: 'bbbb-n4' },
+        });
+
+        const catalog = new DefaultEntitiesCatalog({
+          database: knex,
+          logger: mockServices.logger.mock(),
+          stitcher,
+        });
+
+        async function page(
+          limit: number,
+          offset?: number,
+          order: 'asc' | 'desc' = 'asc',
+        ): Promise<string[]> {
+          const r = await catalog.entities({
+            order: [{ field: 'spec.b', order }],
+            pagination: { limit, offset },
+            credentials: mockCredentials.none(),
+          });
+          return entitiesResponseToObjects(r.entities).map(
+            e => e!.metadata.name,
+          );
+        }
+
+        // Page that straddles the Phase 1 / Phase 2 boundary
+        await expect(page(3)).resolves.toEqual(['n1', 'n2', 'n3']);
+        await expect(page(3, 1)).resolves.toEqual(['n2', 'n3', 'n4']);
+
+        // Phase 2 entities (no spec.b) are always ordered ASC by entity_id
+        // regardless of the primary sort direction
+        await expect(page(4, 0, 'asc')).resolves.toEqual([
+          'n1',
+          'n2',
+          'n3',
+          'n4',
+        ]);
+        await expect(page(4, 0, 'desc')).resolves.toEqual([
+          'n2',
+          'n1',
+          'n3',
+          'n4',
+        ]);
+      },
+    );
+
+    it.each(databases.eachSupportedId())(
+      'treats a null sort-field value the same as a missing sort field, %p',
+      async databaseId => {
+        await createDatabase(databaseId);
+
+        // n1 has spec.b with a real value (Phase 1)
+        // n2 has spec.b explicitly set to null — buildEntitySearch stores value=NULL
+        // n3 has no spec.b at all
+        // n2 and n3 must both end up in the NULLS-LAST bucket (Phase 2),
+        // ordered by entity_id, regardless of primary sort direction.
+        await addEntityToSearch({
+          apiVersion: 'a',
+          kind: 'k',
+          metadata: { name: 'n1' },
+          spec: { b: 'alpha' },
+        });
+        await addEntityToSearch({
+          apiVersion: 'a',
+          kind: 'k',
+          metadata: { name: 'n2', uid: 'aaaa-n2' },
+          spec: { b: null },
+        });
+        await addEntityToSearch({
+          apiVersion: 'a',
+          kind: 'k',
+          metadata: { name: 'n3', uid: 'bbbb-n3' },
+        });
+
+        const catalog = new DefaultEntitiesCatalog({
+          database: knex,
+          logger: mockServices.logger.mock(),
+          stitcher,
+        });
+
+        async function page(order: 'asc' | 'desc'): Promise<string[]> {
+          const r = await catalog.entities({
+            order: [{ field: 'spec.b', order }],
+            credentials: mockCredentials.none(),
+          });
+          return entitiesResponseToObjects(r.entities).map(
+            e => e!.metadata.name,
+          );
+        }
+
+        // n2 (null value) and n3 (missing key) must sort together after n1,
+        // ordered by entity_id ASC, regardless of primary direction
+        await expect(page('asc')).resolves.toEqual(['n1', 'n2', 'n3']);
+        await expect(page('desc')).resolves.toEqual(['n1', 'n2', 'n3']);
+      },
+    );
   });
 
   describe('entitiesBatch', () => {
