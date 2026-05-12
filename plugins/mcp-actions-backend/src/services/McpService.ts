@@ -43,6 +43,32 @@ function safeStringify(value: unknown): string {
   }
 }
 
+// Baggage is propagated from untrusted callers, so we forward only an
+// explicit allowlist of low-cardinality identifier keys from the OTel
+// `gen_ai.*` registry.
+const PROPAGATED_BAGGAGE_ATTRIBUTES: readonly string[] = [
+  'gen_ai.agent.id',
+  'gen_ai.agent.name',
+  'gen_ai.conversation.id',
+  'gen_ai.provider.name',
+  'gen_ai.request.model',
+];
+
+function baggageAttributes(
+  tracingService: TracingService,
+): Record<string, string> {
+  const baggage = tracingService.getActiveBaggage();
+  if (!baggage) return {};
+  const attrs: Record<string, string> = {};
+  for (const key of PROPAGATED_BAGGAGE_ATTRIBUTES) {
+    const entry = baggage.getEntry(key);
+    if (entry) {
+      attrs[key] = entry.value;
+    }
+  }
+  return attrs;
+}
+
 export class McpService {
   private readonly actions: ActionsService;
   private readonly namespacedToolNames: boolean;
@@ -189,6 +215,16 @@ export class McpService {
                 credentials,
               });
 
+              // Record the structured action output directly rather than the
+              // CallToolResult envelope below, which wraps an already-
+              // stringified markdown-fenced JSON block.
+              if (this.captureToolPayloads) {
+                span.setAttribute(
+                  'gen_ai.tool.call.result',
+                  safeStringify(output),
+                );
+              }
+
               return {
                 // todo(blam): unfortunately structuredContent is not supported by most clients yet.
                 // so the validation for the output happens in the default actions registry
@@ -207,12 +243,6 @@ export class McpService {
             });
 
             isError = !!(result as { isError?: boolean })?.isError;
-            if (this.captureToolPayloads) {
-              span.setAttribute(
-                'gen_ai.tool.call.result',
-                safeStringify(result),
-              );
-            }
             if (isError) {
               span.setAttribute('error.type', 'tool_error');
               span.setStatus({ code: 'error', message: 'tool_error' });
@@ -223,6 +253,7 @@ export class McpService {
             kind: 'server',
             credentials,
             attributes: {
+              ...baggageAttributes(this.tracingService),
               'mcp.method.name': 'tools/call',
               'gen_ai.tool.name': params.name,
               'gen_ai.operation.name': 'execute_tool',

@@ -1010,7 +1010,68 @@ describe('McpService', () => {
       );
     });
 
-    it('includes tool arguments in the span options and sets the result via setAttribute when captureToolPayloads is true', async () => {
+    it('includes gen_ai baggage entries as span attributes when present', async () => {
+      const tracing = tracingServiceMock.mock();
+      tracing.getActiveBaggage.mockReturnValue({
+        getEntry: (key: string) => {
+          const entries: Record<string, { value: string }> = {
+            'gen_ai.conversation.id': { value: 'conv-123' },
+            'gen_ai.agent.id': { value: 'agent-456' },
+          };
+          return entries[key];
+        },
+        getAllEntries: () => [
+          ['gen_ai.conversation.id', { value: 'conv-123' }],
+          ['gen_ai.agent.id', { value: 'agent-456' }],
+        ],
+      });
+
+      await invokeMockAction({ tracing });
+
+      const [, , options] = tracing.startActiveSpan.mock.calls[0];
+      expect(options?.attributes?.['gen_ai.conversation.id']).toBe('conv-123');
+      expect(options?.attributes?.['gen_ai.agent.id']).toBe('agent-456');
+    });
+
+    it('only forwards allowlisted baggage keys onto the span', async () => {
+      const tracing = tracingServiceMock.mock();
+      tracing.getActiveBaggage.mockReturnValue({
+        getEntry: (key: string) => {
+          const entries: Record<string, { value: string }> = {
+            'gen_ai.conversation.id': { value: 'conv-123' },
+            'gen_ai.tool.call.result': { value: 'injected-result' },
+            'gen_ai.prompt': { value: 'injected-prompt' },
+            'gen_ai.user.message': { value: 'injected-user-message' },
+          };
+          return entries[key];
+        },
+        getAllEntries: () => [
+          ['gen_ai.conversation.id', { value: 'conv-123' }],
+          ['gen_ai.tool.call.result', { value: 'injected-result' }],
+          ['gen_ai.prompt', { value: 'injected-prompt' }],
+          ['gen_ai.user.message', { value: 'injected-user-message' }],
+        ],
+      });
+
+      await invokeMockAction({ tracing });
+
+      const [, , options] = tracing.startActiveSpan.mock.calls[0];
+      expect(options?.attributes?.['gen_ai.conversation.id']).toBe('conv-123');
+      expect(options?.attributes).not.toHaveProperty('gen_ai.tool.call.result');
+      expect(options?.attributes).not.toHaveProperty('gen_ai.prompt');
+      expect(options?.attributes).not.toHaveProperty('gen_ai.user.message');
+    });
+
+    it('omits gen_ai baggage attributes when no baggage is present', async () => {
+      const tracing = tracingServiceMock.mock();
+      await invokeMockAction({ tracing });
+
+      const [, , options] = tracing.startActiveSpan.mock.calls[0];
+      expect(options?.attributes).not.toHaveProperty('gen_ai.conversation.id');
+      expect(options?.attributes).not.toHaveProperty('gen_ai.agent.id');
+    });
+
+    it('includes tool arguments in the span options and sets the structured action output as the result attribute when captureToolPayloads is true', async () => {
       const tracing = tracingServiceMock.mock();
       await invokeMockAction({ tracing, captureToolPayloads: true });
 
@@ -1024,9 +1085,9 @@ describe('McpService', () => {
         ([key]) => key === 'gen_ai.tool.call.result',
       );
       expect(resultCall).toBeDefined();
-      const parsed = JSON.parse(resultCall![1] as string);
-      expect(parsed.content[0].type).toBe('text');
-      expect(parsed.content[0].text).toContain('"output": "test"');
+      // The recorded result should be the structured action output, not the
+      // CallToolResult envelope wrapping a fenced JSON block.
+      expect(JSON.parse(resultCall![1] as string)).toEqual({ output: 'test' });
     });
 
     it('sets error.type=tool_error and ERROR status on the span when the tool returns isError', async () => {
@@ -1049,6 +1110,7 @@ describe('McpService', () => {
         actions: mockActionsRegistry,
         metrics: metricsServiceMock.mock(),
         tracingService: tracing,
+        captureToolPayloads: true,
       });
 
       const server = mcpService.getServer({
@@ -1083,6 +1145,12 @@ describe('McpService', () => {
         code: 'error',
         message: 'tool_error',
       });
+      // The error is signalled via error.type + status; the result attribute
+      // should be omitted even when captureToolPayloads is enabled.
+      const resultCall = span.setAttribute.mock.calls.find(
+        ([key]) => key === 'gen_ai.tool.call.result',
+      );
+      expect(resultCall).toBeUndefined();
     });
   });
 });

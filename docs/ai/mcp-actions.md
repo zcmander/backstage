@@ -295,9 +295,21 @@ See the [OpenTelemetry tutorial](../tutorials/setup-opentelemetry.md) to learn h
 
 ## Tracing
 
-The MCP Actions Backend emits a trace span for each `tools/call` invocation via the [Tracing Service](../backend-system/core-services/tracing.md), following the [OpenTelemetry server-side MCP semantic conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/mcp/#server). Each span uses the name `tools/call <toolname>`, server kind, and includes the standard MCP attributes (`mcp.method.name`, `gen_ai.tool.name`, `gen_ai.operation.name`). When a tool result returns `isError: true`, the span is marked with `error.type=tool_error`; thrown handler errors are recorded and the span status is set to `ERROR`.
+The MCP Actions Backend emits a trace span for each `tools/call` invocation via the [Tracing Service](../backend-system/core-services/tracing.md), following the [OpenTelemetry server-side MCP semantic conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/mcp/#server). Each span uses the name `tools/call <toolname>`, server kind, and includes the standard MCP attributes (`mcp.method.name`, `gen_ai.tool.name`, `gen_ai.operation.name`). Known Backstage errors (such as `InputError` or `NotFoundError`) are caught and returned as `isError: true` tool responses — the span is marked with `error.type=tool_error` in that case. Unhandled exceptions are recorded automatically by the Tracing Service and the span status is set to `ERROR`.
 
 In addition to those attributes, the Tracing Service automatically attaches the authenticated principal's type as `backstage.principal.type` (one of `user`, `service`, or `none`). Each `tools/call` span is also attributed to the plugin that owns the invoked action via `backstage.plugin.id` (e.g. `catalog`, `scaffolder`) — overriding the default `mcp-actions` value so tracing backends can filter activity by the source plugin rather than by the MCP transport.
+
+### Baggage propagation
+
+The MCP Actions routers propagate OpenTelemetry context from the incoming HTTP request headers so that trace parent and baggage survive through the MCP transport layer. The following low-cardinality identifier entries from the OpenTelemetry [`gen_ai.*` attribute registry](https://opentelemetry.io/docs/specs/semconv/registry/attributes/gen-ai/), when set by the MCP client in baggage, are automatically forwarded as attributes on the `tools/call` span:
+
+- `gen_ai.agent.id`
+- `gen_ai.agent.name`
+- `gen_ai.conversation.id`
+- `gen_ai.provider.name`
+- `gen_ai.request.model`
+
+This enables tracing backends to correlate MCP tool invocations back to the originating agent, conversation, or model without additional configuration. Other `gen_ai.*` baggage entries are intentionally not forwarded — baggage may be set by arbitrary upstream callers, and a broad prefix filter would let clients smuggle high-cardinality or payload-shaped keys (e.g. `gen_ai.tool.call.result`, `gen_ai.prompt`) onto the span and bypass the [tool payload capture flag](#capturing-tool-arguments-and-results).
 
 ### Capturing the authenticated end user
 
