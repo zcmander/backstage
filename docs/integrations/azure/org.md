@@ -50,6 +50,37 @@ backend.add(import('@backstage/plugin-catalog-backend-module-msgraph'));
 /* highlight-add-end */
 ```
 
+## Incremental Ingestion for Large Tenants
+
+For very large Azure AD tenants where loading the full dataset into memory at once is not feasible, the `@backstage/plugin-catalog-backend-module-msgraph-incremental` package provides a memory-efficient alternative. It processes users and groups one page at a time and persists the `@odata.nextLink` cursor so ingestion resumes from the last completed page after a pod restart.
+
+```bash title="From your Backstage root directory"
+yarn --cwd packages/backend add @backstage/plugin-catalog-backend-module-incremental-ingestion
+yarn --cwd packages/backend add @backstage/plugin-catalog-backend-module-msgraph-incremental
+```
+
+```ts title="packages/backend/src/index.ts"
+backend.add(import('@backstage/plugin-catalog-backend'));
+/* highlight-add-start */
+backend.add(
+  import('@backstage/plugin-catalog-backend-module-incremental-ingestion'),
+);
+backend.add(
+  import('@backstage/plugin-catalog-backend-module-msgraph-incremental'),
+);
+/* highlight-add-end */
+```
+
+It uses the same `catalog.providers.microsoftGraphOrg` configuration as the standard module. The following options are **not** supported by the incremental provider: `userGroupMember*` and `groupIncludeSubGroups`. Use `MicrosoftGraphOrgEntityProvider` if you require those.
+
+|                            | `MicrosoftGraphOrgEntityProvider` | Incremental provider |
+| -------------------------- | --------------------------------- | -------------------- |
+| Memory usage               | Full dataset in RAM               | One page at a time   |
+| Resume on restart          | Starts from scratch               | Resumes from cursor  |
+| `userGroupMember*` options | Supported                         | Not supported        |
+| `groupIncludeSubGroups`    | Supported                         | Not supported        |
+| Suitable for large tenants | No                                | Yes                  |
+
 ## Authenticating with Microsoft Graph
 
 ### Local Development
@@ -120,7 +151,7 @@ microsoftGraphOrg:
 In addition to these groups, one additional group will be created for your organization.
 All imported groups will be a child of this group.
 
-By default the provider will get groups using the msgraph `/group` endpoint, but it is possible to use different endpoints by setting the `path` configuration. All the endpoint containing `/microsoft.graph.group` will return the right type of group object. [See usage](#Using-path-parameter) for more details.
+By default the provider will get groups using the msgraph `/group` endpoint, but it is possible to use different endpoints by setting the `path` configuration. All the endpoint containing `/microsoft.graph.group` will return the right type of group object. [See usage](#using-path-parameter) for more details.
 
 ### Users
 
@@ -145,7 +176,7 @@ microsoftGraphOrg:
       search: '"description:One" AND ("displayName:Video" OR "displayName:Drive")'
 ```
 
-By default the provider will get user using the msgraph `/user` endpoint, but it is possible to use different endpoints by setting the `path` configuration. All the endpoint containing `/microsoft.graph.user` will return the right type of user object. [See usage](#Using-path-parameter) for more details.
+By default the provider will get user using the msgraph `/user` endpoint, but it is possible to use different endpoints by setting the `path` configuration. All the endpoint containing `/microsoft.graph.user` will return the right type of user object. [See usage](#using-path-parameter) for more details.
 
 ### Using `path` parameter
 

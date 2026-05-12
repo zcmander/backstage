@@ -17,6 +17,7 @@
 import { Knex } from 'knex';
 import { TestDatabases } from '@backstage/backend-test-utils';
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
 
 const migrationsDir = `${__dirname}/../../migrations`;
 const migrationsFiles = fs.readdirSync(migrationsDir).sort();
@@ -1088,6 +1089,245 @@ describe('migrations', () => {
         r => r.entity_id === 'id2',
       );
       expect(id2RefreshRow?.next_stitch_at).toBeNull();
+
+      await knex.destroy();
+    },
+  );
+
+  it.each(databases.eachSupportedId())(
+    '20260510000000_search_indices_and_dedup.js, %p',
+    async databaseId => {
+      const knex = await databases.init(databaseId);
+
+      await migrateUntilBefore(
+        knex,
+        '20260510000000_search_indices_and_dedup.js',
+      );
+
+      // Set up FK dependencies: search → final_entities → refresh_state
+      await knex('refresh_state').insert({
+        entity_id: 'e1',
+        entity_ref: 'k:ns/n1',
+        unprocessed_entity: '{}',
+        errors: '[]',
+        next_update_at: knex.fn.now(),
+        last_discovery_at: knex.fn.now(),
+      });
+      await knex('final_entities').insert({
+        entity_id: 'e1',
+        entity_ref: 'k:ns/n1',
+        hash: 'h1',
+        final_entity: '{}',
+      });
+
+      // Insert search rows with duplicates on (entity_id, key, value).
+      // Both copies of k1 share the same original_value so the surviving row
+      // is unambiguous across all database dedup strategies.
+      // The two null-value rows verify that null dedup does not conflate null
+      // with non-null or remove more rows than it should.
+      await knex('search').insert([
+        { entity_id: 'e1', key: 'k1', value: 'v1', original_value: 'v1' }, // first copy
+        { entity_id: 'e1', key: 'k1', value: 'v1', original_value: 'v1' }, // duplicate — removed
+        { entity_id: 'e1', key: 'k2', value: null, original_value: null }, // null first — kept
+        { entity_id: 'e1', key: 'k2', value: null, original_value: null }, // null duplicate — removed
+        { entity_id: 'e1', key: 'k3', value: 'v3', original_value: 'v3' }, // unique — kept
+      ]);
+
+      // Preconditions NOT met: dedup runs
+      await migrateUpOnce(knex);
+
+      // 5 rows collapsed to 3 unique (entity_id, key, value) combinations
+      const rows = await knex('search').orderBy('key');
+      expect(rows).toHaveLength(3);
+      expect(rows.map(r => r.key)).toEqual(['k1', 'k2', 'k3']);
+      expect(rows[0]).toEqual(
+        expect.objectContaining({
+          key: 'k1',
+          value: 'v1',
+          original_value: 'v1',
+        }),
+      );
+      // null-value row survives correctly
+      expect(rows[1]).toEqual(
+        expect.objectContaining({
+          key: 'k2',
+          value: null,
+          original_value: null,
+        }),
+      );
+
+      // Unique constraint is now in place
+      await expect(
+        knex('search').insert({
+          entity_id: 'e1',
+          key: 'k1',
+          value: 'v1',
+          original_value: 'extra',
+        }),
+      ).rejects.toEqual(expect.anything());
+
+      await migrateDownOnce(knex);
+
+      // After rollback the unique constraint is gone — duplicates are allowed again
+      await expect(
+        knex('search').insert({
+          entity_id: 'e1',
+          key: 'k1',
+          value: 'v1',
+          original_value: 'extra',
+        }),
+      ).resolves.not.toThrow();
+
+      await knex.destroy();
+    },
+  );
+
+  it.each(databases.eachSupportedId())(
+    '20260510000000_search_indices_and_dedup.js preconditions met (PG fast path), %p',
+    async databaseId => {
+      const knex = await databases.init(databaseId);
+
+      // The fast path (skip dedup when unique index pre-exists) is a
+      // PostgreSQL-only code path that checks pg_index.
+      if (!knex.client.config.client.includes('pg')) {
+        await knex.destroy();
+        return;
+      }
+
+      await migrateUntilBefore(
+        knex,
+        '20260510000000_search_indices_and_dedup.js',
+      );
+
+      await knex('refresh_state').insert({
+        entity_id: 'e1',
+        entity_ref: 'k:ns/n1',
+        unprocessed_entity: '{}',
+        errors: '[]',
+        next_update_at: knex.fn.now(),
+        last_discovery_at: knex.fn.now(),
+      });
+      await knex('final_entities').insert({
+        entity_id: 'e1',
+        entity_ref: 'k:ns/n1',
+        hash: 'h1',
+        final_entity: '{}',
+      });
+
+      // Insert clean rows (no duplicates) so the unique index can be created
+      await knex('search').insert([
+        { entity_id: 'e1', key: 'k1', value: 'v1', original_value: 'V1' },
+        { entity_id: 'e1', key: 'k2', value: null, original_value: null },
+      ]);
+
+      // Simulate a user who manually deduped and created the unique index
+      // before deploying this version
+      await knex.raw(
+        `CREATE UNIQUE INDEX search_entity_key_value_idx ON search (entity_id, key, value)`,
+      );
+
+      // Migration detects the existing unique index and skips the dedup step
+      await migrateUpOnce(knex);
+
+      // Row count unchanged — no rows were removed by dedup
+      const rows = await knex('search').orderBy('key');
+      expect(rows).toHaveLength(2);
+      expect(rows[0]).toEqual(
+        expect.objectContaining({
+          key: 'k1',
+          value: 'v1',
+          original_value: 'V1',
+        }),
+      );
+      expect(rows[1]).toEqual(
+        expect.objectContaining({
+          key: 'k2',
+          value: null,
+          original_value: null,
+        }),
+      );
+
+      await migrateDownOnce(knex);
+      await knex.destroy();
+    },
+  );
+
+  it.each(databases.eachSupportedId())(
+    '20260403000000_add_location_entity_ref.js, %p',
+    async databaseId => {
+      const knex = await databases.init(databaseId);
+
+      await migrateUntilBefore(
+        knex,
+        '20260403000000_add_location_entity_ref.js',
+      );
+
+      // The bootstrap location row was added by an earlier migration; after this
+      // migration it will have an empty-string placeholder for location_entity_ref.
+      const [bootstrapRow] = await knex('locations').where('type', 'bootstrap');
+      expect(bootstrapRow).toBeDefined();
+
+      // Insert a couple of non-bootstrap location rows to verify the backfill.
+      await knex('locations').insert([
+        {
+          id: 'aaaaaaaa-0000-0000-0000-000000000001',
+          type: 'url',
+          target: 'https://example.com/a/catalog-info.yaml',
+        },
+        {
+          id: 'aaaaaaaa-0000-0000-0000-000000000002',
+          type: 'url',
+          target: 'https://example.com/b/catalog-info.yaml',
+        },
+      ]);
+
+      // Verify the column does not yet exist
+      const columnsBefore = await knex('locations').columnInfo();
+      expect(columnsBefore.location_entity_ref).toBeUndefined();
+
+      await migrateUpOnce(knex);
+
+      // Column should now exist
+      const columnsAfter = await knex('locations').columnInfo();
+      expect(columnsAfter.location_entity_ref).toBeDefined();
+
+      const rowsAfter = await knex('locations').orderBy('id').select();
+
+      // Helper matching the migration's own logic
+      function expectedRef(type: string, target: string): string {
+        return `location:default/generated-${createHash('sha1')
+          .update(`${type}:${target}`)
+          .digest('hex')}`.toLocaleLowerCase('en-US');
+      }
+
+      // Non-bootstrap rows get their entity ref backfilled
+      const rowA = rowsAfter.find(
+        r => r.id === 'aaaaaaaa-0000-0000-0000-000000000001',
+      );
+      expect(rowA?.location_entity_ref).toBe(
+        expectedRef('url', 'https://example.com/a/catalog-info.yaml'),
+      );
+
+      const rowB = rowsAfter.find(
+        r => r.id === 'aaaaaaaa-0000-0000-0000-000000000002',
+      );
+      expect(rowB?.location_entity_ref).toBe(
+        expectedRef('url', 'https://example.com/b/catalog-info.yaml'),
+      );
+
+      // The two targets produce distinct entity refs
+      expect(rowA?.location_entity_ref).not.toBe(rowB?.location_entity_ref);
+
+      // The bootstrap row gets an empty string placeholder (it will be removed
+      // in a future migration, so a real entity ref is not needed for it)
+      const bootstrapRowAfter = rowsAfter.find(r => r.type === 'bootstrap');
+      expect(bootstrapRowAfter?.location_entity_ref).toBe('');
+
+      // Rolling back removes the column
+      await migrateDownOnce(knex);
+
+      const columnsReverted = await knex('locations').columnInfo();
+      expect(columnsReverted.location_entity_ref).toBeUndefined();
 
       await knex.destroy();
     },

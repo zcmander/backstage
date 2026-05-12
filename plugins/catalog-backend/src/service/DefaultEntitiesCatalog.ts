@@ -260,7 +260,7 @@ export class DefaultEntitiesCatalog implements EntitiesCatalog {
 
     // For performance reasons we invoke the count query only on the first
     // request. The result is then embedded into the cursor for subsequent
-    // requests. Threfore this can be undefined here, but will then get
+    // requests. Therefore this can be undefined here, but will then get
     // populated further down.
     const shouldComputeTotalItems =
       cursor.totalItems === undefined && !cursor.skipTotalItems;
@@ -273,33 +273,39 @@ export class DefaultEntitiesCatalog implements EntitiesCatalog {
     const sortField = cursor.orderFields.at(0);
 
     // The first part of the query builder is a subquery that applies all of the
-    // filtering.
+    // filtering. When a sort field is specified, the search table for that key
+    // drives the query via INNER JOIN so that the (key, value, entity_id)
+    // index walks rows in sort order, letting LIMIT short-circuit. Entities
+    // that lack the sort field are excluded from both the result set and the
+    // count — this is a deliberate choice that aligns totalItems with the
+    // number of entities actually reachable through cursor pagination.
     const dbQuery = this.database.with(
       'filtered',
       ['entity_id', 'final_entity', ...(sortField ? ['value'] : [])],
       inner => {
-        inner
-          .from<DbFinalEntitiesRow>('final_entities')
-          .whereNotNull('final_entity');
-
         if (sortField) {
           inner
-            .distinct()
-            .leftOuterJoin('search', qb =>
-              qb
-                .on('search.entity_id', 'final_entities.entity_id')
-                .andOnVal('search.key', sortField.field),
+            .from('search')
+            .innerJoin(
+              'final_entities',
+              'final_entities.entity_id',
+              'search.entity_id',
             )
+            .where('search.key', sortField.field)
+            .whereNotNull('final_entities.final_entity')
             .select({
               entity_id: 'final_entities.entity_id',
               final_entity: 'final_entities.final_entity',
               value: 'search.value',
             });
         } else {
-          inner.select({
-            entity_id: 'final_entities.entity_id',
-            final_entity: 'final_entities.final_entity',
-          });
+          inner
+            .from<DbFinalEntitiesRow>('final_entities')
+            .whereNotNull('final_entity')
+            .select({
+              entity_id: 'final_entities.entity_id',
+              final_entity: 'final_entities.final_entity',
+            });
         }
 
         // Add regular filters and/or predicate query, if given
@@ -685,18 +691,40 @@ export class DefaultEntitiesCatalog implements EntitiesCatalog {
       .select({
         facet: 'search.key',
         value: 'search.original_value',
-        count: this.database.raw('count(DISTINCT search.entity_id)'),
+        count: this.database.raw('count(*)'),
       })
-      .groupBy(['search.key', 'search.original_value']);
+      .groupBy(['search.key', 'search.original_value'])
+      .orderBy(['search.key', 'search.original_value']);
 
     if (request.filter || request.query) {
+      // Build a subquery that finds matching entity IDs via
+      // final_entities, so that the EXISTS-based filters correlate
+      // against one-row-per-entity rather than the much larger search
+      // table. The whereNotNull guard on final_entity excludes
+      // not-yet-stitched (or future tombstoned) entities.
+      const entityIdSubquery = this.database('final_entities')
+        .select('final_entities.entity_id')
+        .whereNotNull('final_entities.final_entity');
+
       applyEntityFilterToQuery({
         filter: request.filter,
         query: request.query,
-        targetQuery: query,
-        onEntityIdField: 'search.entity_id',
+        targetQuery: entityIdSubquery,
+        onEntityIdField: 'final_entities.entity_id',
         knex: this.database,
       });
+
+      // Use INNER JOIN rather than `WHERE search.entity_id IN (...)`. The
+      // results are the same but the JOIN form gives the planner more
+      // freedom in join shape and ordering. On PostgreSQL with large
+      // search tables, the IN form tends to materialize the full filtered
+      // entity set up front and spill to temp; the JOIN form lets the
+      // planner pick a much cheaper plan based on actual selectivities.
+      query.innerJoin(
+        entityIdSubquery.as('filtered_entities'),
+        'search.entity_id',
+        'filtered_entities.entity_id',
+      );
     }
 
     const rows = await query;

@@ -1,6 +1,6 @@
 {
   "name": "root",
-  "version": "1.50.0-next.0",
+  "version": "1.51.0-next.2",
   "backstage": {
     "cli": {
       "new": {
@@ -99,6 +99,7 @@
     "rejectFrontendNetworkRequests": true
   },
   "resolutions": {
+    "@remixicon/react": ">=4.6.0 <4.9.0",
     "@changesets/assemble-release-plan@^6.0.0": "patch:@changesets/assemble-release-plan@npm%3A6.0.0#./.yarn/patches/@changesets-assemble-release-plan-npm-6.0.0-f7b3005037.patch",
     "@material-ui/pickers@^3.2.10": "patch:@material-ui/pickers@npm%3A3.3.11#./.yarn/patches/@material-ui-pickers-npm-3.3.11-1c8f68ea20.patch",
     "@material-ui/pickers@^3.3.10": "patch:@material-ui/pickers@npm%3A3.3.11#./.yarn/patches/@material-ui-pickers-npm-3.3.11-1c8f68ea20.patch",
@@ -132,7 +133,7 @@
     "@backstage/eslint-plugin": "workspace:*",
     "@backstage/repo-tools": "workspace:*",
     "@changesets/cli": "^2.14.0",
-    "@jest/environment-jsdom-abstract": "^30",
+    "@jest/environment-jsdom-abstract": "~30.2.0",
     "@octokit/rest": "^19.0.3",
     "@playwright/test": "^1.32.3",
     "@spotify/eslint-plugin": "^15.0.0",
@@ -161,7 +162,7 @@
     "eslint-plugin-testing-library": "^7.0.0",
     "fs-extra": "^11.2.0",
     "husky": "^9.0.0",
-    "jest": "^30",
+    "jest": "~30.2.0",
     "js-yaml": "^4.1.1",
     "jsdom": "^27",
     "lint-staged": "^16.0.0",

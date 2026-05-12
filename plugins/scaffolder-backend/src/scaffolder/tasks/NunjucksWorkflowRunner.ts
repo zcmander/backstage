@@ -23,18 +23,21 @@ import {
   TaskStep,
 } from '@backstage/plugin-scaffolder-common';
 import { JsonArray, JsonObject, JsonValue } from '@backstage/types';
-import { metrics } from '@opentelemetry/api';
 import fs from 'fs-extra';
 import { validate as validateJsonSchema } from 'jsonschema';
-import nunjucks from 'nunjucks';
 import path from 'node:path';
+import nunjucks from 'nunjucks';
 import * as winston from 'winston';
 import {
   SecureTemplater,
   SecureTemplateRenderer,
 } from '../../lib/templating/SecureTemplater';
 import { TemplateActionRegistry } from '../actions/TemplateActionRegistry';
-import { generateExampleOutput, isTruthy } from './helper';
+import {
+  filterConditionalItems,
+  generateExampleOutput,
+  isTruthy,
+} from './helper';
 import { TaskTrackType, WorkflowResponse, WorkflowRunner } from './types';
 
 import type {
@@ -42,7 +45,9 @@ import type {
   LoggerService,
   PermissionsService,
 } from '@backstage/backend-plugin-api';
+import type { MetricsService } from '@backstage/backend-plugin-api/alpha';
 import { UserEntity } from '@backstage/catalog-model';
+import { Config } from '@backstage/config';
 import {
   AuthorizeResult,
   PolicyDecision,
@@ -56,17 +61,16 @@ import {
   TemplateFilter,
   TemplateGlobal,
 } from '@backstage/plugin-scaffolder-node';
-import { createDefaultFilters } from '../../lib/templating/filters/createDefaultFilters';
-import { scaffolderActionRules } from '../../service/rules';
-import { createCounterMetric, createHistogramMetric } from '../../util/metrics';
-import { BackstageLoggerTransport, WinstonLogger } from './logger';
-import { convertFiltersToRecord } from '../../util/templating';
 import {
   CheckpointContext,
   CheckpointState,
 } from '@backstage/plugin-scaffolder-node/alpha';
-import { Config } from '@backstage/config';
 import { resolveDefaultEnvironment } from '../../lib/defaultEnvironment';
+import { createDefaultFilters } from '../../lib/templating/filters/createDefaultFilters';
+import { scaffolderActionRules } from '../../service/rules';
+import { createCounterMetric, createHistogramMetric } from '../../util/metrics';
+import { convertFiltersToRecord } from '../../util/templating';
+import { BackstageLoggerTransport, WinstonLogger } from './logger';
 
 type NunjucksWorkflowRunnerOptions = {
   workingDirectory: string;
@@ -78,6 +82,7 @@ type NunjucksWorkflowRunnerOptions = {
   additionalTemplateGlobals?: Record<string, TemplateGlobal>;
   permissions?: PermissionsService;
   config?: Config;
+  metrics: MetricsService;
 };
 
 type TemplateContext = {
@@ -188,6 +193,8 @@ export class NunjucksWorkflowRunner implements WorkflowRunner {
     secrets?: Record<string, string>;
   } = { parameters: {}, secrets: {} };
 
+  private readonly tracker: ReturnType<typeof scaffoldingTracker>;
+
   constructor(options: NunjucksWorkflowRunnerOptions) {
     this.options = options;
     this.defaultTemplateFilters = convertFiltersToRecord(
@@ -195,9 +202,8 @@ export class NunjucksWorkflowRunner implements WorkflowRunner {
         integrations: this.options.integrations,
       }),
     );
+    this.tracker = scaffoldingTracker(options.metrics);
   }
-
-  private readonly tracker = scaffoldingTracker();
 
   async getEnvironmentConfig(): Promise<{
     parameters: JsonObject;
@@ -638,13 +644,30 @@ export class NunjucksWorkflowRunner implements WorkflowRunner {
 
     this.environment = await this.getEnvironmentConfig();
 
-    const renderTemplate = await SecureTemplater.loadRenderer({
-      templateFilters: {
-        ...this.defaultTemplateFilters,
-        ...additionalTemplateFilters,
-      },
-      templateGlobals: additionalTemplateGlobals,
-    });
+    // Track whether any step has failed, used by status check functions
+    const taskState = { failed: false };
+
+    // Track whether a status check global (always/failure) was invoked during rendering
+    const statusCheckInvoked = { value: false };
+
+    const { render: renderTemplate, dispose } =
+      await SecureTemplater.loadRenderer({
+        templateFilters: {
+          ...this.defaultTemplateFilters,
+          ...additionalTemplateFilters,
+        },
+        templateGlobals: {
+          ...additionalTemplateGlobals,
+          always: () => {
+            statusCheckInvoked.value = true;
+            return true;
+          },
+          failure: () => {
+            statusCheckInvoked.value = true;
+            return taskState.failed;
+          },
+        },
+      });
 
     try {
       await task.rehydrateWorkspace?.({ taskId, targetPath: workspacePath });
@@ -675,24 +698,99 @@ export class NunjucksWorkflowRunner implements WorkflowRunner {
             )
           : [{ result: AuthorizeResult.ALLOW }];
 
+      let firstError: Error | undefined;
+      const allErrors: Array<{ step: TaskStep; error: Error }> = [];
+
       for (const step of task.spec.steps) {
-        await this.executeStep(
-          task,
-          step,
-          context,
-          renderTemplate,
-          taskTrack,
-          workspacePath,
-          decision,
-        );
+        // If a previous step failed, only run steps whose `if` condition
+        // invokes a status check global (${{ always() }} or ${{ failure() }})
+        if (taskState.failed) {
+          if (typeof step.if !== 'string') {
+            await task.emitLog(
+              `Skipping step ${step.id} because a previous step failed`,
+              { stepId: step.id, status: 'skipped' },
+            );
+            continue;
+          }
+
+          // Render the if condition to detect status check function usage
+          statusCheckInvoked.value = false;
+          this.render(step.if, context, renderTemplate);
+
+          if (!statusCheckInvoked.value) {
+            await task.emitLog(
+              `Skipping step ${step.id} because a previous step failed`,
+              { stepId: step.id, status: 'skipped' },
+            );
+            continue;
+          }
+        }
+
+        try {
+          await this.executeStep(
+            task,
+            step,
+            context,
+            renderTemplate,
+            taskTrack,
+            workspacePath,
+            decision,
+          );
+        } catch (err) {
+          const error = err as Error;
+          allErrors.push({ step, error });
+
+          if (!firstError) {
+            firstError = error;
+          } else {
+            // Log subsequent errors to preserve debugging information
+            this.options.logger.error(
+              `Additional error in step ${step.id} (${step.name}): ${error.message}`,
+              error,
+            );
+            await task.emitLog(
+              `Additional error occurred: ${error.message}\n${error.stack}`,
+              { stepId: step.id, status: 'failed' },
+            );
+          }
+          taskState.failed = true;
+        }
+      }
+
+      if (firstError) {
+        // If there were multiple errors, add context to the first error
+        if (allErrors.length > 1) {
+          const additionalErrorSummary = allErrors
+            .slice(1)
+            .map(({ step }) => `${step.id} (${step.name})`)
+            .join(', ');
+          this.options.logger.warn(
+            `Task failed with ${allErrors.length} errors. First error from step ${allErrors[0].step.id}. Additional failures in: ${additionalErrorSummary}`,
+          );
+        }
+        throw firstError;
       }
 
       const output = this.render(task.spec.output, context, renderTemplate);
+
+      // Filter output links and text items based on their `if` condition
+      if (Array.isArray(output?.links)) {
+        output.links = filterConditionalItems(output.links);
+      }
+      if (Array.isArray(output?.text)) {
+        output.text = filterConditionalItems(output.text);
+      }
+
       await taskTrack.markSuccessful();
       await task.cleanWorkspace?.();
 
       return { output };
     } finally {
+      try {
+        dispose();
+      } catch {
+        // Ignore disposal errors so they don't mask the original failure.
+      }
       if (workspacePath) {
         await fs.remove(workspacePath);
       }
@@ -700,7 +798,7 @@ export class NunjucksWorkflowRunner implements WorkflowRunner {
   }
 }
 
-function scaffoldingTracker() {
+function scaffoldingTracker(metrics: MetricsService) {
   // prom-client metrics are deprecated in favour of OpenTelemetry metrics.
   const promTaskCount = createCounterMetric({
     name: 'scaffolder_task_count',
@@ -712,7 +810,7 @@ function scaffoldingTracker() {
     help: 'Duration of a task run',
     labelNames: ['template', 'result'],
   });
-  const promtStepCount = createCounterMetric({
+  const promStepCount = createCounterMetric({
     name: 'scaffolder_step_count',
     help: 'Count of step runs',
     labelNames: ['template', 'step', 'result'],
@@ -723,23 +821,22 @@ function scaffoldingTracker() {
     labelNames: ['template', 'step', 'result'],
   });
 
-  const meter = metrics.getMeter('default');
-  const taskCount = meter.createCounter('scaffolder.task.count', {
-    description: 'Count of task runs',
+  const taskCount = metrics.createCounter('scaffolder.task.count', {
+    description: 'Total number of scaffolder tasks executed',
   });
 
-  const taskDuration = meter.createHistogram('scaffolder.task.duration', {
-    description: 'Duration of a task run',
-    unit: 'seconds',
+  const taskDuration = metrics.createHistogram('scaffolder.task.duration', {
+    description: 'Time taken to complete a scaffolder task end-to-end',
+    unit: 's',
   });
 
-  const stepCount = meter.createCounter('scaffolder.step.count', {
-    description: 'Count of step runs',
+  const stepCount = metrics.createCounter('scaffolder.step.count', {
+    description: 'Total number of individual scaffolder action steps executed',
   });
 
-  const stepDuration = meter.createHistogram('scaffolder.step.duration', {
-    description: 'Duration of a step runs',
-    unit: 'seconds',
+  const stepDuration = metrics.createHistogram('scaffolder.step.duration', {
+    description: 'Time taken to complete a single scaffolder action step',
+    unit: 's',
   });
 
   async function taskStart(task: TaskContext) {
@@ -851,7 +948,7 @@ function scaffoldingTracker() {
         stepId: step.id,
         status: 'completed',
       });
-      promtStepCount.inc({
+      promStepCount.inc({
         template,
         step: step.name,
         result: 'ok',
@@ -867,7 +964,7 @@ function scaffoldingTracker() {
     }
 
     async function markCancelled() {
-      promtStepCount.inc({
+      promStepCount.inc({
         template,
         step: step.name,
         result: 'cancelled',
@@ -883,7 +980,7 @@ function scaffoldingTracker() {
     }
 
     async function markFailed() {
-      promtStepCount.inc({
+      promStepCount.inc({
         template,
         step: step.name,
         result: 'failed',

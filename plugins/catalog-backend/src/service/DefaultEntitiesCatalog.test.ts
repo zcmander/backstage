@@ -22,7 +22,7 @@ import {
 } from '@backstage/backend-test-utils';
 import { Entity, stringifyEntityRef } from '@backstage/catalog-model';
 import { Knex } from 'knex';
-import { v4 as uuid, v4 } from 'uuid';
+import { randomUUID as uuid } from 'node:crypto';
 import {
   QueryEntitiesCursorRequest,
   QueryEntitiesInitialRequest,
@@ -99,7 +99,7 @@ describe('DefaultEntitiesCatalog', () => {
   }
 
   async function addEntityToSearch(entity: Entity) {
-    const id = entity.metadata.uid || v4();
+    const id = entity.metadata.uid || uuid();
     const entityRef = stringifyEntityRef(entity);
     const entityJson = JSON.stringify(entity);
 
@@ -1518,7 +1518,7 @@ describe('DefaultEntitiesCatalog', () => {
               addEntityToSearch({
                 apiVersion: 'a',
                 kind: 'k',
-                metadata: { name: v4() },
+                metadata: { name: uuid() },
               }),
             ),
         );
@@ -1554,7 +1554,7 @@ describe('DefaultEntitiesCatalog', () => {
               addEntityToSearch({
                 apiVersion: 'a',
                 kind: 'k',
-                metadata: { name: v4() },
+                metadata: { name: uuid() },
               }),
             ),
         );
@@ -1899,27 +1899,28 @@ describe('DefaultEntitiesCatalog', () => {
           stitcher,
         });
 
-        await expect(
-          catalog
-            .queryEntities({
-              orderFields: [{ field: 'metadata.title', order: 'asc' }],
-              credentials: mockCredentials.none(),
-            })
-            .then(r =>
-              entitiesResponseToObjects(r.items).map(e => e!.metadata.name),
-            ),
-        ).resolves.toEqual(['CC', 'BB', 'AA']); // 'AA' has no title, ends up last
+        // Entities without the sort field are excluded — sorting by a field
+        // means "show me entities that have this field, in order." The count
+        // also reflects only the entities that will be returned.
+        const ascResult = await catalog.queryEntities({
+          orderFields: [{ field: 'metadata.title', order: 'asc' }],
+          credentials: mockCredentials.none(),
+        });
+        expect(
+          entitiesResponseToObjects(ascResult.items).map(e => e!.metadata.name),
+        ).toEqual(['CC', 'BB']);
+        expect(ascResult.totalItems).toBe(2);
 
-        await expect(
-          catalog
-            .queryEntities({
-              orderFields: [{ field: 'metadata.title', order: 'desc' }],
-              credentials: mockCredentials.none(),
-            })
-            .then(r =>
-              entitiesResponseToObjects(r.items).map(e => e!.metadata.name),
-            ),
-        ).resolves.toEqual(['BB', 'CC', 'AA']); // 'AA' has no title, ends up last
+        const descResult = await catalog.queryEntities({
+          orderFields: [{ field: 'metadata.title', order: 'desc' }],
+          credentials: mockCredentials.none(),
+        });
+        expect(
+          entitiesResponseToObjects(descResult.items).map(
+            e => e!.metadata.name,
+          ),
+        ).toEqual(['BB', 'CC']);
+        expect(descResult.totalItems).toBe(2);
       },
     );
 
@@ -2013,22 +2014,26 @@ describe('DefaultEntitiesCatalog', () => {
 
         await Promise.all(entities.map(e => addEntityToSearch(e)));
 
-        // Manually insert duplicate search entries for the same entities
-        // I'm not sure exactly how this happens but I have seen it in the real world
-        await knex<DbSearchRow>('search').insert([
-          {
-            entity_id: 'uid-a',
-            key: 'metadata.title',
-            value: 'a test entity',
-            original_value: 'A Test Entity',
-          },
-          {
-            entity_id: 'uid-b',
-            key: 'metadata.title',
-            value: 'b test entity',
-            original_value: 'B Test Entity',
-          },
-        ]);
+        // The UNIQUE constraint on (entity_id, key, value) prevents
+        // duplicate search rows. Verify that duplicates are silently
+        // rejected and the query still returns correct results.
+        await knex<DbSearchRow>('search')
+          .insert([
+            {
+              entity_id: 'uid-a',
+              key: 'metadata.title',
+              value: 'a test entity',
+              original_value: 'A Test Entity',
+            },
+            {
+              entity_id: 'uid-b',
+              key: 'metadata.title',
+              value: 'b test entity',
+              original_value: 'B Test Entity',
+            },
+          ])
+          .onConflict()
+          .ignore();
 
         const catalog = new DefaultEntitiesCatalog({
           database: knex,
@@ -2407,15 +2412,19 @@ describe('DefaultEntitiesCatalog', () => {
           spec: {},
         });
 
-        // Manually insert a duplicate search entry, this shouldn't happen but does in reality
-        await knex<DbSearchRow>('search').insert([
-          {
-            entity_id: 'uid-a',
-            key: 'metadata.name',
-            value: 'one',
-            original_value: 'one',
-          },
-        ]);
+        // Attempt to insert a duplicate — the UNIQUE constraint silently
+        // rejects it via ON CONFLICT IGNORE.
+        await knex<DbSearchRow>('search')
+          .insert([
+            {
+              entity_id: 'uid-a',
+              key: 'metadata.name',
+              value: 'one',
+              original_value: 'one',
+            },
+          ])
+          .onConflict()
+          .ignore();
 
         const catalog = new DefaultEntitiesCatalog({
           database: knex,
@@ -2430,9 +2439,297 @@ describe('DefaultEntitiesCatalog', () => {
           }),
         ).resolves.toEqual({
           facets: {
+            'metadata.name': [{ value: 'one', count: 1 }],
+          },
+        });
+      },
+    );
+
+    async function setupFacetsCatalog(
+      databaseId: TestDatabaseId,
+      entities: Entity[],
+    ) {
+      await createDatabase(databaseId);
+      for (const entity of entities) {
+        await addEntityToSearch(entity);
+      }
+      return new DefaultEntitiesCatalog({
+        database: knex,
+        logger: mockServices.logger.mock(),
+        stitcher,
+      });
+    }
+
+    it.each(databases.eachSupportedId())(
+      'excludes not-yet-stitched entities from filtered facets, %p',
+      async databaseId => {
+        await createDatabase(databaseId);
+
+        await addEntityToSearch({
+          apiVersion: 'a',
+          kind: 'Component',
+          metadata: { name: 'stitched' },
+          spec: {},
+        });
+
+        // Insert an unstitched entity: final_entity is NULL but search
+        // rows exist. This simulates a race or future tombstone state.
+        const unstitchedId = uuid();
+        await knex<DbRefreshStateRow>('refresh_state').insert({
+          entity_id: unstitchedId,
+          entity_ref: 'component:default/unstitched',
+          unprocessed_entity: '{}',
+          errors: '[]',
+          next_update_at: '2031-01-01 23:00:00',
+          last_discovery_at: '2021-04-01 13:37:00',
+        });
+        await knex<DbFinalEntitiesRow>('final_entities').insert({
+          entity_id: unstitchedId,
+          entity_ref: 'component:default/unstitched',
+          hash: '',
+        });
+        await knex<DbSearchRow>('search').insert([
+          {
+            entity_id: unstitchedId,
+            key: 'kind',
+            value: 'component',
+            original_value: 'Component',
+          },
+          {
+            entity_id: unstitchedId,
+            key: 'metadata.name',
+            value: 'unstitched',
+            original_value: 'unstitched',
+          },
+        ]);
+
+        const catalog = new DefaultEntitiesCatalog({
+          database: knex,
+          logger: mockServices.logger.mock(),
+          stitcher,
+        });
+
+        // With filter: unstitched entity should be excluded because the
+        // inner entityIdSubquery requires final_entity IS NOT NULL
+        await expect(
+          catalog.facets({
+            facets: ['metadata.name'],
+            filter: { key: 'kind', values: ['component'] },
+            credentials: mockCredentials.none(),
+          }),
+        ).resolves.toEqual({
+          facets: {
+            'metadata.name': [{ value: 'stitched', count: 1 }],
+          },
+        });
+      },
+    );
+
+    it.each(databases.eachSupportedId())(
+      'filters with a predicate query, %p',
+      async databaseId => {
+        const catalog = await setupFacetsCatalog(databaseId, [
+          {
+            apiVersion: 'a',
+            kind: 'Component',
+            metadata: { name: 'one' },
+            spec: { type: 'service' },
+          },
+          {
+            apiVersion: 'a',
+            kind: 'Component',
+            metadata: { name: 'two' },
+            spec: { type: 'library' },
+          },
+          {
+            apiVersion: 'a',
+            kind: 'API',
+            metadata: { name: 'three' },
+            spec: { type: 'openapi' },
+          },
+        ]);
+
+        const result = await catalog.facets({
+          facets: ['spec.type'],
+          query: { kind: 'component' },
+          credentials: mockCredentials.none(),
+        });
+        expect(result.facets['spec.type']).toHaveLength(2);
+        expect(result).toEqual({
+          facets: {
+            'spec.type': expect.arrayContaining([
+              { value: 'library', count: 1 },
+              { value: 'service', count: 1 },
+            ]),
+          },
+        });
+      },
+    );
+
+    it.each(databases.eachSupportedId())(
+      'filters with a predicate query using $in, %p',
+      async databaseId => {
+        const catalog = await setupFacetsCatalog(databaseId, [
+          {
+            apiVersion: 'a',
+            kind: 'Component',
+            metadata: { name: 'one' },
+            spec: { type: 'service' },
+          },
+          {
+            apiVersion: 'a',
+            kind: 'API',
+            metadata: { name: 'two' },
+            spec: { type: 'openapi' },
+          },
+          {
+            apiVersion: 'a',
+            kind: 'System',
+            metadata: { name: 'three' },
+            spec: {},
+          },
+        ]);
+
+        const result = await catalog.facets({
+          facets: ['kind'],
+          query: { kind: { $in: ['component', 'api'] } },
+          credentials: mockCredentials.none(),
+        });
+        expect(result.facets.kind).toHaveLength(2);
+        expect(result).toEqual({
+          facets: {
+            kind: expect.arrayContaining([
+              { value: 'API', count: 1 },
+              { value: 'Component', count: 1 },
+            ]),
+          },
+        });
+      },
+    );
+
+    it.each(databases.eachSupportedId())(
+      'filters with compound allOf filter, %p',
+      async databaseId => {
+        const catalog = await setupFacetsCatalog(databaseId, [
+          {
+            apiVersion: 'a',
+            kind: 'Component',
+            metadata: { name: 'one' },
+            spec: { type: 'service' },
+          },
+          {
+            apiVersion: 'a',
+            kind: 'Component',
+            metadata: { name: 'two' },
+            spec: { type: 'library' },
+          },
+          {
+            apiVersion: 'a',
+            kind: 'API',
+            metadata: { name: 'three' },
+            spec: { type: 'openapi' },
+          },
+        ]);
+
+        await expect(
+          catalog.facets({
+            facets: ['metadata.name'],
+            filter: {
+              allOf: [
+                { key: 'kind', values: ['component'] },
+                { key: 'spec.type', values: ['service'] },
+              ],
+            },
+            credentials: mockCredentials.none(),
+          }),
+        ).resolves.toEqual({
+          facets: {
+            'metadata.name': [{ value: 'one', count: 1 }],
+          },
+        });
+      },
+    );
+
+    it.each(databases.eachSupportedId())(
+      'filters with compound anyOf filter, %p',
+      async databaseId => {
+        const catalog = await setupFacetsCatalog(databaseId, [
+          {
+            apiVersion: 'a',
+            kind: 'Component',
+            metadata: { name: 'one' },
+            spec: { type: 'service' },
+          },
+          {
+            apiVersion: 'a',
+            kind: 'API',
+            metadata: { name: 'two' },
+            spec: { type: 'openapi' },
+          },
+          {
+            apiVersion: 'a',
+            kind: 'System',
+            metadata: { name: 'three' },
+            spec: {},
+          },
+        ]);
+
+        await expect(
+          catalog.facets({
+            facets: ['metadata.name'],
+            filter: {
+              anyOf: [
+                { key: 'kind', values: ['component'] },
+                { key: 'kind', values: ['api'] },
+              ],
+            },
+            credentials: mockCredentials.none(),
+          }),
+        ).resolves.toEqual({
+          facets: {
             'metadata.name': expect.arrayContaining([
               { value: 'one', count: 1 },
+              { value: 'two', count: 1 },
             ]),
+          },
+        });
+      },
+    );
+
+    it.each(databases.eachSupportedId())(
+      'filters with both filter and query combined, %p',
+      async databaseId => {
+        const catalog = await setupFacetsCatalog(databaseId, [
+          {
+            apiVersion: 'a',
+            kind: 'Component',
+            metadata: { name: 'one' },
+            spec: { type: 'service' },
+          },
+          {
+            apiVersion: 'a',
+            kind: 'Component',
+            metadata: { name: 'two' },
+            spec: { type: 'library' },
+          },
+          {
+            apiVersion: 'a',
+            kind: 'API',
+            metadata: { name: 'three' },
+            spec: { type: 'openapi' },
+          },
+        ]);
+
+        await expect(
+          catalog.facets({
+            facets: ['spec.type'],
+            filter: { key: 'kind', values: ['component'] },
+            query: { 'metadata.name': 'one' },
+            credentials: mockCredentials.none(),
+          }),
+        ).resolves.toEqual({
+          facets: {
+            'spec.type': [{ value: 'service', count: 1 }],
           },
         });
       },

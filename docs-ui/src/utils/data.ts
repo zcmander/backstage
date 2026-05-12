@@ -18,6 +18,10 @@ export const components: Page[] = [
     slug: 'avatar',
   },
   {
+    title: 'Badge',
+    slug: 'badge',
+  },
+  {
     title: 'Box',
     slug: 'box',
   },
@@ -42,8 +46,25 @@ export const components: Page[] = [
     slug: 'checkbox',
   },
   {
+    title: 'CheckboxGroup',
+    slug: 'checkbox-group',
+  },
+  {
+    title: 'Combobox',
+    slug: 'combobox',
+    status: 'new',
+  },
+  {
     title: 'Container',
     slug: 'container',
+  },
+  {
+    title: 'DatePicker',
+    slug: 'date-picker',
+  },
+  {
+    title: 'DateRangePicker',
+    slug: 'date-range-picker',
   },
   {
     title: 'Dialog',
