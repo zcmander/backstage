@@ -1899,27 +1899,28 @@ describe('DefaultEntitiesCatalog', () => {
           stitcher,
         });
 
-        await expect(
-          catalog
-            .queryEntities({
-              orderFields: [{ field: 'metadata.title', order: 'asc' }],
-              credentials: mockCredentials.none(),
-            })
-            .then(r =>
-              entitiesResponseToObjects(r.items).map(e => e!.metadata.name),
-            ),
-        ).resolves.toEqual(['CC', 'BB', 'AA']); // 'AA' has no title, ends up last
+        // Entities without the sort field are excluded — sorting by a field
+        // means "show me entities that have this field, in order." The count
+        // also reflects only the entities that will be returned.
+        const ascResult = await catalog.queryEntities({
+          orderFields: [{ field: 'metadata.title', order: 'asc' }],
+          credentials: mockCredentials.none(),
+        });
+        expect(
+          entitiesResponseToObjects(ascResult.items).map(e => e!.metadata.name),
+        ).toEqual(['CC', 'BB']);
+        expect(ascResult.totalItems).toBe(2);
 
-        await expect(
-          catalog
-            .queryEntities({
-              orderFields: [{ field: 'metadata.title', order: 'desc' }],
-              credentials: mockCredentials.none(),
-            })
-            .then(r =>
-              entitiesResponseToObjects(r.items).map(e => e!.metadata.name),
-            ),
-        ).resolves.toEqual(['BB', 'CC', 'AA']); // 'AA' has no title, ends up last
+        const descResult = await catalog.queryEntities({
+          orderFields: [{ field: 'metadata.title', order: 'desc' }],
+          credentials: mockCredentials.none(),
+        });
+        expect(
+          entitiesResponseToObjects(descResult.items).map(
+            e => e!.metadata.name,
+          ),
+        ).toEqual(['BB', 'CC']);
+        expect(descResult.totalItems).toBe(2);
       },
     );
 
