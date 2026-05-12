@@ -85,7 +85,6 @@ class PublishSubject<T> {
  * Recent toasts are buffered and replayed to new subscribers to prevent
  * missing toasts that were posted before subscription.
  *
- * @internal
  */
 export class ToastApiForwarder implements ToastApiForwarderApi {
   private readonly subject = new PublishSubject<ToastApiForwarderMessage>();

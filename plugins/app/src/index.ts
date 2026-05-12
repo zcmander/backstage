@@ -15,3 +15,10 @@
  */
 
 export { appPlugin as default } from './plugin';
+// export for legacy frontend
+export {
+  toastApiForwarderRef,
+  ToastApiForwarder,
+  type ToastApiForwarderApi,
+  type ToastApiForwarderMessage,
+} from './apis';

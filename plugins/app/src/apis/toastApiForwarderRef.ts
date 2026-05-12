@@ -24,7 +24,6 @@ import { Observable } from '@backstage/types';
 /**
  * Internal enriched toast message emitted by the forwarder's observable.
  *
- * @internal
  */
 export type ToastApiForwarderMessage = ToastApiMessage & {
   /** Unique key for tracking this toast */
@@ -43,7 +42,6 @@ export type ToastApiForwarderMessage = ToastApiMessage & {
  * for the toast display to subscribe to. This interface is only used
  * within the app plugin and can be freely evolved.
  *
- * @internal
  */
 export type ToastApiForwarderApi = ToastApi & {
   /** Observe toasts posted by other parts of the application. */
@@ -54,7 +52,6 @@ export type ToastApiForwarderApi = ToastApi & {
  * Internal API ref for the toast forwarder. The public `toastApiRef`
  * delegates to this, and the toast display subscribes to it directly.
  *
- * @internal
  */
 export const toastApiForwarderRef = createApiRef<ToastApiForwarderApi>({
   id: 'app.toast.internal-forwarder',

@@ -16,4 +16,7 @@
 
 export { ToastApiForwarder } from './ToastApiForwarder';
 export { toastApiForwarderRef } from './toastApiForwarderRef';
-export type { ToastApiForwarderApi } from './toastApiForwarderRef';
+export type {
+  ToastApiForwarderApi,
+  ToastApiForwarderMessage,
+} from './toastApiForwarderRef';
