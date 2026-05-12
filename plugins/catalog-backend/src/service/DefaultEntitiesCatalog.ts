@@ -687,7 +687,8 @@ export class DefaultEntitiesCatalog implements EntitiesCatalog {
         value: 'search.original_value',
         count: this.database.raw('count(*)'),
       })
-      .groupBy(['search.key', 'search.original_value']);
+      .groupBy(['search.key', 'search.original_value'])
+      .orderBy(['search.key', 'search.original_value']);
 
     if (request.filter || request.query) {
       // Build a subquery that finds matching entity IDs via
