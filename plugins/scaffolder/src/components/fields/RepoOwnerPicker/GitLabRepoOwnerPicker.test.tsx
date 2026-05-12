@@ -91,34 +91,51 @@ describe('GitLabRepoOwnerPicker', () => {
   });
 
   it('should populate owners', async () => {
+    jest.useFakeTimers();
+    const user = userEvent.setup({
+      advanceTimers: jest.advanceTimersByTime,
+    });
     const onChange = jest.fn();
 
-    const { getByRole, getByText } = await renderInTestApp(
-      <TestApiProvider apis={[[scaffolderApiRef, scaffolderApiMock]]}>
-        <GitLabRepoOwnerPicker
-          onChange={onChange}
-          state={{
-            host: 'gitlab.com',
-            owner: 'foo',
-          }}
-          rawErrors={[]}
-          accessToken="token"
-        />
-      </TestApiProvider>,
-    );
+    try {
+      const { getByRole } = await renderInTestApp(
+        <TestApiProvider apis={[[scaffolderApiRef, scaffolderApiMock]]}>
+          <GitLabRepoOwnerPicker
+            onChange={onChange}
+            state={{
+              host: 'gitlab.com',
+              owner: 'foo',
+            }}
+            rawErrors={[]}
+            accessToken="token"
+          />
+        </TestApiProvider>,
+      );
 
-    // Open the Autocomplete dropdown
-    const input = getByRole('textbox');
-    await userEvent.click(input);
+      // Open the Autocomplete dropdown
+      const input = getByRole('textbox');
+      await user.click(input);
 
-    // Verify that the available owners are shown
-    await waitFor(() => expect(getByText('owner1')).toBeInTheDocument());
+      // Flush the component debounce and any pending async updates
+      act(() => {
+        jest.advanceTimersByTime(500);
+      });
+      await act(async () => {
+        await Promise.resolve();
+      });
 
-    // Verify that selecting an option calls onChange
-    await userEvent.click(getByText('owner1'));
-    expect(onChange).toHaveBeenCalledWith({
-      owner: 'owner1',
-    });
+      // Verify that the available owners are shown
+      expect(await screen.findByText('owner1')).toBeInTheDocument();
+
+      // Verify that selecting an option calls onChange
+      await user.click(screen.getByText('owner1'));
+      expect(onChange).toHaveBeenCalledWith({
+        owner: 'owner1',
+      });
+    } finally {
+      jest.runOnlyPendingTimers();
+      jest.useRealTimers();
+    }
   });
 
   it('should filter out excluded owners', async () => {
