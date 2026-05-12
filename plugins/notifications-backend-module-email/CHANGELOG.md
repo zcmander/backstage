@@ -1,5 +1,13 @@
 # @backstage/plugin-notifications-backend-module-email
 
+## 0.3.21-next.1
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/integration-aws-node@0.2.0-next.1
+  - @backstage/backend-plugin-api@1.9.1-next.1
+
 ## 0.3.21-next.0
 
 ### Patch Changes

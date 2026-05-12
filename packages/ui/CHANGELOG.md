@@ -1,5 +1,17 @@
 # @backstage/ui
 
+## 0.15.0-next.3
+
+### Patch Changes
+
+- 4bb649d: Fixed Table with row selection creating phantom scroll height on ancestor elements by establishing a containing block for visually-hidden checkbox inputs.
+
+  **Affected components:** Table, TableRoot
+
+- d726bcd: Added new `DatePicker` component — combines a date field and a calendar popover for selecting a date, built on React Aria with full keyboard and screen reader accessibility. Uses BUI design tokens throughout, including auto-incremented backgrounds via the bg consumer pattern.
+
+  **Affected components:** DatePicker
+
 ## 0.15.0-next.2
 
 ### Patch Changes

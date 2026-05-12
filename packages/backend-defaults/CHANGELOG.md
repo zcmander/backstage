@@ -1,5 +1,14 @@
 # @backstage/backend-defaults
 
+## 0.17.1-next.2
+
+### Patch Changes
+
+- 90b572e: Adds an alpha `TracingService` to provide a unified interface for emitting trace spans across Backstage plugins.
+- Updated dependencies
+  - @backstage/integration-aws-node@0.2.0-next.1
+  - @backstage/backend-plugin-api@1.9.1-next.1
+
 ## 0.17.1-next.1
 
 ### Patch Changes

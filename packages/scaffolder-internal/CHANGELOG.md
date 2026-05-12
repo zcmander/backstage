@@ -1,5 +1,12 @@
 # @internal/scaffolder
 
+## 0.0.21-next.1
+
+### Patch Changes
+
+- Updated dependencies
+  - @backstage/plugin-scaffolder-react@1.21.0-next.1
+
 ## 0.0.21-next.0
 
 ### Patch Changes

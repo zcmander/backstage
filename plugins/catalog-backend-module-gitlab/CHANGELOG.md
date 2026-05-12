@@ -1,5 +1,14 @@
 # @backstage/plugin-catalog-backend-module-gitlab
 
+## 0.8.3-next.2
+
+### Patch Changes
+
+- 1ecc3ca: Fixed spelling mistakes in internal code
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.9.1-next.1
+  - @backstage/backend-defaults@0.17.1-next.2
+
 ## 0.8.3-next.1
 
 ### Patch Changes
