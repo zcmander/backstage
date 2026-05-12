@@ -691,9 +691,10 @@ export class DefaultEntitiesCatalog implements EntitiesCatalog {
       .select({
         facet: 'search.key',
         value: 'search.original_value',
-        count: this.database.raw('count(DISTINCT search.entity_id)'),
+        count: this.database.raw('count(*)'),
       })
-      .groupBy(['search.key', 'search.original_value']);
+      .groupBy(['search.key', 'search.original_value'])
+      .orderBy(['search.key', 'search.original_value']);
 
     if (request.filter || request.query) {
       // Build a subquery that finds matching entity IDs via

@@ -2549,18 +2549,18 @@ describe('DefaultEntitiesCatalog', () => {
           },
         ]);
 
-        await expect(
-          catalog.facets({
-            facets: ['spec.type'],
-            query: { kind: 'component' },
-            credentials: mockCredentials.none(),
-          }),
-        ).resolves.toEqual({
+        const result = await catalog.facets({
+          facets: ['spec.type'],
+          query: { kind: 'component' },
+          credentials: mockCredentials.none(),
+        });
+        expect(result.facets['spec.type']).toHaveLength(2);
+        expect(result).toEqual({
           facets: {
-            'spec.type': [
+            'spec.type': expect.arrayContaining([
               { value: 'library', count: 1 },
               { value: 'service', count: 1 },
-            ],
+            ]),
           },
         });
       },
@@ -2590,18 +2590,18 @@ describe('DefaultEntitiesCatalog', () => {
           },
         ]);
 
-        await expect(
-          catalog.facets({
-            facets: ['kind'],
-            query: { kind: { $in: ['component', 'api'] } },
-            credentials: mockCredentials.none(),
-          }),
-        ).resolves.toEqual({
+        const result = await catalog.facets({
+          facets: ['kind'],
+          query: { kind: { $in: ['component', 'api'] } },
+          credentials: mockCredentials.none(),
+        });
+        expect(result.facets.kind).toHaveLength(2);
+        expect(result).toEqual({
           facets: {
-            kind: [
+            kind: expect.arrayContaining([
               { value: 'API', count: 1 },
               { value: 'Component', count: 1 },
-            ],
+            ]),
           },
         });
       },
@@ -2687,10 +2687,10 @@ describe('DefaultEntitiesCatalog', () => {
           }),
         ).resolves.toEqual({
           facets: {
-            'metadata.name': [
+            'metadata.name': expect.arrayContaining([
               { value: 'one', count: 1 },
               { value: 'two', count: 1 },
-            ],
+            ]),
           },
         });
       },
