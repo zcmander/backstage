@@ -32,6 +32,7 @@ import { ScaffolderStep } from '@backstage/plugin-scaffolder-react';
 import { ScaffolderTaskOutput } from '@backstage/plugin-scaffolder-react';
 import { SetStateAction } from 'react';
 import { StyleRules } from '@material-ui/core/styles/withStyles';
+import { SwappableComponentRef } from '@backstage/frontend-plugin-api';
 import { TaskStep } from '@backstage/plugin-scaffolder-common';
 import { TemplateEntityV1beta3 } from '@backstage/plugin-scaffolder-common';
 import { TemplateGroupFilter } from '@backstage/plugin-scaffolder-react';
@@ -389,7 +390,27 @@ export interface TaskStepsProps {
 }
 
 // @alpha
-export const TemplateCard: (props: TemplateCardProps) => JSX_2.Element;
+export const TemplateCard: {
+  (props: TemplateCardComponentProps): JSX.Element | null;
+  ref: SwappableComponentRef<
+    TemplateCardComponentProps,
+    TemplateCardComponentProps
+  >;
+};
+
+// @alpha
+export interface TemplateCardComponentProps {
+  // (undocumented)
+  additionalLinks?: {
+    icon: IconComponent;
+    text: string;
+    url: string;
+  }[];
+  // (undocumented)
+  onSelected?: () => void;
+  // (undocumented)
+  template: TemplateEntityV1beta3;
+}
 
 // @alpha
 export interface TemplateCardProps {
