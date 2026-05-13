@@ -36102,21 +36102,21 @@ __metadata:
   linkType: hard
 
 "material-ui-popup-state@npm:^5.3.6":
-  version: 5.3.6
-  resolution: "material-ui-popup-state@npm:5.3.6"
+  version: 5.3.7
+  resolution: "material-ui-popup-state@npm:5.3.7"
   dependencies:
     "@babel/runtime": "npm:^7.26.0"
     "@types/prop-types": "npm:^15.7.3"
     classnames: "npm:^2.2.6"
     prop-types: "npm:^15.7.2"
   peerDependencies:
-    "@mui/material": ^5.0.0 || ^6.0.0 || ^7.0.0
+    "@mui/material": ">=5 <10"
     "@types/react": ^16.8.0 || ^17 || ^18 || ^19
-    react: ^16.8.0 || ^17 || ^18 || ^19
+    react: ">=16.8.0 <20"
   peerDependenciesMeta:
     "@types/react":
       optional: true
-  checksum: 10/0edb01e329b694517656833a4d923bdb25ab3454c3027dbbb2a32d3f264aa5ae9b174756a83d08dcc981a77775426004b5b3766bbf330fd4df2075c810d7aa9e
+  checksum: 10/059a3bc399c921222d051df3aa37cde326f82a52dce9add1f841d12e42ae8179582dd4bdca59812ab0efa417ee043fa37dc1d74fcb749cc661b8d83b286eade0
   languageName: node
   linkType: hard
 
