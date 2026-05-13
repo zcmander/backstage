@@ -35063,11 +35063,11 @@ __metadata:
   linkType: hard
 
 "libsodium-wrappers@npm:*, libsodium-wrappers@npm:^0.8.0":
-  version: 0.8.2
-  resolution: "libsodium-wrappers@npm:0.8.2"
+  version: 0.8.4
+  resolution: "libsodium-wrappers@npm:0.8.4"
   dependencies:
     libsodium: "npm:^0.8.0"
-  checksum: 10/0116b4deeea9ec21f1e4dcbf665ccaa41e6143161f16b5345c10ea995bd1f930155d4aca1783bee99d42854dda3265a22f48e5edb7ddfe1159bf460416e11117
+  checksum: 10/186e9004482826a086e03017efca80405b7449f085cced48702adb8bb92d66e8c983f761550883cb1c078b01098ca459053d3c7c69ec3cdee7f86ceba25bd888
   languageName: node
   linkType: hard
 
