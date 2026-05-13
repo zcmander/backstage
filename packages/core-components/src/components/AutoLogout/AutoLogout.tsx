@@ -114,6 +114,7 @@ const ConditionalAutoLogout = ({
     // Events will be rebound as long as `stopOnMount` is not set.
     setPromptOpen(false);
     setRemainingTimeCountdown(0);
+    lastSeenOnlineStore.delete();
     identityApi.signOut();
   };
 
