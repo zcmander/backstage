@@ -387,6 +387,9 @@ describe('Entity page', () => {
       await expect(
         screen.findByRole('tab', { name: /Documentation/ }),
       ).resolves.toBeInTheDocument();
+      await expect(
+        screen.findByRole('tab', { name: /Overview/ }),
+      ).resolves.toBeInTheDocument();
       const tabs = screen.getAllByRole('tab');
       expect(tabs).toHaveLength(2);
       expect(tabs[0]).toHaveTextContent('Documentation');
@@ -605,6 +608,9 @@ describe('Entity page', () => {
       await expect(
         screen.findByRole('tab', { name: /Overview/ }),
       ).resolves.toBeInTheDocument();
+      await expect(
+        screen.findByRole('tab', { name: /Documentation/ }),
+      ).resolves.toBeInTheDocument();
       const tabs = screen.getAllByRole('tab');
       expect(tabs).toHaveLength(2);
       expect(tabs[0]).toHaveTextContent('Overview');
@@ -738,7 +744,7 @@ describe('Entity page', () => {
       await userEvent.click(await screen.findByTestId('menu-button'));
 
       const title = await screen.findByText('Test Title');
-      expect(screen.getByText('Test Icon')).toBeInTheDocument();
+      await expect(screen.findByText('Test Icon')).resolves.toBeInTheDocument();
       const anchor = title.closest('a');
       expect(anchor).toHaveAttribute('href', '/somewhere');
       expect(anchor).toHaveAttribute('aria-disabled', disabled.toString());
@@ -801,7 +807,7 @@ describe('Entity page', () => {
         screen.findByText('Test Title'),
       ).resolves.toBeInTheDocument();
 
-      expect(screen.getByText('Test Icon')).toBeInTheDocument();
+      await expect(screen.findByText('Test Icon')).resolves.toBeInTheDocument();
       const listItem = screen.getByText('Test Title').closest('li');
       expect(listItem).toHaveAttribute('aria-disabled', disabled.toString());
       if (!disabled) {
