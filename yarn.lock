@@ -25931,11 +25931,11 @@ __metadata:
   linkType: hard
 
 "copy-to-clipboard@npm:^3.2.0, copy-to-clipboard@npm:^3.3.1":
-  version: 3.3.1
-  resolution: "copy-to-clipboard@npm:3.3.1"
+  version: 3.3.3
+  resolution: "copy-to-clipboard@npm:3.3.3"
   dependencies:
     toggle-selection: "npm:^1.0.6"
-  checksum: 10/37800fd81674bb15feea9121b1ef09b41e7dc0da51c48546340ca9a998074adc8bc0fb33afc522497a2c1efc50e9aec0056a3671a848127757d49089ff742d22
+  checksum: 10/e0a325e39b7615108e6c1c8ac110ae7b829cdc4ee3278b1df6a0e4228c490442cc86444cd643e2da344fbc424b3aab8909e2fec82f8bc75e7e5b190b7c24eecf
   languageName: node
   linkType: hard
 
