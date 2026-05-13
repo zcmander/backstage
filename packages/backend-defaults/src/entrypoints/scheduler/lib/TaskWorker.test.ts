@@ -329,7 +329,7 @@ describe.each(databases.eachSupportedId())('TaskWorker, %s', databaseId => {
     await new Promise(resolve => setTimeout(resolve, 250));
     expect(fn1).toHaveBeenCalledTimes(0);
     await waitForExpect(() => {
-      expect(fn1.mock.calls.length).toBeGreaterThan(0);
+      expect(fn1.mock).toHaveBeenCalled();
     });
 
     // Start a second worker and make sure it waits but the first worker still works along
