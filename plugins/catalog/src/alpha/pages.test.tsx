@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-jest.setTimeout(30_000);
-
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
@@ -38,6 +36,8 @@ import {
 import { convertLegacyRouteRef } from '@backstage/core-compat-api';
 import { rootRouteRef } from '../routes';
 import { Entity } from '@backstage/catalog-model';
+
+jest.setTimeout(30_000);
 
 describe('Entity page', () => {
   const entityMock = {
