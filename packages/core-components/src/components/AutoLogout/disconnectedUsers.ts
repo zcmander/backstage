@@ -46,26 +46,27 @@ export const useLogoutDisconnectedUserEffect = ({
     const shouldCheckDisconnectedUser = autologoutIsEnabled && enableEffect;
 
     // Prevent lastSeen getting deleted before logged state is checked
-    if (shouldCheckDisconnectedUser && isLoggedIn === null) {
+    if (isLoggedIn === null) {
       return;
     }
 
-    if (shouldCheckDisconnectedUser && isLoggedIn) {
-      const lastSeenOnline = lastSeenOnlineStore.get();
-      if (lastSeenOnline) {
-        const now = new Date();
-        const nowSeconds = Math.ceil(now.getTime() / 1000);
-        const lastSeenOnlineSeconds = Math.ceil(
-          lastSeenOnline.getTime() / 1000,
-        );
-        if (nowSeconds - lastSeenOnlineSeconds > idleTimeoutSeconds) {
-          identityApi.signOut();
-        }
-      }
-      lastSeenOnlineStore.save(new Date());
-    } else {
+    if (!shouldCheckDisconnectedUser || !isLoggedIn) {
       lastSeenOnlineStore.delete();
+      return;
     }
+
+    const lastSeenOnline = lastSeenOnlineStore.get();
+    if (lastSeenOnline) {
+      const now = new Date();
+      const nowSeconds = Math.ceil(now.getTime() / 1000);
+      const lastSeenOnlineSeconds = Math.ceil(lastSeenOnline.getTime() / 1000);
+      if (nowSeconds - lastSeenOnlineSeconds > idleTimeoutSeconds) {
+        lastSeenOnlineStore.delete();
+        identityApi.signOut();
+        return;
+      }
+    }
+    lastSeenOnlineStore.save(new Date());
   }, [
     autologoutIsEnabled,
     enableEffect,
