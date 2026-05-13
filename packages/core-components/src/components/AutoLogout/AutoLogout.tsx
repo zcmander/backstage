@@ -231,7 +231,6 @@ const parseConfig = (
 export const AutoLogout = (props: AutoLogoutProps): JSX.Element | null => {
   const identityApi = useApi(identityApiRef);
   const configApi = useApi(configApiRef);
-  const isLoggedRef = useRef<boolean | null>(null);
   const [isLogged, setIsLogged] = useState<boolean | null>(null);
   const lastSeenOnlineStore: TimestampStore = useMemo(
     () => new DefaultTimestampStore(LAST_SEEN_ONLINE_STORAGE_KEY),
@@ -239,18 +238,7 @@ export const AutoLogout = (props: AutoLogoutProps): JSX.Element | null => {
   );
 
   useEffect(() => {
-    isLoggedRef.current = isLogged;
-  }, [isLogged]);
-
-  useEffect(() => {
     let cancelled = false;
-
-    const timeoutId = setTimeout(() => {
-      if (cancelled) return;
-      if (isLoggedRef.current === null || isLoggedRef.current === false) {
-        lastSeenOnlineStore.delete();
-      }
-    }, 3000);
 
     async function checkLogin(identity: IdentityApi) {
       try {
@@ -272,7 +260,6 @@ export const AutoLogout = (props: AutoLogoutProps): JSX.Element | null => {
 
     return () => {
       cancelled = true;
-      clearTimeout(timeoutId);
     };
   }, [lastSeenOnlineStore, identityApi]);
 

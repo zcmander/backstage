@@ -48,6 +48,8 @@ describe('useLogoutDisconnectedUserEffect', () => {
     renderHook(() => useLogoutDisconnectedUserEffect(props));
 
     expect(mockTimestampStore.get).not.toHaveBeenCalled();
+    expect(mockTimestampStore.delete).not.toHaveBeenCalled();
+    expect(mockTimestampStore.save).not.toHaveBeenCalled();
     expect(mockIdentityApi.signOut).not.toHaveBeenCalled();
   });
 
