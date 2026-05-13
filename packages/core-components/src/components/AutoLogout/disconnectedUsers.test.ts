@@ -84,6 +84,27 @@ describe('useLogoutDisconnectedUserEffect', () => {
     expect(mockTimestampStore.delete).toHaveBeenCalled();
   });
 
+  it('should delete the store and sign out when idle timeout has passed', () => {
+    const staleStore = {
+      ...mockTimestampStore,
+      get: jest.fn().mockReturnValue(new Date(Date.now() - 2000)),
+    };
+    const props: UseLogoutDisconnectedUserEffectProps = {
+      enableEffect: true,
+      autologoutIsEnabled: true,
+      isLoggedIn: true,
+      idleTimeoutSeconds: 1,
+      lastSeenOnlineStore: staleStore,
+      identityApi: mockIdentityApi,
+    };
+
+    renderHook(() => useLogoutDisconnectedUserEffect(props));
+
+    expect(staleStore.delete).toHaveBeenCalled();
+    expect(mockIdentityApi.signOut).toHaveBeenCalled();
+    expect(staleStore.save).not.toHaveBeenCalled();
+  });
+
   it('should call signOut if idle timeout passed', () => {
     jest.useFakeTimers();
 
