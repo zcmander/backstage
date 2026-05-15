@@ -115,7 +115,28 @@ export const isAIResourceEntity = (
 export const isSkillAIResourceEntity = (
   entity: Entity,
 ): entity is SkillAIResourceEntityV1alpha1 =>
-  isAIResourceEntity(entity) && entity.spec.type === 'skill';
+  isAIResourceEntity(entity) && entity.spec?.type === 'skill';
+
+/**
+ * Extends the catalog model with the AIResource kind.
+ *
+ * @alpha
+ */
+const baseRelationFields = [
+  {
+    selector: { path: 'spec.owner' },
+    relation: 'ownedBy',
+    defaultKind: 'Group',
+    defaultNamespace: 'inherit' as const,
+    allowedKinds: ['Group', 'User'],
+  },
+  {
+    selector: { path: 'spec.system' },
+    relation: 'partOf',
+    defaultKind: 'System',
+    defaultNamespace: 'inherit' as const,
+  },
+];
 
 /**
  * Extends the catalog model with the AIResource kind.
@@ -137,21 +158,7 @@ export const aiResourceEntityModel = createCatalogModelLayer({
       versions: [
         {
           name: 'v1alpha1',
-          relationFields: [
-            {
-              selector: { path: 'spec.owner' },
-              relation: 'ownedBy',
-              defaultKind: 'Group',
-              defaultNamespace: 'inherit',
-              allowedKinds: ['Group', 'User'],
-            },
-            {
-              selector: { path: 'spec.system' },
-              relation: 'partOf',
-              defaultKind: 'System',
-              defaultNamespace: 'inherit',
-            },
-          ],
+          relationFields: baseRelationFields,
           schema: {
             jsonSchema: defaultJsonSchema as JsonObject,
           },
@@ -160,24 +167,12 @@ export const aiResourceEntityModel = createCatalogModelLayer({
           name: 'v1alpha1',
           specType: 'skill',
           relationFields: [
-            {
-              selector: { path: 'spec.owner' },
-              relation: 'ownedBy',
-              defaultKind: 'Group',
-              defaultNamespace: 'inherit',
-              allowedKinds: ['Group', 'User'],
-            },
-            {
-              selector: { path: 'spec.system' },
-              relation: 'partOf',
-              defaultKind: 'System',
-              defaultNamespace: 'inherit',
-            },
+            ...baseRelationFields,
             {
               selector: { path: 'spec.dependsOn' },
               relation: 'dependsOn',
               defaultKind: 'AIResource',
-              defaultNamespace: 'inherit',
+              defaultNamespace: 'inherit' as const,
             },
           ],
           schema: {
