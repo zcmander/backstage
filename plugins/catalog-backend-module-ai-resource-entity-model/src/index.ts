@@ -20,9 +20,15 @@
  * @packageDocumentation
  */
 
-export type { AIResourceEntityV1alpha1 } from './AIResourceEntityV1alpha1';
+export type {
+  AIResourceEntityV1alpha1,
+  AIResourceEntityV1alpha1Default,
+  SkillAIResourceEntityV1alpha1,
+} from './AIResourceEntityV1alpha1';
 export {
   aiResourceEntityV1alpha1Validator,
+  skillAIResourceEntityV1alpha1Validator,
   isAIResourceEntity,
+  isSkillAIResourceEntity,
 } from './AIResourceEntityV1alpha1';
 export { catalogModuleAIResourceEntityModel as default } from './module';

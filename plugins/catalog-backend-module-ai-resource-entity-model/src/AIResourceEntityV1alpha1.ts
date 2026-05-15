@@ -21,15 +21,15 @@ import {
 } from '@backstage/catalog-model';
 import { createCatalogModelLayer } from '@backstage/catalog-model/alpha';
 import type { JsonObject } from '@backstage/types';
-import jsonSchema from './schema/AIResource.v1alpha1.schema.json';
+import defaultJsonSchema from './schema/AIResource.v1alpha1.schema.json';
+import skillJsonSchema from './schema/AIResource.v1alpha1.skill.schema.json';
 
 /**
- * Backstage catalog AIResource kind Entity. Represents contextual information
- * consumed by AI coding tools, such as skills and rules.
+ * Default AIResource entity for types that don't have a structured spec.
  *
  * @public
  */
-export interface AIResourceEntityV1alpha1 extends Entity {
+export interface AIResourceEntityV1alpha1Default extends Entity {
   apiVersion: 'backstage.io/v1alpha1';
   kind: 'AIResource';
   spec: {
@@ -40,16 +40,60 @@ export interface AIResourceEntityV1alpha1 extends Entity {
   };
 }
 
-const validator = entityKindSchemaValidator(jsonSchema);
+/**
+ * AIResource entity with spec.type 'skill'. Represents reusable contextual
+ * knowledge consumed by AI coding tools.
+ *
+ * @public
+ */
+export interface SkillAIResourceEntityV1alpha1 extends Entity {
+  apiVersion: 'backstage.io/v1alpha1';
+  kind: 'AIResource';
+  spec: {
+    type: 'skill';
+    lifecycle: string;
+    owner: string;
+    system?: string;
+    disciplines?: string[];
+    categories?: string[];
+    agents?: string[];
+    dependsOn?: string[];
+  };
+}
 
 /**
- * Entity data validator for {@link AIResourceEntityV1alpha1}.
+ * Backstage catalog AIResource kind Entity. Represents contextual information
+ * consumed by AI coding tools, such as skills and rules.
+ *
+ * @public
+ */
+export type AIResourceEntityV1alpha1 =
+  | AIResourceEntityV1alpha1Default
+  | SkillAIResourceEntityV1alpha1;
+
+const defaultValidator = entityKindSchemaValidator(defaultJsonSchema);
+
+/**
+ * Entity data validator for the default {@link AIResourceEntityV1alpha1}.
  *
  * @public
  */
 export const aiResourceEntityV1alpha1Validator: KindValidator = {
   async check(data: Entity) {
-    return validator(data) === data;
+    return defaultValidator(data) === data;
+  },
+};
+
+const skillValidator = entityKindSchemaValidator(skillJsonSchema);
+
+/**
+ * Entity data validator for {@link SkillAIResourceEntityV1alpha1}.
+ *
+ * @public
+ */
+export const skillAIResourceEntityV1alpha1Validator: KindValidator = {
+  async check(data: Entity) {
+    return skillValidator(data) === data;
   },
 };
 
@@ -62,6 +106,16 @@ export const isAIResourceEntity = (
   entity: Entity,
 ): entity is AIResourceEntityV1alpha1 =>
   entity.apiVersion === 'backstage.io/v1alpha1' && entity.kind === 'AIResource';
+
+/**
+ * Type guard for {@link SkillAIResourceEntityV1alpha1}.
+ *
+ * @public
+ */
+export const isSkillAIResourceEntity = (
+  entity: Entity,
+): entity is SkillAIResourceEntityV1alpha1 =>
+  isAIResourceEntity(entity) && entity.spec.type === 'skill';
 
 /**
  * Extends the catalog model with the AIResource kind.
@@ -99,7 +153,35 @@ export const aiResourceEntityModel = createCatalogModelLayer({
             },
           ],
           schema: {
-            jsonSchema: jsonSchema as JsonObject,
+            jsonSchema: defaultJsonSchema as JsonObject,
+          },
+        },
+        {
+          name: 'v1alpha1',
+          specType: 'skill',
+          relationFields: [
+            {
+              selector: { path: 'spec.owner' },
+              relation: 'ownedBy',
+              defaultKind: 'Group',
+              defaultNamespace: 'inherit',
+              allowedKinds: ['Group', 'User'],
+            },
+            {
+              selector: { path: 'spec.system' },
+              relation: 'partOf',
+              defaultKind: 'System',
+              defaultNamespace: 'inherit',
+            },
+            {
+              selector: { path: 'spec.dependsOn' },
+              relation: 'dependsOn',
+              defaultKind: 'AIResource',
+              defaultNamespace: 'inherit',
+            },
+          ],
+          schema: {
+            jsonSchema: skillJsonSchema as JsonObject,
           },
         },
       ],

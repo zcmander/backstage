@@ -8,7 +8,12 @@ import { Entity } from '@backstage/catalog-model';
 import { KindValidator } from '@backstage/catalog-model';
 
 // @public
-export interface AIResourceEntityV1alpha1 extends Entity {
+export type AIResourceEntityV1alpha1 =
+  | AIResourceEntityV1alpha1Default
+  | SkillAIResourceEntityV1alpha1;
+
+// @public
+export interface AIResourceEntityV1alpha1Default extends Entity {
   // (undocumented)
   apiVersion: 'backstage.io/v1alpha1';
   // (undocumented)
@@ -33,4 +38,31 @@ export default catalogModuleAIResourceEntityModel;
 export const isAIResourceEntity: (
   entity: Entity,
 ) => entity is AIResourceEntityV1alpha1;
+
+// @public
+export const isSkillAIResourceEntity: (
+  entity: Entity,
+) => entity is SkillAIResourceEntityV1alpha1;
+
+// @public
+export interface SkillAIResourceEntityV1alpha1 extends Entity {
+  // (undocumented)
+  apiVersion: 'backstage.io/v1alpha1';
+  // (undocumented)
+  kind: 'AIResource';
+  // (undocumented)
+  spec: {
+    type: 'skill';
+    lifecycle: string;
+    owner: string;
+    system?: string;
+    disciplines?: string[];
+    categories?: string[];
+    agents?: string[];
+    dependsOn?: string[];
+  };
+}
+
+// @public
+export const skillAIResourceEntityV1alpha1Validator: KindValidator;
 ```
