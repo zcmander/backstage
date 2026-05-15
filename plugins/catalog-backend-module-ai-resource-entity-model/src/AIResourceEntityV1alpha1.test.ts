@@ -200,7 +200,7 @@ describe('AIResourceV1alpha1 skill validator', () => {
 });
 
 describe('isAIResourceEntity', () => {
-  it('returns true for a valid AIResource entity', () => {
+  it('returns true when apiVersion and kind match', () => {
     const entity: Entity = {
       apiVersion: 'backstage.io/v1alpha1',
       kind: 'AIResource',
