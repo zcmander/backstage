@@ -114,6 +114,7 @@
 
 - `relations_source_entity_id_idx` (`originating_entity_id`)
 - `relations_source_entity_ref_idx` (`source_entity_ref`)
+- `relations_target_entity_ref_idx` (`target_entity_ref`)
 
 ## Table `search`
 
