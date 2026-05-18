@@ -69,10 +69,6 @@ function wrapOtelBaggage(
 ): TracingServiceBaggage | undefined {
   if (!baggage) return undefined;
   return {
-    getEntry: (key: string) => {
-      const entry = baggage.getEntry(key);
-      return entry ? { value: entry.value } : undefined;
-    },
     getAllEntries: () =>
       baggage
         .getAllEntries()

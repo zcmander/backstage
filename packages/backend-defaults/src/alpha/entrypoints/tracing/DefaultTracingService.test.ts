@@ -351,13 +351,11 @@ describe('DefaultTracingService', () => {
     describe('getActiveBaggage', () => {
       it('returns a read-only baggage wrapping the active context baggage', () => {
         const mockBaggage = {
-          getEntry: jest.fn((key: string) =>
-            key === 'gen_ai.conversation.id' ? { value: 'conv-1' } : undefined,
-          ),
           getAllEntries: jest.fn(() => [
             ['gen_ai.conversation.id', { value: 'conv-1' }],
             ['gen_ai.agent.id', { value: 'agent-2' }],
           ]),
+          getEntry: jest.fn(),
           setEntry: jest.fn(),
           removeEntry: jest.fn(),
           removeEntries: jest.fn(),
@@ -371,10 +369,6 @@ describe('DefaultTracingService', () => {
         const baggage = service.propagation.getActiveBaggage();
 
         expect(baggage).toBeDefined();
-        expect(baggage!.getEntry('gen_ai.conversation.id')).toEqual({
-          value: 'conv-1',
-        });
-        expect(baggage!.getEntry('unknown')).toBeUndefined();
         expect(baggage!.getAllEntries()).toEqual([
           ['gen_ai.conversation.id', { value: 'conv-1' }],
           ['gen_ai.agent.id', { value: 'agent-2' }],
@@ -386,8 +380,8 @@ describe('DefaultTracingService', () => {
       it('returns baggage from the supplied context', () => {
         const ctx = { __ctx: 'has-baggage' } as any;
         const mockBaggage = {
-          getEntry: jest.fn(() => ({ value: 'ctx-val' })),
           getAllEntries: jest.fn(() => [['k', { value: 'ctx-val' }]]),
+          getEntry: jest.fn(),
           setEntry: jest.fn(),
           removeEntry: jest.fn(),
           removeEntries: jest.fn(),
@@ -401,7 +395,7 @@ describe('DefaultTracingService', () => {
         const baggage = service.propagation.getBaggage(ctx);
 
         expect(getBaggageSpy).toHaveBeenCalledWith(ctx);
-        expect(baggage!.getEntry('k')).toEqual({ value: 'ctx-val' });
+        expect(baggage!.getAllEntries()).toEqual([['k', { value: 'ctx-val' }]]);
       });
 
       it('returns undefined when the context has no baggage', () => {

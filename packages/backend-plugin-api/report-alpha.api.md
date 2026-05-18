@@ -324,8 +324,6 @@ export type TracingServiceAttributeValue =
 export interface TracingServiceBaggage {
   // (undocumented)
   getAllEntries(): Array<[string, TracingServiceBaggageEntry]>;
-  // (undocumented)
-  getEntry(key: string): TracingServiceBaggageEntry | undefined;
 }
 
 // @alpha
@@ -337,7 +335,7 @@ export interface TracingServiceBaggageEntry {
 // @alpha
 export interface TracingServiceContext {
   // (undocumented)
-  readonly [tracingServiceContextBrand]: never;
+  readonly $$type: '@backstage/TracingServiceContext';
 }
 
 // @alpha

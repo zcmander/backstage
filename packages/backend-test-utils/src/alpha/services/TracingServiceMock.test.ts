@@ -26,29 +26,22 @@ describe('tracingServiceMock', () => {
     });
 
     // Baggage is reachable directly off the extracted handle.
-    expect(
-      tracing.propagation.getBaggage(ctx)?.getEntry('gen_ai.agent.id'),
-    ).toEqual({ value: 'agent-456' });
+    expect(tracing.propagation.getBaggage(ctx)?.getAllEntries()).toEqual([
+      ['gen_ai.conversation.id', { value: 'conv-123' }],
+      ['gen_ai.agent.id', { value: 'agent-456' }],
+    ]);
 
-    const seen = await tracing.context.with(ctx, () => {
-      const baggage = tracing.propagation.getActiveBaggage();
-      return {
-        conv: baggage?.getEntry('gen_ai.conversation.id')?.value,
-        agent: baggage?.getEntry('gen_ai.agent.id')?.value,
-        missing: baggage?.getEntry('gen_ai.missing'),
-        all: baggage?.getAllEntries().map(([k, v]) => [k, v.value]),
-      };
-    });
+    const seen = await tracing.context.with(ctx, () =>
+      tracing.propagation
+        .getActiveBaggage()
+        ?.getAllEntries()
+        .map(([k, v]) => [k, v.value]),
+    );
 
-    expect(seen).toEqual({
-      conv: 'conv-123',
-      agent: 'agent-456',
-      missing: undefined,
-      all: [
-        ['gen_ai.conversation.id', { value: 'conv-123' }],
-        ['gen_ai.agent.id', { value: 'agent-456' }],
-      ].map(([k, v]) => [k, (v as { value: string }).value]),
-    });
+    expect(seen).toEqual([
+      ['gen_ai.conversation.id', 'conv-123'],
+      ['gen_ai.agent.id', 'agent-456'],
+    ]);
 
     // Baggage is scoped to the context.with callback.
     expect(tracing.propagation.getActiveBaggage()).toBeUndefined();
@@ -57,7 +50,6 @@ describe('tracingServiceMock', () => {
   it('honours mockReturnValue overrides for getActiveBaggage', async () => {
     const tracing = tracingServiceMock.mock();
     const override = {
-      getEntry: () => ({ value: 'override' }),
       getAllEntries: () =>
         [['gen_ai.conversation.id', { value: 'override' }]] as Array<
           [string, { value: string }]

@@ -176,8 +176,6 @@ export interface TracingServicePropagationAPI {
   getActiveBaggage(): TracingServiceBaggage | undefined;
 }
 
-declare const tracingServiceContextBrand: unique symbol;
-
 /**
  * Opaque handle representing a tracing context. Consumers receive
  * these from {@link TracingServiceContextAPI.active} or
@@ -187,7 +185,7 @@ declare const tracingServiceContextBrand: unique symbol;
  * @alpha
  */
 export interface TracingServiceContext {
-  readonly [tracingServiceContextBrand]: never;
+  readonly $$type: '@backstage/TracingServiceContext';
 }
 
 /**
@@ -196,7 +194,6 @@ export interface TracingServiceContext {
  * @alpha
  */
 export interface TracingServiceBaggage {
-  getEntry(key: string): TracingServiceBaggageEntry | undefined;
   getAllEntries(): Array<[string, TracingServiceBaggageEntry]>;
 }
 

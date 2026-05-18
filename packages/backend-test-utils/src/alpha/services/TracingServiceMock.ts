@@ -73,7 +73,6 @@ function parseBaggageHeader(
   if (entries.size === 0) return undefined;
 
   return {
-    getEntry: key => entries.get(key),
     getAllEntries: () => Array.from(entries.entries()),
   };
 }

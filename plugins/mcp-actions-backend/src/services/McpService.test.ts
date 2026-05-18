@@ -1013,13 +1013,6 @@ describe('McpService', () => {
     it('includes gen_ai baggage entries as span attributes when present', async () => {
       const tracing = tracingServiceMock.mock();
       tracing.propagation.getActiveBaggage.mockReturnValue({
-        getEntry: (key: string) => {
-          const entries: Record<string, { value: string }> = {
-            'gen_ai.conversation.id': { value: 'conv-123' },
-            'gen_ai.agent.id': { value: 'agent-456' },
-          };
-          return entries[key];
-        },
         getAllEntries: () => [
           ['gen_ai.conversation.id', { value: 'conv-123' }],
           ['gen_ai.agent.id', { value: 'agent-456' }],
@@ -1036,15 +1029,6 @@ describe('McpService', () => {
     it('only forwards allowlisted baggage keys onto the span', async () => {
       const tracing = tracingServiceMock.mock();
       tracing.propagation.getActiveBaggage.mockReturnValue({
-        getEntry: (key: string) => {
-          const entries: Record<string, { value: string }> = {
-            'gen_ai.conversation.id': { value: 'conv-123' },
-            'gen_ai.tool.call.result': { value: 'injected-result' },
-            'gen_ai.prompt': { value: 'injected-prompt' },
-            'gen_ai.user.message': { value: 'injected-user-message' },
-          };
-          return entries[key];
-        },
         getAllEntries: () => [
           ['gen_ai.conversation.id', { value: 'conv-123' }],
           ['gen_ai.tool.call.result', { value: 'injected-result' }],

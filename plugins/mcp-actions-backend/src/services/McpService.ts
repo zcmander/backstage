@@ -46,13 +46,13 @@ function safeStringify(value: unknown): string {
 // Baggage is propagated from untrusted callers, so we forward only an
 // explicit allowlist of low-cardinality identifier keys from the OTel
 // `gen_ai.*` registry.
-const PROPAGATED_BAGGAGE_ATTRIBUTES: readonly string[] = [
+const PROPAGATED_BAGGAGE_ATTRIBUTES: ReadonlySet<string> = new Set([
   'gen_ai.agent.id',
   'gen_ai.agent.name',
   'gen_ai.conversation.id',
   'gen_ai.provider.name',
   'gen_ai.request.model',
-];
+]);
 
 function baggageAttributes(
   tracingService: TracingService,
@@ -60,9 +60,8 @@ function baggageAttributes(
   const baggage = tracingService.propagation.getActiveBaggage();
   if (!baggage) return {};
   const attrs: Record<string, string> = {};
-  for (const key of PROPAGATED_BAGGAGE_ATTRIBUTES) {
-    const entry = baggage.getEntry(key);
-    if (entry) {
+  for (const [key, entry] of baggage.getAllEntries()) {
+    if (PROPAGATED_BAGGAGE_ATTRIBUTES.has(key)) {
       attrs[key] = entry.value;
     }
   }
