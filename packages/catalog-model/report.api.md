@@ -273,11 +273,6 @@ export function isLocationEntity(
   entity: Entity,
 ): entity is LocationEntityV1alpha1;
 
-// @public
-export function isMcpServerApiEntity(
-  entity: Entity,
-): entity is McpServerApiEntity;
-
 // @public (undocumented)
 export function isResourceEntity(
   entity: Entity,
@@ -336,31 +331,6 @@ export const locationEntityV1alpha1Validator: KindValidator;
 
 // @public
 export function makeValidator(overrides?: Partial<Validators>): Validators;
-
-// @public
-export interface McpServerApiEntity extends Entity {
-  // (undocumented)
-  apiVersion: 'backstage.io/v1alpha1' | 'backstage.io/v1beta1';
-  // (undocumented)
-  kind: 'API';
-  // (undocumented)
-  spec: {
-    type: 'mcp-server';
-    lifecycle: string;
-    owner: string;
-    system?: string;
-    remotes: McpServerRemote[];
-  };
-}
-
-// @public
-export const mcpServerApiEntityValidator: KindValidator;
-
-// @public
-export type McpServerRemote = {
-  type: string;
-  url: string;
-};
 
 // @public
 export class NoForeignRootFieldsEntityPolicy implements EntityPolicy {

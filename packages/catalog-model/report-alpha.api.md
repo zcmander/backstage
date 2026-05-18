@@ -492,6 +492,11 @@ export const isAiResourceEntity: (
 ) => entity is AiResourceEntityV1alpha1;
 
 // @alpha
+export function isMcpServerApiEntity(
+  entity: Entity,
+): entity is McpServerApiEntity;
+
+// @alpha
 export const isSkillAiResourceEntity: (
   entity: Entity,
 ) => entity is SkillAiResourceEntityV1alpha1;
@@ -499,6 +504,34 @@ export const isSkillAiResourceEntity: (
 // @public
 export type KindValidator = {
   check(entity: Entity): Promise<boolean>;
+};
+
+// @alpha
+export interface McpServerApiEntity extends Entity {
+  // (undocumented)
+  apiVersion: 'backstage.io/v1alpha1' | 'backstage.io/v1beta1';
+  // (undocumented)
+  kind: 'API';
+  // (undocumented)
+  spec: {
+    type: 'mcp-server';
+    lifecycle: string;
+    owner: string;
+    system?: string;
+    remotes: McpServerRemote[];
+  };
+}
+
+// @alpha
+export const mcpServerApiEntityModel: CatalogModelLayer;
+
+// @alpha
+export const mcpServerApiEntityValidator: KindValidator;
+
+// @alpha
+export type McpServerRemote = {
+  type: string;
+  url: string;
 };
 
 // @alpha

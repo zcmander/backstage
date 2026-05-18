@@ -16,9 +16,13 @@
 
 import { compileCatalogModel } from '../model/compileCatalogModel';
 import { defaultCatalogEntityModel } from '../model/defaultCatalogEntityModel';
+import { mcpServerApiEntityModel } from './McpServerApiEntity';
 
 describe('apiEntityModel mcp-server dispatch', () => {
-  const model = compileCatalogModel([defaultCatalogEntityModel]);
+  const model = compileCatalogModel([
+    defaultCatalogEntityModel,
+    mcpServerApiEntityModel,
+  ]);
 
   it('routes mcp-server and non-mcp-server v1alpha1 entities to different schemas', () => {
     const mcp = model.getKind({

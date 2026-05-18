@@ -23,7 +23,7 @@ import { ajvCompiledJsonSchemaValidator } from './util';
  * An MCP (Model Context Protocol) server represented as an API entity
  * (spec.type: 'mcp-server').
  *
- * @public
+ * @alpha
  */
 export interface McpServerApiEntity extends Entity {
   apiVersion: 'backstage.io/v1alpha1' | 'backstage.io/v1beta1';
@@ -40,7 +40,7 @@ export interface McpServerApiEntity extends Entity {
 /**
  * A transport endpoint for an MCP server.
  *
- * @public
+ * @alpha
  */
 export type McpServerRemote = {
   type: string;
@@ -50,7 +50,7 @@ export type McpServerRemote = {
 /**
  * {@link KindValidator} for the `mcp-server` specType of API entities.
  *
- * @public
+ * @alpha
  */
 export const mcpServerApiEntityValidator =
   ajvCompiledJsonSchemaValidator(mcpServerSchema);
@@ -58,7 +58,7 @@ export const mcpServerApiEntityValidator =
 /**
  * Type guard: narrows an entity to the MCP server API subtype.
  *
- * @public
+ * @alpha
  */
 export function isMcpServerApiEntity(
   entity: Entity,

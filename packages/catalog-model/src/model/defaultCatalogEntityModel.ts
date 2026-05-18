@@ -15,7 +15,6 @@
  */
 
 import { apiEntityModel } from '../kinds/ApiEntityV1alpha1';
-import { mcpServerApiEntityModel } from '../kinds/McpServerApiEntity';
 import { componentEntityModel } from '../kinds/ComponentEntityV1alpha1';
 import { domainEntityModel } from '../kinds/DomainEntityV1alpha1';
 import { groupEntityModel } from '../kinds/GroupEntityV1alpha1';
@@ -37,7 +36,6 @@ export const defaultCatalogEntityModel = createCatalogModelLayer({
   layerId: 'catalog.backstage.io/default-entity-model',
   builder: model => {
     model.import(apiEntityModel);
-    model.import(mcpServerApiEntityModel);
     model.import(componentEntityModel);
     model.import(domainEntityModel);
     model.import(groupEntityModel);
