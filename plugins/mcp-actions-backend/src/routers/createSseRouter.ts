@@ -68,7 +68,11 @@ export const createSseRouter = ({
 
     const transport = transportsToSessionId.get(sessionId);
     if (transport) {
-      await tracing.withPropagatedContext(req.headers, () =>
+      const ctx = tracing.propagation.extract(
+        tracing.context.active(),
+        req.headers,
+      );
+      await tracing.context.with(ctx, () =>
         transport.handlePostMessage(req, res, req.body),
       );
     } else {

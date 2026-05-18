@@ -104,24 +104,90 @@ export interface TracingService {
   startActiveSpan<T>(
     name: string,
     fn: (span: TracingServiceSpan) => T | Promise<T>,
-    options?: TracingServiceSpanOptions,
   ): Promise<T>;
-
   /**
-   * Extracts propagated context from HTTP headers and runs `fn` within
-   * it. Use this to bridge context across async boundaries where
-   * automatic propagation is lost.
+   * Runs `fn` inside a new active span configured by `options`. The
+   * span is finished when `fn` resolves or throws.
    */
-  withPropagatedContext<T>(
-    headers: Record<string, string | string[] | undefined>,
-    fn: () => T | Promise<T>,
+  startActiveSpan<T>(
+    name: string,
+    options: TracingServiceSpanOptions,
+    fn: (span: TracingServiceSpan) => T | Promise<T>,
   ): Promise<T>;
 
   /**
-   * Returns the active baggage from the current context, or `undefined`
-   * when none is present.
+   * Read the active tracing context, or run work within a specific
+   * one.
+   */
+  readonly context: TracingServiceContextAPI;
+
+  /**
+   * Extract a caller's tracing context from an inbound carrier, and
+   * read baggage from a context. Use these to bridge context across
+   * boundaries where automatic propagation is lost — for example,
+   * when a request arrives over a transport that does not
+   * automatically attach the caller's context.
+   */
+  readonly propagation: TracingServicePropagationAPI;
+}
+
+/**
+ * Read the active tracing context, or run work within a specific one.
+ * The context carries the active span and propagation fields (trace
+ * parent, baggage) for the current unit of work, and is automatically
+ * inherited by spans created via `startActiveSpan`.
+ *
+ * @alpha
+ */
+export interface TracingServiceContextAPI {
+  /** Returns the currently active context. */
+  active(): TracingServiceContext;
+  /** Runs `fn` with the supplied context set as the active context. */
+  with<T>(context: TracingServiceContext, fn: () => T | Promise<T>): Promise<T>;
+}
+
+/**
+ * Extract a caller's trace parent and baggage from an inbound carrier
+ * (typically HTTP headers), or read baggage from a context. Use these
+ * to bridge context across boundaries where automatic propagation is
+ * lost.
+ *
+ * @alpha
+ */
+export interface TracingServicePropagationAPI {
+  /**
+   * Returns a new context with propagation fields (trace parent,
+   * baggage, ...) read from the supplied carrier merged into it.
+   */
+  extract(
+    context: TracingServiceContext,
+    carrier: Record<string, string | string[] | undefined>,
+  ): TracingServiceContext;
+  /**
+   * Returns the baggage attached to the supplied context, or
+   * `undefined` when none is present.
+   */
+  getBaggage(context: TracingServiceContext): TracingServiceBaggage | undefined;
+  /**
+   * Returns the baggage attached to the currently active context, or
+   * `undefined` when none is present. Equivalent to
+   * `getBaggage(context.active())`.
    */
   getActiveBaggage(): TracingServiceBaggage | undefined;
+}
+
+declare const tracingServiceContextBrand: unique symbol;
+
+/**
+ * Opaque handle representing a tracing context. Consumers receive
+ * these from {@link TracingServiceContextAPI.active} or
+ * {@link TracingServicePropagationAPI.extract} and pass them back into
+ * the API; the type carries no inspectable fields.
+ *
+ * @alpha
+ */
+export interface TracingServiceContext {
+  readonly [tracingServiceContextBrand]: never;
 }
 
 /**

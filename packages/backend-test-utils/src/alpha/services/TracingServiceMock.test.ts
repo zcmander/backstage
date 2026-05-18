@@ -17,37 +17,41 @@
 import { tracingServiceMock } from './TracingServiceMock';
 
 describe('tracingServiceMock', () => {
-  it('parses the baggage header from withPropagatedContext and exposes it via getActiveBaggage', async () => {
+  it('parses the baggage header via propagation.extract and exposes it via getActiveBaggage inside context.with', async () => {
     const tracing = tracingServiceMock.mock();
 
-    const seen = await tracing.withPropagatedContext(
-      {
-        baggage:
-          'gen_ai.conversation.id=conv-123, gen_ai.agent.id=agent-456;property=ignored',
-      },
-      () => {
-        const baggage = tracing.getActiveBaggage();
-        return {
-          conv: baggage?.getEntry('gen_ai.conversation.id')?.value,
-          agent: baggage?.getEntry('gen_ai.agent.id')?.value,
-          missing: baggage?.getEntry('gen_ai.missing'),
-          all: baggage?.getAllEntries().map(([k, v]) => [k, v.value]),
-        };
-      },
-    );
+    const ctx = tracing.propagation.extract(tracing.context.active(), {
+      baggage:
+        'gen_ai.conversation.id=conv-123, gen_ai.agent.id=agent-456;property=ignored',
+    });
+
+    // Baggage is reachable directly off the extracted handle.
+    expect(
+      tracing.propagation.getBaggage(ctx)?.getEntry('gen_ai.agent.id'),
+    ).toEqual({ value: 'agent-456' });
+
+    const seen = await tracing.context.with(ctx, () => {
+      const baggage = tracing.propagation.getActiveBaggage();
+      return {
+        conv: baggage?.getEntry('gen_ai.conversation.id')?.value,
+        agent: baggage?.getEntry('gen_ai.agent.id')?.value,
+        missing: baggage?.getEntry('gen_ai.missing'),
+        all: baggage?.getAllEntries().map(([k, v]) => [k, v.value]),
+      };
+    });
 
     expect(seen).toEqual({
       conv: 'conv-123',
       agent: 'agent-456',
       missing: undefined,
       all: [
-        ['gen_ai.conversation.id', 'conv-123'],
-        ['gen_ai.agent.id', 'agent-456'],
-      ],
+        ['gen_ai.conversation.id', { value: 'conv-123' }],
+        ['gen_ai.agent.id', { value: 'agent-456' }],
+      ].map(([k, v]) => [k, (v as { value: string }).value]),
     });
 
-    // Baggage is scoped to the propagated callback.
-    expect(tracing.getActiveBaggage()).toBeUndefined();
+    // Baggage is scoped to the context.with callback.
+    expect(tracing.propagation.getActiveBaggage()).toBeUndefined();
   });
 
   it('honours mockReturnValue overrides for getActiveBaggage', async () => {
@@ -59,22 +63,25 @@ describe('tracingServiceMock', () => {
           [string, { value: string }]
         >,
     };
-    tracing.getActiveBaggage.mockReturnValue(override);
+    tracing.propagation.getActiveBaggage.mockReturnValue(override);
 
-    expect(tracing.getActiveBaggage()).toBe(override);
-    await tracing.withPropagatedContext(
-      { baggage: 'gen_ai.conversation.id=conv-from-header' },
-      () => {
-        // mockReturnValue takes precedence over the default header parsing.
-        expect(tracing.getActiveBaggage()).toBe(override);
-      },
-    );
+    expect(tracing.propagation.getActiveBaggage()).toBe(override);
+    const ctx = tracing.propagation.extract(tracing.context.active(), {
+      baggage: 'gen_ai.conversation.id=conv-from-header',
+    });
+    await tracing.context.with(ctx, () => {
+      // mockReturnValue takes precedence over the default header parsing.
+      expect(tracing.propagation.getActiveBaggage()).toBe(override);
+    });
   });
 
-  it('returns undefined baggage when no baggage header is supplied', async () => {
+  it('returns undefined baggage when no baggage header is supplied to extract', async () => {
     const tracing = tracingServiceMock.mock();
-    await tracing.withPropagatedContext({ traceparent: 'whatever' }, () => {
-      expect(tracing.getActiveBaggage()).toBeUndefined();
+    const ctx = tracing.propagation.extract(tracing.context.active(), {
+      traceparent: 'whatever',
+    });
+    await tracing.context.with(ctx, () => {
+      expect(tracing.propagation.getActiveBaggage()).toBeUndefined();
     });
   });
 });

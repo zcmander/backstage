@@ -22,11 +22,27 @@ import {
   TracingService,
   TracingServiceAttributeValue,
   TracingServiceBaggage,
+  TracingServiceContext,
+  TracingServiceContextAPI,
+  TracingServicePropagationAPI,
   TracingServiceSpan,
   TracingServiceSpanStatus,
   tracingServiceRef,
 } from '@backstage/backend-plugin-api/alpha';
 import { tracingServiceFactory } from '@backstage/backend-defaults/alpha';
+
+// Internal context shape used by the mock. The opaque `TracingServiceContext`
+// is just this object cast to the public type.
+interface MockContext {
+  baggage?: TracingServiceBaggage;
+}
+
+function toMockContext(ctx: TracingServiceContext): MockContext {
+  return ctx as unknown as MockContext;
+}
+function fromMockContext(ctx: MockContext): TracingServiceContext {
+  return ctx as unknown as TracingServiceContext;
+}
 
 // Parses the `baggage` header per the W3C Baggage member syntax,
 // dropping value properties (`;property=value`). This mirrors what
@@ -34,10 +50,10 @@ import { tracingServiceFactory } from '@backstage/backend-defaults/alpha';
 // for tests to assert end-to-end behaviour between propagated headers
 // and `getActiveBaggage()`.
 function parseBaggageHeader(
-  headers: Record<string, string | string[] | undefined>,
+  carrier: Record<string, string | string[] | undefined>,
 ): TracingServiceBaggage | undefined {
   let raw: string | undefined;
-  for (const [name, value] of Object.entries(headers)) {
+  for (const [name, value] of Object.entries(carrier)) {
     if (name.toLowerCase() !== 'baggage') continue;
     raw = Array.isArray(value) ? value[0] : value;
     break;
@@ -73,26 +89,54 @@ export interface MockedTracingServiceSpan extends TracingServiceSpan {
 }
 
 /**
+ * Jest-mocked counterpart of the `context` member on the
+ * `TracingService`.
+ *
+ * @alpha
+ */
+export interface MockedTracingServiceContextAPI
+  extends TracingServiceContextAPI {
+  active: jest.MockedFunction<TracingServiceContextAPI['active']>;
+  with: jest.MockedFunction<TracingServiceContextAPI['with']>;
+}
+
+/**
+ * Jest-mocked counterpart of the `propagation` member on the
+ * `TracingService`.
+ *
+ * @alpha
+ */
+export interface MockedTracingServicePropagationAPI
+  extends TracingServicePropagationAPI {
+  extract: jest.MockedFunction<TracingServicePropagationAPI['extract']>;
+  getBaggage: jest.MockedFunction<TracingServicePropagationAPI['getBaggage']>;
+  getActiveBaggage: jest.MockedFunction<
+    TracingServicePropagationAPI['getActiveBaggage']
+  >;
+}
+
+/**
  * Mock for the `TracingService`. Captures every span created via
  * `startActiveSpan` so tests can assert on the options passed in and the
  * methods called on the span inside the callback.
  *
- * By default, `withPropagatedContext` parses the `baggage` header (W3C
- * Baggage syntax) out of the supplied headers and makes those entries
- * available via `getActiveBaggage` for the duration of the wrapped
- * callback. Other propagation headers (e.g. `traceparent`) are ignored.
- * Tests that need fully custom baggage can still override
- * `getActiveBaggage` via `mockReturnValue` / `mockImplementation`, which
- * takes precedence over the default behaviour.
+ * By default, `propagation.extract` parses the `baggage` header (W3C
+ * Baggage syntax) out of the supplied carrier and stashes the entries
+ * on the returned context handle. `context.with` activates that handle
+ * for the duration of the wrapped callback so
+ * `propagation.getActiveBaggage` (and `propagation.getBaggage` on the
+ * supplied handle) returns those entries. Other propagation fields
+ * (e.g. `traceparent`) are ignored. Tests that need fully custom
+ * baggage can still override `propagation.getActiveBaggage` via
+ * `mockReturnValue` / `mockImplementation`, which takes precedence over
+ * the default behaviour.
  *
  * @alpha
  */
 export interface TracingServiceMock extends TracingService {
   startActiveSpan: jest.MockedFunction<TracingService['startActiveSpan']>;
-  withPropagatedContext: jest.MockedFunction<
-    TracingService['withPropagatedContext']
-  >;
-  getActiveBaggage: jest.MockedFunction<TracingService['getActiveBaggage']>;
+  context: MockedTracingServiceContextAPI;
+  propagation: MockedTracingServicePropagationAPI;
   /** Spans created by `startActiveSpan` calls, in order. */
   spans: MockedTracingServiceSpan[];
   factory: ServiceFactory<TracingService>;
@@ -113,35 +157,74 @@ export namespace tracingServiceMock {
    */
   export const mock = (): TracingServiceMock => {
     const spans: MockedTracingServiceSpan[] = [];
-    const startActiveSpan = jest.fn(async (_name, fn, _options) => {
-      const span: MockedTracingServiceSpan = {
-        setAttribute: jest.fn(),
-        setStatus: jest.fn(),
-      };
-      spans.push(span);
-      return await fn(span);
-    }) as TracingServiceMock['startActiveSpan'];
+    const startActiveSpan = jest.fn(
+      async (
+        _name: string,
+        optionsOrFn: unknown,
+        maybeFn?: (span: MockedTracingServiceSpan) => unknown,
+      ) => {
+        const fn = (
+          typeof optionsOrFn === 'function' ? optionsOrFn : maybeFn
+        ) as (span: MockedTracingServiceSpan) => unknown;
+        const span: MockedTracingServiceSpan = {
+          setAttribute: jest.fn(),
+          setStatus: jest.fn(),
+        };
+        spans.push(span);
+        return await fn(span);
+      },
+    ) as unknown as TracingServiceMock['startActiveSpan'];
 
-    const baggageStack: Array<TracingServiceBaggage | undefined> = [];
-    const withPropagatedContext = jest.fn(async (headers, fn) => {
-      baggageStack.push(parseBaggageHeader(headers));
+    const contextStack: MockContext[] = [{}];
+
+    const active = jest.fn(() =>
+      fromMockContext(contextStack[contextStack.length - 1]),
+    ) as MockedTracingServiceContextAPI['active'];
+
+    const withFn = jest.fn(async (ctx, fn) => {
+      contextStack.push(toMockContext(ctx));
       try {
         return await fn();
       } finally {
-        baggageStack.pop();
+        contextStack.pop();
       }
-    }) as TracingServiceMock['withPropagatedContext'];
-    const getActiveBaggage = jest.fn(
-      () => baggageStack[baggageStack.length - 1],
-    ) as TracingServiceMock['getActiveBaggage'];
+    }) as MockedTracingServiceContextAPI['with'];
 
-    const service: TracingService = {
-      startActiveSpan,
-      withPropagatedContext,
+    const extract = jest.fn((ctx, carrier) => {
+      const baggage = parseBaggageHeader(carrier);
+      // Carry forward the parsed baggage; preserve any baggage already on the
+      // supplied handle if the carrier doesn't include one.
+      const base = toMockContext(ctx);
+      return fromMockContext({ baggage: baggage ?? base.baggage });
+    }) as MockedTracingServicePropagationAPI['extract'];
+
+    const getBaggage = jest.fn(
+      ctx => toMockContext(ctx).baggage,
+    ) as MockedTracingServicePropagationAPI['getBaggage'];
+
+    const getActiveBaggage = jest.fn(
+      () => contextStack[contextStack.length - 1].baggage,
+    ) as MockedTracingServicePropagationAPI['getActiveBaggage'];
+
+    const context: MockedTracingServiceContextAPI = {
+      active,
+      with: withFn,
+    };
+    const propagation: MockedTracingServicePropagationAPI = {
+      extract,
+      getBaggage,
       getActiveBaggage,
     };
 
+    const service: TracingService = {
+      startActiveSpan,
+      context,
+      propagation,
+    };
+
     return Object.assign(service as TracingServiceMock, {
+      context,
+      propagation,
       spans,
       factory: createServiceFactory({
         service: tracingServiceRef,

@@ -15,11 +15,12 @@
  */
 
 import {
+  Context,
   SpanKind,
   SpanStatusCode,
   Tracer,
-  context,
-  propagation,
+  context as otelContext,
+  propagation as otelPropagation,
   trace,
 } from '@opentelemetry/api';
 import {
@@ -29,6 +30,10 @@ import {
 import {
   TracingService,
   TracingServiceAttributes,
+  TracingServiceBaggage,
+  TracingServiceContext,
+  TracingServiceContextAPI,
+  TracingServicePropagationAPI,
   TracingServiceSpan,
   TracingServiceSpanKind,
   TracingServiceSpanOptions,
@@ -49,6 +54,32 @@ export interface DefaultTracingServiceOptions {
   httpAuth: HttpAuthService;
 }
 
+// `TracingServiceContext` is an opaque handle for an OTel `Context`. Internally
+// the value *is* the OTel context; we just narrow the type so consumers can't
+// poke at it directly.
+function toOtelContext(ctx: TracingServiceContext): Context {
+  return ctx as unknown as Context;
+}
+function fromOtelContext(ctx: Context): TracingServiceContext {
+  return ctx as unknown as TracingServiceContext;
+}
+
+function wrapOtelBaggage(
+  baggage: ReturnType<typeof otelPropagation.getActiveBaggage>,
+): TracingServiceBaggage | undefined {
+  if (!baggage) return undefined;
+  return {
+    getEntry: (key: string) => {
+      const entry = baggage.getEntry(key);
+      return entry ? { value: entry.value } : undefined;
+    },
+    getAllEntries: () =>
+      baggage
+        .getAllEntries()
+        .map(([key, entry]) => [key, { value: entry.value }]),
+  };
+}
+
 /**
  * Default implementation of the {@link TracingService} interface.
  *
@@ -59,6 +90,25 @@ export class DefaultTracingService implements TracingService {
   private readonly pluginId: string;
   private readonly captureEndUser: boolean;
   private readonly httpAuth: HttpAuthService;
+
+  readonly context: TracingServiceContextAPI = {
+    active: () => fromOtelContext(otelContext.active()),
+    with: async <T>(
+      ctx: TracingServiceContext,
+      fn: () => T | Promise<T>,
+    ): Promise<T> => otelContext.with(toOtelContext(ctx), fn),
+  };
+
+  readonly propagation: TracingServicePropagationAPI = {
+    extract: (
+      ctx: TracingServiceContext,
+      carrier: Record<string, string | string[] | undefined>,
+    ): TracingServiceContext =>
+      fromOtelContext(otelPropagation.extract(toOtelContext(ctx), carrier)),
+    getBaggage: (ctx: TracingServiceContext) =>
+      wrapOtelBaggage(otelPropagation.getBaggage(toOtelContext(ctx))),
+    getActiveBaggage: () => wrapOtelBaggage(otelPropagation.getActiveBaggage()),
+  };
 
   private constructor(opts: DefaultTracingServiceOptions) {
     this.tracer = trace
@@ -73,11 +123,30 @@ export class DefaultTracingService implements TracingService {
     return new DefaultTracingService(opts);
   }
 
-  async startActiveSpan<T>(
+  startActiveSpan<T>(
     name: string,
     fn: (span: TracingServiceSpan) => T | Promise<T>,
-    options: TracingServiceSpanOptions = {},
+  ): Promise<T>;
+  startActiveSpan<T>(
+    name: string,
+    options: TracingServiceSpanOptions,
+    fn: (span: TracingServiceSpan) => T | Promise<T>,
+  ): Promise<T>;
+  async startActiveSpan<T>(
+    name: string,
+    optionsOrFn:
+      | TracingServiceSpanOptions
+      | ((span: TracingServiceSpan) => T | Promise<T>),
+    maybeFn?: (span: TracingServiceSpan) => T | Promise<T>,
   ): Promise<T> {
+    const [options, fn]: [
+      TracingServiceSpanOptions,
+      (span: TracingServiceSpan) => T | Promise<T>,
+    ] =
+      typeof optionsOrFn === 'function'
+        ? [{}, optionsOrFn]
+        : [optionsOrFn, maybeFn!];
+
     let credentials = options.credentials;
     if (!credentials && options.request) {
       credentials = await this.httpAuth.credentials(options.request);
@@ -122,29 +191,6 @@ export class DefaultTracingService implements TracingService {
         }
       },
     );
-  }
-
-  async withPropagatedContext<T>(
-    headers: Record<string, string | string[] | undefined>,
-    fn: () => T | Promise<T>,
-  ): Promise<T> {
-    const otelCtx = propagation.extract(context.active(), headers);
-    return context.with(otelCtx, fn);
-  }
-
-  getActiveBaggage() {
-    const baggage = propagation.getActiveBaggage();
-    if (!baggage) return undefined;
-    return {
-      getEntry: (key: string) => {
-        const entry = baggage.getEntry(key);
-        return entry ? { value: entry.value } : undefined;
-      },
-      getAllEntries: (): Array<[string, { value: string }]> =>
-        baggage
-          .getAllEntries()
-          .map(([key, entry]) => [key, { value: entry.value }]),
-    };
   }
 
   private getPrincipalAttributes(

@@ -981,7 +981,7 @@ describe('McpService', () => {
       await invokeMockAction({ tracing, credentials });
 
       expect(tracing.startActiveSpan).toHaveBeenCalledTimes(1);
-      const [name, , options] = tracing.startActiveSpan.mock.calls[0];
+      const [name, options] = tracing.startActiveSpan.mock.calls[0];
       expect(name).toBe('tools/call test.mock-action');
       expect(options?.kind).toBe('server');
       expect(options?.attributes).toEqual(
@@ -1012,7 +1012,7 @@ describe('McpService', () => {
 
     it('includes gen_ai baggage entries as span attributes when present', async () => {
       const tracing = tracingServiceMock.mock();
-      tracing.getActiveBaggage.mockReturnValue({
+      tracing.propagation.getActiveBaggage.mockReturnValue({
         getEntry: (key: string) => {
           const entries: Record<string, { value: string }> = {
             'gen_ai.conversation.id': { value: 'conv-123' },
@@ -1028,14 +1028,14 @@ describe('McpService', () => {
 
       await invokeMockAction({ tracing });
 
-      const [, , options] = tracing.startActiveSpan.mock.calls[0];
+      const [, options] = tracing.startActiveSpan.mock.calls[0];
       expect(options?.attributes?.['gen_ai.conversation.id']).toBe('conv-123');
       expect(options?.attributes?.['gen_ai.agent.id']).toBe('agent-456');
     });
 
     it('only forwards allowlisted baggage keys onto the span', async () => {
       const tracing = tracingServiceMock.mock();
-      tracing.getActiveBaggage.mockReturnValue({
+      tracing.propagation.getActiveBaggage.mockReturnValue({
         getEntry: (key: string) => {
           const entries: Record<string, { value: string }> = {
             'gen_ai.conversation.id': { value: 'conv-123' },
@@ -1055,7 +1055,7 @@ describe('McpService', () => {
 
       await invokeMockAction({ tracing });
 
-      const [, , options] = tracing.startActiveSpan.mock.calls[0];
+      const [, options] = tracing.startActiveSpan.mock.calls[0];
       expect(options?.attributes?.['gen_ai.conversation.id']).toBe('conv-123');
       expect(options?.attributes).not.toHaveProperty('gen_ai.tool.call.result');
       expect(options?.attributes).not.toHaveProperty('gen_ai.prompt');
@@ -1066,7 +1066,7 @@ describe('McpService', () => {
       const tracing = tracingServiceMock.mock();
       await invokeMockAction({ tracing });
 
-      const [, , options] = tracing.startActiveSpan.mock.calls[0];
+      const [, options] = tracing.startActiveSpan.mock.calls[0];
       expect(options?.attributes).not.toHaveProperty('gen_ai.conversation.id');
       expect(options?.attributes).not.toHaveProperty('gen_ai.agent.id');
     });
@@ -1075,7 +1075,7 @@ describe('McpService', () => {
       const tracing = tracingServiceMock.mock();
       await invokeMockAction({ tracing, captureToolPayloads: true });
 
-      const [, , options] = tracing.startActiveSpan.mock.calls[0];
+      const [, options] = tracing.startActiveSpan.mock.calls[0];
       expect(options?.attributes?.['gen_ai.tool.call.arguments']).toBe(
         JSON.stringify({ input: 'val' }),
       );

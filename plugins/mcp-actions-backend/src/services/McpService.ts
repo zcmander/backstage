@@ -57,7 +57,7 @@ const PROPAGATED_BAGGAGE_ATTRIBUTES: readonly string[] = [
 function baggageAttributes(
   tracingService: TracingService,
 ): Record<string, string> {
-  const baggage = tracingService.getActiveBaggage();
+  const baggage = tracingService.propagation.getActiveBaggage();
   if (!baggage) return {};
   const attrs: Record<string, string> = {};
   for (const key of PROPAGATED_BAGGAGE_ATTRIBUTES) {
@@ -189,6 +189,19 @@ export class McpService {
       try {
         return await this.tracingService.startActiveSpan(
           `tools/call ${params.name}`,
+          {
+            kind: 'server',
+            credentials,
+            attributes: {
+              ...baggageAttributes(this.tracingService),
+              'mcp.method.name': 'tools/call',
+              'gen_ai.tool.name': params.name,
+              'gen_ai.operation.name': 'execute_tool',
+              ...(this.captureToolPayloads && {
+                'gen_ai.tool.call.arguments': safeStringify(params.arguments),
+              }),
+            },
+          },
           async span => {
             const result = await handleErrors(async () => {
               const { actions: allActions } = await this.actions.list({
@@ -248,19 +261,6 @@ export class McpService {
               span.setStatus({ code: 'error', message: 'tool_error' });
             }
             return result;
-          },
-          {
-            kind: 'server',
-            credentials,
-            attributes: {
-              ...baggageAttributes(this.tracingService),
-              'mcp.method.name': 'tools/call',
-              'gen_ai.tool.name': params.name,
-              'gen_ai.operation.name': 'execute_tool',
-              ...(this.captureToolPayloads && {
-                'gen_ai.tool.call.arguments': safeStringify(params.arguments),
-              }),
-            },
           },
         );
       } catch (err) {

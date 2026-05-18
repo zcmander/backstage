@@ -102,29 +102,44 @@ The span object exposes:
 
 ## Context Propagation
 
-When your plugin receives requests through a protocol layer that breaks automatic OpenTelemetry context propagation (e.g. a WebSocket handler), use `withPropagatedContext` to extract the trace parent and baggage from the incoming HTTP headers and run the handler within that context:
+The tracing service exposes two sub-objects that mirror the corresponding namespaces in `@opentelemetry/api`:
+
+- `tracing.context` for context management (`active`, `with`).
+- `tracing.propagation` for context propagation (`extract`, `getBaggage`, `getActiveBaggage`).
+
+When your plugin handles a request through a transport or framework that doesn't automatically attach the caller's context to the work it runs (for example, a handler dispatched from a message-queue consumer, or a third-party transport like the MCP streamable HTTP transport that re-enters user code outside of Express's middleware chain), extract the trace parent and baggage from the inbound request's headers yourself and run the handler with that context active:
 
 ```ts
 router.post('/', async (req, res) => {
-  await tracing.withPropagatedContext(req.headers, () =>
+  const ctx = tracing.propagation.extract(
+    tracing.context.active(),
+    req.headers,
+  );
+  await tracing.context.with(ctx, () =>
     transport.handleRequest(req, res, req.body),
   );
 });
 ```
 
+`propagation.extract` reads from a header-shaped record (`Record<string, string | string[] | undefined>`), so any source of headers — Express's `req.headers`, a Node.js `http.IncomingMessage`, or a payload field carrying serialized headers — works the same way.
+
 Any spans created inside the callback — including those from `startActiveSpan` — will be children of the propagated trace and will have access to the propagated baggage.
+
+The context returned by `propagation.extract` and `context.active` is an opaque handle: consumers pass it back into the API but do not introspect it.
 
 ## Reading Baggage
 
-Use `getActiveBaggage()` to read baggage entries from the active context. This is useful for forwarding caller-set metadata onto your spans — for example, a request ID, tenant identifier, or feature-flag context that the caller propagated via baggage:
+Use `propagation.getActiveBaggage()` to read baggage entries from the currently active context. This is useful for forwarding caller-set metadata onto your spans — for example, a request ID, tenant identifier, or feature-flag context that the caller propagated via baggage:
 
 ```ts
-const baggage = tracing.getActiveBaggage();
+const baggage = tracing.propagation.getActiveBaggage();
 const tenantId = baggage?.getEntry('app.tenant.id')?.value;
 if (tenantId) {
   span.setAttribute('app.tenant.id', tenantId);
 }
 ```
+
+Use `propagation.getBaggage(ctx)` when you already hold a specific context handle (for example, one returned by `propagation.extract`) and want to read its baggage without first activating the context.
 
 The returned object exposes:
 
@@ -133,7 +148,7 @@ The returned object exposes:
 | `getEntry(key)`   | Returns `{ value: string }` for the key, or `undefined`. |
 | `getAllEntries()` | Returns all entries as `[key, { value }][]`.             |
 
-Returns `undefined` when no baggage is present in the active context.
+Both calls return `undefined` when no baggage is present.
 
 ## Principal Enrichment
 

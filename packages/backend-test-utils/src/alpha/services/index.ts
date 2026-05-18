@@ -22,5 +22,7 @@ export {
   tracingServiceMock,
   type TracingServiceMock,
   type MockedTracingServiceSpan,
+  type MockedTracingServiceContextAPI,
+  type MockedTracingServicePropagationAPI,
 } from './TracingServiceMock';
 export { type ServiceMock } from './alphaCreateServiceMock';

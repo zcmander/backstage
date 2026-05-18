@@ -292,15 +292,16 @@ export const rootSystemMetadataServiceRef: ServiceRef<
 
 // @alpha
 export interface TracingService {
-  getActiveBaggage(): TracingServiceBaggage | undefined;
+  readonly context: TracingServiceContextAPI;
+  readonly propagation: TracingServicePropagationAPI;
   startActiveSpan<T>(
     name: string,
     fn: (span: TracingServiceSpan) => T | Promise<T>,
-    options?: TracingServiceSpanOptions,
   ): Promise<T>;
-  withPropagatedContext<T>(
-    headers: Record<string, string | string[] | undefined>,
-    fn: () => T | Promise<T>,
+  startActiveSpan<T>(
+    name: string,
+    options: TracingServiceSpanOptions,
+    fn: (span: TracingServiceSpan) => T | Promise<T>,
   ): Promise<T>;
 }
 
@@ -331,6 +332,28 @@ export interface TracingServiceBaggage {
 export interface TracingServiceBaggageEntry {
   // (undocumented)
   value: string;
+}
+
+// @alpha
+export interface TracingServiceContext {
+  // (undocumented)
+  readonly [tracingServiceContextBrand]: never;
+}
+
+// @alpha
+export interface TracingServiceContextAPI {
+  active(): TracingServiceContext;
+  with<T>(context: TracingServiceContext, fn: () => T | Promise<T>): Promise<T>;
+}
+
+// @alpha
+export interface TracingServicePropagationAPI {
+  extract(
+    context: TracingServiceContext,
+    carrier: Record<string, string | string[] | undefined>,
+  ): TracingServiceContext;
+  getActiveBaggage(): TracingServiceBaggage | undefined;
+  getBaggage(context: TracingServiceContext): TracingServiceBaggage | undefined;
 }
 
 // @alpha

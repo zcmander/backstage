@@ -94,10 +94,11 @@ describe('DefaultTracingService', () => {
 
   it('passes name, kind, and caller attributes through to the tracer', async () => {
     const service = createService();
-    await service.startActiveSpan('op', async () => undefined, {
-      kind: 'server',
-      attributes: { foo: 'bar' },
-    });
+    await service.startActiveSpan(
+      'op',
+      { kind: 'server', attributes: { foo: 'bar' } },
+      async () => undefined,
+    );
 
     expect(mocks.tracer.startActiveSpan).toHaveBeenCalledWith(
       'op',
@@ -119,9 +120,11 @@ describe('DefaultTracingService', () => {
 
   it('lets caller-supplied attributes override backstage.plugin.id at start time', async () => {
     const service = createService({ pluginId: 'my-plugin' });
-    await service.startActiveSpan('op', async () => undefined, {
-      attributes: { 'backstage.plugin.id': 'other-plugin' },
-    });
+    await service.startActiveSpan(
+      'op',
+      { attributes: { 'backstage.plugin.id': 'other-plugin' } },
+      async () => undefined,
+    );
 
     const attrs = mocks.tracer.startActiveSpan.mock.calls[0][1].attributes;
     expect(attrs['backstage.plugin.id']).toBe('other-plugin');
@@ -146,18 +149,22 @@ describe('DefaultTracingService', () => {
     ];
     for (const [kind, expected] of cases) {
       mocks.tracer.startActiveSpan.mockClear();
-      await service.startActiveSpan('op', async () => undefined, {
-        kind: kind as any,
-      });
+      await service.startActiveSpan(
+        'op',
+        { kind: kind as any },
+        async () => undefined,
+      );
       expect(mocks.tracer.startActiveSpan.mock.calls[0][1].kind).toBe(expected);
     }
   });
 
   it('adds backstage.principal.type but not enduser.id when capture is off', async () => {
     const service = createService({ captureEndUser: false });
-    await service.startActiveSpan('op', async () => undefined, {
-      credentials: mockCredentials.user('user:default/alice'),
-    });
+    await service.startActiveSpan(
+      'op',
+      { credentials: mockCredentials.user('user:default/alice') },
+      async () => undefined,
+    );
 
     const attrs = mocks.tracer.startActiveSpan.mock.calls[0][1].attributes;
     expect(attrs['backstage.principal.type']).toBe('user');
@@ -166,9 +173,11 @@ describe('DefaultTracingService', () => {
 
   it('adds enduser.id from a user principal when capture is on', async () => {
     const service = createService({ captureEndUser: true });
-    await service.startActiveSpan('op', async () => undefined, {
-      credentials: mockCredentials.user('user:default/alice'),
-    });
+    await service.startActiveSpan(
+      'op',
+      { credentials: mockCredentials.user('user:default/alice') },
+      async () => undefined,
+    );
 
     const attrs = mocks.tracer.startActiveSpan.mock.calls[0][1].attributes;
     expect(attrs['enduser.id']).toBe('user:default/alice');
@@ -176,9 +185,11 @@ describe('DefaultTracingService', () => {
 
   it('adds enduser.id from a service principal subject when capture is on', async () => {
     const service = createService({ captureEndUser: true });
-    await service.startActiveSpan('op', async () => undefined, {
-      credentials: mockCredentials.service('plugin:test'),
-    });
+    await service.startActiveSpan(
+      'op',
+      { credentials: mockCredentials.service('plugin:test') },
+      async () => undefined,
+    );
 
     const attrs = mocks.tracer.startActiveSpan.mock.calls[0][1].attributes;
     expect(attrs['enduser.id']).toBe('plugin:test');
@@ -195,9 +206,11 @@ describe('DefaultTracingService', () => {
       httpAuth,
     });
 
-    await service.startActiveSpan('op', async () => undefined, {
-      request: { headers: {} } as any,
-    });
+    await service.startActiveSpan(
+      'op',
+      { request: { headers: {} } as any },
+      async () => undefined,
+    );
 
     expect(credSpy).toHaveBeenCalledTimes(1);
     const attrs = mocks.tracer.startActiveSpan.mock.calls[0][1].attributes;
@@ -214,10 +227,14 @@ describe('DefaultTracingService', () => {
       httpAuth,
     });
 
-    await service.startActiveSpan('op', async () => undefined, {
-      credentials: mockCredentials.user('user:default/explicit'),
-      request: { headers: {} } as any,
-    });
+    await service.startActiveSpan(
+      'op',
+      {
+        credentials: mockCredentials.user('user:default/explicit'),
+        request: { headers: {} } as any,
+      },
+      async () => undefined,
+    );
 
     expect(credSpy).not.toHaveBeenCalled();
     const attrs = mocks.tracer.startActiveSpan.mock.calls[0][1].attributes;
@@ -274,70 +291,124 @@ describe('DefaultTracingService', () => {
     expect(mocks.span.end).toHaveBeenCalledTimes(1);
   });
 
-  describe('withPropagatedContext', () => {
-    it('extracts context from headers and runs fn within it', async () => {
-      const extractSpy = jest.spyOn(propagation, 'extract');
-      const withSpy = jest.spyOn(context, 'with');
-
-      const service = createService();
-      const headers = { traceparent: '00-abc-def-01' };
-      const result = await service.withPropagatedContext(headers, () => 42);
-
-      expect(result).toBe(42);
-      expect(extractSpy).toHaveBeenCalledWith(expect.anything(), headers);
-      expect(withSpy).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.any(Function),
-      );
+  describe('context', () => {
+    describe('active', () => {
+      it('returns the OTel active context as an opaque handle', () => {
+        const fakeCtx = { __ctx: 'active' };
+        jest.spyOn(context, 'active').mockReturnValue(fakeCtx as any);
+        const service = createService();
+        expect(service.context.active()).toBe(fakeCtx);
+      });
     });
 
-    it('returns the value from an async fn', async () => {
-      const service = createService();
-      const result = await service.withPropagatedContext(
-        {},
-        async () => 'async-val',
-      );
-      expect(result).toBe('async-val');
+    describe('with', () => {
+      it('delegates to OTel context.with on the supplied handle and returns the fn result', async () => {
+        const fakeCtx = { __ctx: 'extracted' } as any;
+        const withSpy = jest
+          .spyOn(context, 'with')
+          .mockImplementation((_ctx, fn) => (fn as any)());
+
+        const service = createService();
+        const result = await service.context.with(fakeCtx, () => 99);
+
+        expect(withSpy).toHaveBeenCalledWith(fakeCtx, expect.any(Function));
+        expect(result).toBe(99);
+      });
+
+      it('awaits an async fn and returns its resolved value', async () => {
+        jest
+          .spyOn(context, 'with')
+          .mockImplementation((_ctx, fn) => (fn as any)());
+
+        const service = createService();
+        const result = await service.context.with(
+          {} as any,
+          async () => 'async-val',
+        );
+        expect(result).toBe('async-val');
+      });
     });
   });
 
-  describe('getActiveBaggage', () => {
-    it('returns undefined when no baggage is present', () => {
-      jest.spyOn(propagation, 'getActiveBaggage').mockReturnValue(undefined);
-      const service = createService();
-      expect(service.getActiveBaggage()).toBeUndefined();
+  describe('propagation', () => {
+    describe('extract', () => {
+      it('forwards the supplied context and headers to OTel propagation.extract', () => {
+        const baseCtx = { __ctx: 'base' } as any;
+        const extractedCtx = { __ctx: 'extracted' } as any;
+        const extractSpy = jest
+          .spyOn(propagation, 'extract')
+          .mockReturnValue(extractedCtx);
+
+        const service = createService();
+        const headers = { traceparent: '00-abc-def-01' };
+        const result = service.propagation.extract(baseCtx, headers);
+
+        expect(extractSpy).toHaveBeenCalledWith(baseCtx, headers);
+        expect(result).toBe(extractedCtx);
+      });
     });
 
-    it('returns a read-only baggage wrapping the active context baggage', () => {
-      const mockBaggage = {
-        getEntry: jest.fn((key: string) =>
-          key === 'gen_ai.conversation.id' ? { value: 'conv-1' } : undefined,
-        ),
-        getAllEntries: jest.fn(() => [
+    describe('getActiveBaggage', () => {
+      it('returns a read-only baggage wrapping the active context baggage', () => {
+        const mockBaggage = {
+          getEntry: jest.fn((key: string) =>
+            key === 'gen_ai.conversation.id' ? { value: 'conv-1' } : undefined,
+          ),
+          getAllEntries: jest.fn(() => [
+            ['gen_ai.conversation.id', { value: 'conv-1' }],
+            ['gen_ai.agent.id', { value: 'agent-2' }],
+          ]),
+          setEntry: jest.fn(),
+          removeEntry: jest.fn(),
+          removeEntries: jest.fn(),
+          clear: jest.fn(),
+        };
+        jest
+          .spyOn(propagation, 'getActiveBaggage')
+          .mockReturnValue(mockBaggage as any);
+
+        const service = createService();
+        const baggage = service.propagation.getActiveBaggage();
+
+        expect(baggage).toBeDefined();
+        expect(baggage!.getEntry('gen_ai.conversation.id')).toEqual({
+          value: 'conv-1',
+        });
+        expect(baggage!.getEntry('unknown')).toBeUndefined();
+        expect(baggage!.getAllEntries()).toEqual([
           ['gen_ai.conversation.id', { value: 'conv-1' }],
           ['gen_ai.agent.id', { value: 'agent-2' }],
-        ]),
-        setEntry: jest.fn(),
-        removeEntry: jest.fn(),
-        removeEntries: jest.fn(),
-        clear: jest.fn(),
-      };
-      jest
-        .spyOn(propagation, 'getActiveBaggage')
-        .mockReturnValue(mockBaggage as any);
-
-      const service = createService();
-      const baggage = service.getActiveBaggage();
-
-      expect(baggage).toBeDefined();
-      expect(baggage!.getEntry('gen_ai.conversation.id')).toEqual({
-        value: 'conv-1',
+        ]);
       });
-      expect(baggage!.getEntry('unknown')).toBeUndefined();
-      expect(baggage!.getAllEntries()).toEqual([
-        ['gen_ai.conversation.id', { value: 'conv-1' }],
-        ['gen_ai.agent.id', { value: 'agent-2' }],
-      ]);
+    });
+
+    describe('getBaggage', () => {
+      it('returns baggage from the supplied context', () => {
+        const ctx = { __ctx: 'has-baggage' } as any;
+        const mockBaggage = {
+          getEntry: jest.fn(() => ({ value: 'ctx-val' })),
+          getAllEntries: jest.fn(() => [['k', { value: 'ctx-val' }]]),
+          setEntry: jest.fn(),
+          removeEntry: jest.fn(),
+          removeEntries: jest.fn(),
+          clear: jest.fn(),
+        };
+        const getBaggageSpy = jest
+          .spyOn(propagation, 'getBaggage')
+          .mockReturnValue(mockBaggage as any);
+
+        const service = createService();
+        const baggage = service.propagation.getBaggage(ctx);
+
+        expect(getBaggageSpy).toHaveBeenCalledWith(ctx);
+        expect(baggage!.getEntry('k')).toEqual({ value: 'ctx-val' });
+      });
+
+      it('returns undefined when the context has no baggage', () => {
+        jest.spyOn(propagation, 'getBaggage').mockReturnValue(undefined);
+        const service = createService();
+        expect(service.propagation.getBaggage({} as any)).toBeUndefined();
+      });
     });
   });
 });
