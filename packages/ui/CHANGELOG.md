@@ -1,5 +1,95 @@
 # @backstage/ui
 
+## 0.15.0-next.3
+
+### Patch Changes
+
+- 4bb649d: Fixed Table with row selection creating phantom scroll height on ancestor elements by establishing a containing block for visually-hidden checkbox inputs.
+
+  **Affected components:** Table, TableRoot
+
+- d726bcd: Added new `DatePicker` component — combines a date field and a calendar popover for selecting a date, built on React Aria with full keyboard and screen reader accessibility. Uses BUI design tokens throughout, including auto-incremented backgrounds via the bg consumer pattern.
+
+  **Affected components:** DatePicker
+
+## 0.15.0-next.2
+
+### Patch Changes
+
+- 37535b2: Added a public `--bui-bg-inherit` CSS variable that resolves to the background
+  color of the nearest enclosing bg provider (`Box`, `Flex`, `Grid`, `Card`,
+  `Accordion`, or any element with a `data-bg` attribute), falling back to
+  `--bui-bg-app`. Use it from CSS for sticky or fixed elements that need to match
+  their surrounding surface without hardcoding a specific level.
+
+  ```css
+  .searchBarContainer {
+    position: sticky;
+    top: 0;
+    background-color: var(--bui-bg-inherit);
+  }
+  ```
+
+  As part of this change, the `data-bg` painting rules previously duplicated in
+  `Box`, `Flex`, `Grid`, `Accordion`, and `Card` have been centralized into a
+  single source in `core.css`. Painting and component behavior are unchanged for
+  all existing usages, with one minor expansion: any element with a `data-bg`
+  attribute (including provider elements and any element that sets it directly)
+  is now painted, not only `Box`/`Flex`/`Grid`/`Card`/`Accordion` elements.
+
+- 5b85902: Fix `Card href=...` not showing a focus indicator on keyboard navigation. `Link` now composes `useFocusRing`, emits `data-focus-visible`, and renders a `--bui-ring` outline when keyboard-focused. The Card's existing focus-ring CSS matches when the trigger is focused.
+
+  _Affected components_: Card, Link
+
+- 38bb056: Adjusted PluginHeader spacing and borders so headers with and without tabs align more consistently with surrounding page content, including when paired with page headers.
+
+  **Affected components:** PluginHeader, Header
+
+- 25909ba: Added `searchDebounceMs` and `filterDebounceMs` options to `useTable` in `complete` mode. Both default to `0` (no debounce, no observable change for existing consumers); set them to defer the client-side filter/search/sort pipeline on large datasets without reimplementing input-layer debouncing. The controlled `search` / `onSearchChange` and `filter` / `onFilterChange` callbacks continue to fire on every change.
+
+  **Affected components:** Table
+
+- ddca41f: Added a new `Combobox` component. It pairs a text input with a filterable dropdown of options and supports single selection, sectioned options, icons, sizes, and custom typed values via `allowsCustomValue`.
+
+  **Affected components:** Combobox
+
+## 0.15.0-next.1
+
+### Minor Changes
+
+- 5351d8a: Added a `sticky` prop to the `Header` component. When `true`, the title-and-actions bar stays fixed to the top of its scroll container while the rest of the header (tags, description, metadata) scrolls away. The sticky bar background color automatically matches the container surface using the bg-consumer system.
+
+  **BREAKING**: Removed the main header class from the `Header` component. Custom styles that target this class should be updated to target the component sections that remain.
+
+  **Affected components:** Header
+
+### Patch Changes
+
+- e7fc79f: Added support for grouping options into sections in the Select component. You can now pass section objects with a `title` and a nested `options` array alongside (or instead of) regular options to render grouped dropdowns with section headers.
+
+  **Affected components:** Select
+
+- 76635ae: Disabled `Card` scroll shadow in browsers that don't support `animation-timeline: scroll()`. Prevents the shadow from being always visible over the `CardBody` when there's nothing to scroll or the body is not scrolled.
+
+  **Affected components:** Card
+
+- de75f7c: Fixed `CardBody` showing an unwanted scrollbar when constrained below the scroll shadow height.
+
+  **Affected components:** Card
+
+- c96e2b3: Added `description`, `tags`, and `metadata` props to the `Header` component. The `description` prop accepts a markdown string with support for inline links. The `tags` prop renders a row of text or link items above the title. The `metadata` prop renders key-value pairs below the description. The `breadcrumbs` prop has been deprecated and will be removed in a future release.
+
+  **Affected components:** Header
+
+- f635139: Limited `@remixicon/react` dependency to versions below 4.9.0 due to a license change in that release.
+- 23ee789: Added invalid-state styling for Checkbox and corresponding Storybook variants for verification.
+
+  **Affected components:** Checkbox, CheckboxGroup
+
+- df705bb: Fixed external URLs in BUI link components being rewritten as in-app paths when the app is served under a non-root base path. Absolute URLs (`http://`, `https://`, `//`, `mailto:`, `tel:`) are now passed through unchanged. Internal `href` values are resolved against the current `basename` exactly once, which also fixes a latent issue where internal link clicks under a non-root base path could navigate to a URL with the `basename` prefix doubled.
+
+  **Affected components:** ButtonLink, Card, Link, Menu, Tab, Table, Tag
+
 ## 0.15.0-next.0
 
 ### Minor Changes

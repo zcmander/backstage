@@ -1,5 +1,36 @@
 # @backstage/plugin-app
 
+## 0.4.6-next.2
+
+### Patch Changes
+
+- a345820: The `app/routes` redirect config now supports path parameter substitution in the `to` target. Named params (`:userId`) and splat params (`*`) captured by the `from` path are replaced in the `to` string before navigating, making it possible to express redirects like:
+
+  ```yaml
+  app:
+    extensions:
+      - app/routes:
+          config:
+            redirects:
+              - from: /users/:userId
+                to: /profile/:userId
+              - from: /old-docs
+                to: /docs/*
+  ```
+
+- Updated dependencies
+  - @backstage/ui@0.15.0-next.3
+
+## 0.4.6-next.1
+
+### Patch Changes
+
+- f635139: Limited `@remixicon/react` dependency to versions below 4.9.0 due to a license change in that release.
+- Updated dependencies
+  - @backstage/ui@0.15.0-next.1
+  - @backstage/frontend-plugin-api@0.17.0-next.1
+  - @backstage/core-plugin-api@1.12.6-next.1
+
 ## 0.4.6-next.0
 
 ### Patch Changes

@@ -1,5 +1,24 @@
 # @backstage/plugin-catalog-backend-module-gitlab
 
+## 0.8.3-next.2
+
+### Patch Changes
+
+- 1ecc3ca: Fixed spelling mistakes in internal code
+- Updated dependencies
+  - @backstage/backend-plugin-api@1.9.1-next.1
+  - @backstage/backend-defaults@0.17.1-next.2
+
+## 0.8.3-next.1
+
+### Patch Changes
+
+- e9b78e9: Removed the `uuid` dependency and replaced usage with the built-in `crypto.randomUUID()`.
+- Updated dependencies
+  - @backstage/catalog-model@1.8.1-next.1
+  - @backstage/plugin-catalog-node@2.2.1-next.1
+  - @backstage/backend-defaults@0.17.1-next.1
+
 ## 0.8.3-next.0
 
 ### Patch Changes

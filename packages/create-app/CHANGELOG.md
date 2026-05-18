@@ -1,5 +1,23 @@
 # @backstage/create-app
 
+## 0.8.3-next.3
+
+### Patch Changes
+
+- 14e2056: Pinned the Jest version range in app templates to `~30.2.0` to prevent automatic upgrades to Jest 30.4.x, which requires Node.js v24.9+ and breaks tests on Node 22.
+
+## 0.8.3-next.2
+
+### Patch Changes
+
+- Bumped create-app version.
+
+## 0.8.3-next.1
+
+### Patch Changes
+
+- Bumped create-app version.
+
 ## 0.8.3-next.0
 
 ### Patch Changes

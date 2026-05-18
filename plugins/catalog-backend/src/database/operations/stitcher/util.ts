@@ -24,6 +24,12 @@ import stableStringify from 'fast-json-stable-stringify';
 // enough to get the speed benefits.
 export const BATCH_SIZE = 50;
 
+// The SOH (Start of Heading) control character, used as a stand-in for NULL
+// in contexts where NULL cannot participate in equality comparisons (SQL
+// COALESCE, JS dedup keys). It cannot appear in real entity metadata values
+// since they are human-readable strings.
+export const NULL_SENTINEL = '\x01';
+
 export function generateStableHash(entity: Entity) {
   return createHash('sha1')
     .update(stableStringify({ ...entity }))

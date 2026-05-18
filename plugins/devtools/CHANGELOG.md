@@ -1,5 +1,24 @@
 # @backstage/plugin-devtools
 
+## 0.1.39-next.2
+
+### Patch Changes
+
+- 08c922e: Migrated `ConfigContent` component from Material UI to Backstage UI (BUI).
+- Updated dependencies
+  - @backstage/ui@0.15.0-next.2
+  - @backstage/core-components@0.18.10-next.1
+
+## 0.1.39-next.1
+
+### Patch Changes
+
+- b15ef55: Scheduled Tasks page now refreshes its table automatically after a task is triggered or cancelled, so the updated status is visible without reloading the browser.
+- Updated dependencies
+  - @backstage/ui@0.15.0-next.1
+  - @backstage/frontend-plugin-api@0.17.0-next.1
+  - @backstage/core-plugin-api@1.12.6-next.1
+
 ## 0.1.39-next.0
 
 ### Patch Changes

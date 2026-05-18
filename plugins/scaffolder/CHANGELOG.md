@@ -1,5 +1,81 @@
 # @backstage/plugin-scaffolder
 
+## 1.37.0-next.2
+
+### Minor Changes
+
+- dbeb7aa: Added experimental BUI (Backstage UI) form theme for scaffolder forms. All default field extensions render BUI variants when enabled.
+
+  **Extension config:**
+
+  ```yaml
+  app:
+    extensions:
+      - sub-page:scaffolder/templates:
+          config:
+            enableBackstageUi: true
+  ```
+
+  **JSX props:**
+
+  ```tsx
+  <ScaffolderPage formProps={{ EXPERIMENTAL_theme: 'bui' }} />
+  ```
+
+- 8006acf: Promoted `formDecoratorsApiRef`, `ScaffolderFormDecoratorsApi`,
+  `DefaultScaffolderFormDecoratorsApi`, and `formDecoratorsApi` from `@alpha`
+  to `@public`.
+- d09c21c: The `sub-page:scaffolder/templates` extension now accepts a `groups` config
+  field that lets you define template groups on the template list page. Each group
+  has a `title` and a `filter` predicate. Templates not matched by any
+  configured group fall into an automatically appended "Other Templates" group.
+  With no groups configured, the page renders a single "Templates" group as
+  before.
+
+  Example:
+
+  ```yaml
+  app:
+    extensions:
+      - sub-page:scaffolder/templates:
+          config:
+            groups:
+              - title: Recommended Services
+                filter:
+                  spec.type: service
+              - title: Documentation
+                filter:
+                  spec.type: documentation
+  ```
+
+### Patch Changes
+
+- 1ecc3ca: Fixed spelling mistakes in internal code
+- 8006acf: Form decorator input is now parsed against the zod schema configured on the
+  decorator before the decorator runs, so defaults declared via `.default()`
+  are applied and invalid input is reported through the error API instead of
+  silently passing through.
+- 8006acf: The template wizard now reads form decorators from the new
+  `spec.formDecorators` field on a template, falling back to the deprecated
+  `spec.EXPERIMENTAL_formDecorators` for templates that have not been migrated.
+- Updated dependencies
+  - @backstage/plugin-scaffolder-react@1.21.0-next.1
+  - @backstage/ui@0.15.0-next.3
+  - @backstage/plugin-scaffolder-common@2.2.0-next.1
+  - @backstage/plugin-catalog-react@2.1.5-next.1
+
+## 1.36.3-next.1
+
+### Patch Changes
+
+- f635139: Limited `@remixicon/react` dependency to versions below 4.9.0 due to a license change in that release.
+- Updated dependencies
+  - @backstage/ui@0.15.0-next.1
+  - @backstage/frontend-plugin-api@0.17.0-next.1
+  - @backstage/catalog-model@1.8.1-next.1
+  - @backstage/core-plugin-api@1.12.6-next.1
+  - @backstage/plugin-catalog-react@2.1.5-next.1
+
 ## 1.36.3-next.0
 
 ### Patch Changes
