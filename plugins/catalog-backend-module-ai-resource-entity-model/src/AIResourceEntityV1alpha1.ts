@@ -117,24 +117,19 @@ export const isSkillAIResourceEntity = (
 ): entity is SkillAIResourceEntityV1alpha1 =>
   isAIResourceEntity(entity) && entity.spec?.type === 'skill';
 
-/**
- * Extends the catalog model with the AIResource kind.
- *
- * @alpha
- */
 const baseRelationFields = [
   {
     selector: { path: 'spec.owner' },
     relation: 'ownedBy',
     defaultKind: 'Group',
-    defaultNamespace: 'inherit' as const,
+    defaultNamespace: 'inherit',
     allowedKinds: ['Group', 'User'],
   },
   {
     selector: { path: 'spec.system' },
     relation: 'partOf',
     defaultKind: 'System',
-    defaultNamespace: 'inherit' as const,
+    defaultNamespace: 'inherit',
   },
 ];
 
@@ -172,7 +167,7 @@ export const aiResourceEntityModel = createCatalogModelLayer({
               selector: { path: 'spec.dependsOn' },
               relation: 'dependsOn',
               defaultKind: 'AIResource',
-              defaultNamespace: 'inherit' as const,
+              defaultNamespace: 'inherit',
             },
           ],
           schema: {
