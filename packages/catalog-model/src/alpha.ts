@@ -42,5 +42,18 @@ export {
   isRuleAiResourceEntity,
   aiResourceEntityModel,
 } from './kinds/AiResourceEntityV1alpha1';
+export type {
+  ApiEntityV1alpha1 as ApiEntity,
+  ApiEntityV1alpha1,
+} from './kinds/ApiEntityV1alpha1';
+export type {
+  McpServerApiEntity,
+  McpServerRemote,
+} from './kinds/McpServerApiEntity';
+export {
+  mcpServerApiEntityValidator,
+  isMcpServerApiEntity,
+  mcpServerApiEntityModel,
+} from './kinds/McpServerApiEntity';
 export * from './model';
 export { defaultCatalogEntityModel } from './model/defaultCatalogEntityModel';
