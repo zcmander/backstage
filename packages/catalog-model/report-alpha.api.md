@@ -70,6 +70,12 @@ export interface CatalogModel {
 }
 
 // @alpha
+export interface CatalogModelAddKindVersionDefinition {
+  kind: string;
+  versions: CatalogModelKindVersionDefinition[];
+}
+
+// @alpha
 export interface CatalogModelAnnotationDefinition {
   description: string;
   name: string;
@@ -228,6 +234,7 @@ export interface CatalogModelLayer {
 export interface CatalogModelLayerBuilder {
   addAnnotation(annotation: CatalogModelAnnotationDefinition): void;
   addKind(kind: CatalogModelKindDefinition): void;
+  addKindVersion(definition: CatalogModelAddKindVersionDefinition): void;
   addLabel(label: CatalogModelLabelDefinition): void;
   addRelationPair(relation: CatalogModelRelationPairDefinition): void;
   addTag(tag: CatalogModelTagDefinition): void;

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { createCatalogModelLayer } from '../model/createCatalogModelLayer';
 import type { Entity } from '../entity/Entity';
 import defaultSchema from '../schema/kinds/API.v1alpha2.schema.json';
 import mcpServerSchema from '../schema/kinds/API.v1alpha2.mcp-server.schema.json';
@@ -102,3 +103,48 @@ export function isMcpServerApiEntity(
 ): entity is McpServerApiEntityV1alpha2 {
   return entity.spec.type === 'mcp-server';
 }
+
+const apiRelationFields = [
+  {
+    selector: { path: 'spec.owner' },
+    relation: 'ownedBy',
+    defaultKind: 'Group',
+    defaultNamespace: 'inherit' as const,
+    allowedKinds: ['Group', 'User'],
+  },
+  {
+    selector: { path: 'spec.system' },
+    relation: 'partOf',
+    defaultKind: 'System',
+    defaultNamespace: 'inherit' as const,
+  },
+];
+
+/**
+ * Extends the catalog model with v1alpha2 versions of the API kind.
+ *
+ * @alpha
+ */
+export const apiEntityV1alpha2Model = createCatalogModelLayer({
+  layerId: 'catalog.backstage.io/kind-api-v1alpha2',
+  builder: model => {
+    model.addKindVersion({
+      kind: 'API',
+      versions: [
+        {
+          name: 'v1alpha2',
+          relationFields: apiRelationFields,
+          schema: { jsonSchema: defaultSchema },
+        },
+        {
+          name: 'v1alpha2',
+          specType: 'mcp-server',
+          description:
+            'An MCP (Model Context Protocol) server exposed as an API entity.',
+          relationFields: apiRelationFields,
+          schema: { jsonSchema: mcpServerSchema },
+        },
+      ],
+    });
+  },
+});
