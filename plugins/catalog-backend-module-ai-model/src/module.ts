@@ -18,6 +18,7 @@ import { createBackendModule } from '@backstage/backend-plugin-api';
 import {
   CatalogModelSources,
   aiResourceEntityModel,
+  mcpServerApiEntityModel,
 } from '@backstage/catalog-model/alpha';
 import { catalogModelExtensionPoint } from '@backstage/plugin-catalog-node/alpha';
 
@@ -36,7 +37,10 @@ export const catalogModuleAiResourceEntityModel = createBackendModule({
       },
       async init({ model }) {
         model.addModelSource(
-          CatalogModelSources.static([aiResourceEntityModel]),
+          CatalogModelSources.static([
+            aiResourceEntityModel,
+            mcpServerApiEntityModel,
+          ]),
         );
       },
     });
