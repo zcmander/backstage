@@ -1,4 +1,4 @@
-# @backstage/plugin-catalog-backend-module-ai-resource-entity-model
+# @backstage/plugin-catalog-backend-module-ai-model
 
 Adds support for the `AiResource` entity kind to the catalog backend plugin. AI resources represent contextual information consumed by AI coding tools, such as skills and rules.
 
@@ -7,9 +7,7 @@ Adds support for the `AiResource` entity kind to the catalog backend plugin. AI 
 Add the module to your backend:
 
 ```ts
-backend.add(
-  import('@backstage/plugin-catalog-backend-module-ai-resource-entity-model'),
-);
+backend.add(import('@backstage/plugin-catalog-backend-module-ai-model'));
 ```
 
 ## Entity shape

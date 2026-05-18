@@ -26,7 +26,7 @@ import { aiResourceEntityModel } from './AiResourceEntityV1alpha1';
  */
 export const catalogModuleAiResourceEntityModel = createBackendModule({
   pluginId: 'catalog',
-  moduleId: 'ai-resource-entity-model',
+  moduleId: 'ai-model',
   register(reg) {
     reg.registerInit({
       deps: {
