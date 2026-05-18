@@ -17,18 +17,18 @@
 import { compileCatalogModel } from '../model/compileCatalogModel';
 import { defaultCatalogEntityModel } from '../model/defaultCatalogEntityModel';
 
-describe('apiEntityModel v1alpha2 dispatch', () => {
+describe('apiEntityModel mcp-server dispatch', () => {
   const model = compileCatalogModel([defaultCatalogEntityModel]);
 
-  it('routes mcp-server and non-mcp-server v1alpha2 entities to different schemas', () => {
+  it('routes mcp-server and non-mcp-server v1alpha1 entities to different schemas', () => {
     const mcp = model.getKind({
       kind: 'API',
-      apiVersion: 'backstage.io/v1alpha2',
+      apiVersion: 'backstage.io/v1alpha1',
       spec: { type: 'mcp-server' },
     });
     const openapi = model.getKind({
       kind: 'API',
-      apiVersion: 'backstage.io/v1alpha2',
+      apiVersion: 'backstage.io/v1alpha1',
       spec: { type: 'openapi' },
     });
 
@@ -47,15 +47,15 @@ describe('apiEntityModel v1alpha2 dispatch', () => {
     expect(openapiSpecRequired).not.toContain('remotes');
   });
 
-  it('routes a v1alpha1 entity to the existing v1alpha1 schema', () => {
-    const kind = model.getKind({
+  it('routes mcp-server under v1beta1 too', () => {
+    const mcp = model.getKind({
       kind: 'API',
-      apiVersion: 'backstage.io/v1alpha1',
-      spec: { type: 'openapi' },
+      apiVersion: 'backstage.io/v1beta1',
+      spec: { type: 'mcp-server' },
     });
-    expect(kind).toBeDefined();
-    const required = (kind!.jsonSchema.properties as any).spec
+    expect(mcp).toBeDefined();
+    const required = (mcp!.jsonSchema.properties as any).spec
       .required as string[];
-    expect(required).toContain('definition');
+    expect(required).toContain('remotes');
   });
 });
