@@ -13,3 +13,13 @@ spec:
   remotes:
     - type: streamable-http
       url: http://localhost:7007/api/mcp/v1
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: invalid-mcp-server
+  description: This entity is missing remotes and should fail validation
+spec:
+  type: mcp-server
+  lifecycle: experimental
+  owner: team-a
