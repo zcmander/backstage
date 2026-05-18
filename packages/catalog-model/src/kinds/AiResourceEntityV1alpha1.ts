@@ -14,20 +14,18 @@
  * limitations under the License.
  */
 
-import {
-  type Entity,
-  entityKindSchemaValidator,
-  type KindValidator,
-} from '@backstage/catalog-model';
-import { createCatalogModelLayer } from '@backstage/catalog-model/alpha';
+import { createCatalogModelLayer } from '../model/createCatalogModelLayer';
+import type { Entity } from '../entity/Entity';
+import { entityKindSchemaValidator } from '../validation';
+import type { KindValidator } from './types';
 import type { JsonObject } from '@backstage/types';
-import defaultJsonSchema from './schema/AiResource.v1alpha1.schema.json';
-import skillJsonSchema from './schema/AiResource.v1alpha1.skill.schema.json';
+import defaultJsonSchema from '../schema/kinds/AiResource.v1alpha1.schema.json';
+import skillJsonSchema from '../schema/kinds/AiResource.v1alpha1.skill.schema.json';
 
 /**
  * Default AiResource entity for types that don't have a structured spec.
  *
- * @public
+ * @alpha
  */
 export interface AiResourceEntityV1alpha1Default extends Entity {
   apiVersion: 'backstage.io/v1alpha1';
@@ -44,7 +42,7 @@ export interface AiResourceEntityV1alpha1Default extends Entity {
  * AiResource entity with spec.type 'skill'. Represents reusable contextual
  * knowledge consumed by AI coding tools.
  *
- * @public
+ * @alpha
  */
 export interface SkillAiResourceEntityV1alpha1 extends Entity {
   apiVersion: 'backstage.io/v1alpha1';
@@ -65,7 +63,7 @@ export interface SkillAiResourceEntityV1alpha1 extends Entity {
  * Backstage catalog AiResource kind Entity. Represents contextual information
  * consumed by AI coding tools, such as skills and rules.
  *
- * @public
+ * @alpha
  */
 export type AiResourceEntityV1alpha1 =
   | AiResourceEntityV1alpha1Default
@@ -76,7 +74,7 @@ const defaultValidator = entityKindSchemaValidator(defaultJsonSchema);
 /**
  * Entity data validator for the default {@link AiResourceEntityV1alpha1}.
  *
- * @public
+ * @alpha
  */
 export const aiResourceEntityV1alpha1Validator: KindValidator = {
   async check(data: Entity) {
@@ -89,7 +87,7 @@ const skillValidator = entityKindSchemaValidator(skillJsonSchema);
 /**
  * Entity data validator for {@link SkillAiResourceEntityV1alpha1}.
  *
- * @public
+ * @alpha
  */
 export const skillAiResourceEntityV1alpha1Validator: KindValidator = {
   async check(data: Entity) {
@@ -100,7 +98,7 @@ export const skillAiResourceEntityV1alpha1Validator: KindValidator = {
 /**
  * Type guard for {@link AiResourceEntityV1alpha1}.
  *
- * @public
+ * @alpha
  */
 export const isAiResourceEntity = (
   entity: Entity,
@@ -110,7 +108,7 @@ export const isAiResourceEntity = (
 /**
  * Type guard for {@link SkillAiResourceEntityV1alpha1}.
  *
- * @public
+ * @alpha
  */
 export const isSkillAiResourceEntity = (
   entity: Entity,

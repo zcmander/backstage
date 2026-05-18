@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Entity } from '@backstage/catalog-model';
+import type { Entity } from '../entity/Entity';
 import {
   type AiResourceEntityV1alpha1Default,
   type SkillAiResourceEntityV1alpha1,

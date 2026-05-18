@@ -15,9 +15,11 @@
  */
 
 import { createBackendModule } from '@backstage/backend-plugin-api';
-import { CatalogModelSources } from '@backstage/catalog-model/alpha';
+import {
+  CatalogModelSources,
+  aiResourceEntityModel,
+} from '@backstage/catalog-model/alpha';
 import { catalogModelExtensionPoint } from '@backstage/plugin-catalog-node/alpha';
-import { aiResourceEntityModel } from './AiResourceEntityV1alpha1';
 
 /**
  * Registers support for the AiResource entity kind in the catalog.

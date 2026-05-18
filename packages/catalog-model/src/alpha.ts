@@ -14,11 +14,30 @@
  * limitations under the License.
  */
 
+export type {
+  Entity,
+  EntityLink,
+  EntityMeta,
+  EntityRelation,
+} from './entity/Entity';
+export type { KindValidator } from './kinds/types';
 export type { AlphaEntity } from './entity/AlphaEntity';
 export type {
   EntityStatus,
   EntityStatusItem,
   EntityStatusLevel,
 } from './entity/EntityStatus';
+export type {
+  AiResourceEntityV1alpha1,
+  AiResourceEntityV1alpha1Default,
+  SkillAiResourceEntityV1alpha1,
+} from './kinds/AiResourceEntityV1alpha1';
+export {
+  aiResourceEntityV1alpha1Validator,
+  skillAiResourceEntityV1alpha1Validator,
+  isAiResourceEntity,
+  isSkillAiResourceEntity,
+  aiResourceEntityModel,
+} from './kinds/AiResourceEntityV1alpha1';
 export * from './model';
 export { defaultCatalogEntityModel } from './model/defaultCatalogEntityModel';

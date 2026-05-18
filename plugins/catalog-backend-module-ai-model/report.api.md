@@ -4,65 +4,8 @@
 
 ```ts
 import { BackendFeature } from '@backstage/backend-plugin-api';
-import { Entity } from '@backstage/catalog-model';
-import { KindValidator } from '@backstage/catalog-model';
-
-// @public
-export type AiResourceEntityV1alpha1 =
-  | AiResourceEntityV1alpha1Default
-  | SkillAiResourceEntityV1alpha1;
-
-// @public
-export interface AiResourceEntityV1alpha1Default extends Entity {
-  // (undocumented)
-  apiVersion: 'backstage.io/v1alpha1';
-  // (undocumented)
-  kind: 'AiResource';
-  // (undocumented)
-  spec: {
-    type: string;
-    lifecycle: string;
-    owner: string;
-    system?: string;
-  };
-}
-
-// @public
-export const aiResourceEntityV1alpha1Validator: KindValidator;
 
 // @public
 const catalogModuleAiResourceEntityModel: BackendFeature;
 export default catalogModuleAiResourceEntityModel;
-
-// @public
-export const isAiResourceEntity: (
-  entity: Entity,
-) => entity is AiResourceEntityV1alpha1;
-
-// @public
-export const isSkillAiResourceEntity: (
-  entity: Entity,
-) => entity is SkillAiResourceEntityV1alpha1;
-
-// @public
-export interface SkillAiResourceEntityV1alpha1 extends Entity {
-  // (undocumented)
-  apiVersion: 'backstage.io/v1alpha1';
-  // (undocumented)
-  kind: 'AiResource';
-  // (undocumented)
-  spec: {
-    type: 'skill';
-    lifecycle: string;
-    owner: string;
-    system?: string;
-    disciplines?: string[];
-    categories?: string[];
-    agents?: string[];
-    dependsOn?: string[];
-  };
-}
-
-// @public
-export const skillAiResourceEntityV1alpha1Validator: KindValidator;
 ```

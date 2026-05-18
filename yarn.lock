@@ -4768,7 +4768,6 @@ __metadata:
     "@backstage/catalog-model": "workspace:^"
     "@backstage/cli": "workspace:^"
     "@backstage/plugin-catalog-node": "workspace:^"
-    "@backstage/types": "workspace:^"
   languageName: unknown
   linkType: soft
 

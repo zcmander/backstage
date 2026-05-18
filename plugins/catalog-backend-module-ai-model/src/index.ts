@@ -20,15 +20,4 @@
  * @packageDocumentation
  */
 
-export type {
-  AiResourceEntityV1alpha1,
-  AiResourceEntityV1alpha1Default,
-  SkillAiResourceEntityV1alpha1,
-} from './AiResourceEntityV1alpha1';
-export {
-  aiResourceEntityV1alpha1Validator,
-  skillAiResourceEntityV1alpha1Validator,
-  isAiResourceEntity,
-  isSkillAiResourceEntity,
-} from './AiResourceEntityV1alpha1';
 export { catalogModuleAiResourceEntityModel as default } from './module';
