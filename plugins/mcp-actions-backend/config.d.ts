@@ -19,15 +19,15 @@ export interface Config {
     tracing?: {
       capture?: {
         /**
-         * When true, the tool call's input arguments and output result are
-         * included on the MCP `tools/call` server span as
+         * When true, the MCP tool call's input arguments and output result
+         * are included on the MCP `tools/call` server span as
          * `gen_ai.tool.call.arguments` and `gen_ai.tool.call.result`.
          * These attributes are marked Opt-In by the OpenTelemetry GenAI
          * semantic conventions because they may contain sensitive
          * information (entity payloads, scaffolder inputs, free-form
          * text). Defaults to false.
          */
-        toolPayloads?: boolean;
+        mcpActionsToolPayloads?: boolean;
       };
     };
   };
