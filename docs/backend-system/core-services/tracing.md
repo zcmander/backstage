@@ -129,13 +129,14 @@ The context returned by `propagation.extract` and `context.active` is an opaque 
 
 ## Reading Baggage
 
-Use `propagation.getActiveBaggage()` to read baggage entries from the currently active context. This is useful for forwarding caller-set metadata onto your spans — for example, a request ID, tenant identifier, or feature-flag context that the caller propagated via baggage:
+Use `propagation.getActiveBaggage()` to read baggage entries from the currently active context. This is useful for forwarding caller-set metadata onto your spans — for example, a request ID, tenant identifier, or feature-flag context that the caller propagated via baggage. The baggage is exposed as a flat list of entries — iterate through them to find the keys you care about:
 
 ```ts
 const baggage = tracing.propagation.getActiveBaggage();
-const tenantId = baggage?.getEntry('app.tenant.id')?.value;
-if (tenantId) {
-  span.setAttribute('app.tenant.id', tenantId);
+for (const [key, entry] of baggage?.getAllEntries() ?? []) {
+  if (key === 'app.tenant.id') {
+    span.setAttribute('app.tenant.id', entry.value);
+  }
 }
 ```
 
@@ -143,12 +144,11 @@ Use `propagation.getBaggage(ctx)` when you already hold a specific context handl
 
 The returned object exposes:
 
-| Method            | Description                                              |
-| ----------------- | -------------------------------------------------------- |
-| `getEntry(key)`   | Returns `{ value: string }` for the key, or `undefined`. |
-| `getAllEntries()` | Returns all entries as `[key, { value }][]`.             |
+| Method            | Description                                  |
+| ----------------- | -------------------------------------------- |
+| `getAllEntries()` | Returns all entries as `[key, { value }][]`. |
 
-Both calls return `undefined` when no baggage is present.
+Both calls return `undefined` when no baggage is present. Single-key lookups are intentionally not provided — baggage is meant for bridging caller metadata onto spans or metrics, not as a general-purpose key-value store.
 
 ## Principal Enrichment
 

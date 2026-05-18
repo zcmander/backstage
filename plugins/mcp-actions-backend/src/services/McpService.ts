@@ -54,6 +54,12 @@ const PROPAGATED_BAGGAGE_ATTRIBUTES: ReadonlySet<string> = new Set([
   'gen_ai.request.model',
 ]);
 
+// Cap each forwarded baggage value before it lands on a span attribute.
+// Baggage values are caller-controlled strings of unbounded length;
+// allowlisting keys protects against arbitrary attribute names but not
+// against pathologically large values inflating exported span sizes.
+const BAGGAGE_ATTRIBUTE_VALUE_MAX_LENGTH = 256;
+
 function baggageAttributes(
   tracingService: TracingService,
 ): Record<string, string> {
@@ -62,7 +68,7 @@ function baggageAttributes(
   const attrs: Record<string, string> = {};
   for (const [key, entry] of baggage.getAllEntries()) {
     if (PROPAGATED_BAGGAGE_ATTRIBUTES.has(key)) {
-      attrs[key] = entry.value;
+      attrs[key] = entry.value.slice(0, BAGGAGE_ATTRIBUTE_VALUE_MAX_LENGTH);
     }
   }
   return attrs;
@@ -219,6 +225,11 @@ export class McpService {
               }
 
               // Re-attribute the span to the plugin that owns the action.
+              // This runs after the span has started, so head-based samplers
+              // still see the default `mcp-actions` value when deciding
+              // whether to record the span. The pluginId is only known after
+              // resolving the action via `actions.list`, so the reattribution
+              // is unavoidable.
               span.setAttribute('backstage.plugin.id', action.pluginId);
 
               const { output } = await this.actions.invoke({

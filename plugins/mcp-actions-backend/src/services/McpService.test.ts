@@ -1055,6 +1055,37 @@ describe('McpService', () => {
       expect(options?.attributes).not.toHaveProperty('gen_ai.agent.id');
     });
 
+    it('threads baggage end-to-end from a propagated baggage header through context.with into the tool span', async () => {
+      const tracing = tracingServiceMock.mock();
+      // Simulate what the routers do on incoming requests: extract context
+      // from headers and run the handler with that context active.
+      const ctx = tracing.propagation.extract(tracing.context.active(), {
+        baggage: 'gen_ai.conversation.id=conv-end-to-end',
+      });
+      await tracing.context.with(ctx, () => invokeMockAction({ tracing }));
+
+      const [, options] = tracing.startActiveSpan.mock.calls[0];
+      expect(options?.attributes?.['gen_ai.conversation.id']).toBe(
+        'conv-end-to-end',
+      );
+    });
+
+    it('truncates overlong baggage values before stamping them on the span', async () => {
+      const tracing = tracingServiceMock.mock();
+      const longValue = 'a'.repeat(1024);
+      tracing.propagation.getActiveBaggage.mockReturnValue({
+        getAllEntries: () => [['gen_ai.conversation.id', { value: longValue }]],
+      });
+
+      await invokeMockAction({ tracing });
+
+      const [, options] = tracing.startActiveSpan.mock.calls[0];
+      const recorded = options?.attributes?.['gen_ai.conversation.id'];
+      expect(typeof recorded).toBe('string');
+      expect((recorded as string).length).toBe(256);
+      expect(recorded).toBe('a'.repeat(256));
+    });
+
     it('includes tool arguments in the span options and sets the structured action output as the result attribute when captureToolPayloads is true', async () => {
       const tracing = tracingServiceMock.mock();
       await invokeMockAction({ tracing, captureToolPayloads: true });

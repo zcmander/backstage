@@ -89,6 +89,13 @@ export class DefaultTracingService implements TracingService {
 
   readonly context: TracingServiceContextAPI = {
     active: () => fromOtelContext(otelContext.active()),
+    // `otelContext.with` is synchronous: it activates `ctx`, invokes `fn`,
+    // then restores the previous active context before this call returns.
+    // When `fn` is async, the AsyncLocalStorage context manager installed
+    // by the OTel SDK is what keeps `ctx` active across the callback's
+    // `await`s. If no context manager is registered (e.g. in a test that
+    // does not wire up the OTel SDK) the `await` continuations will run
+    // outside `ctx`.
     with: async <T>(
       ctx: TracingServiceContext,
       fn: () => T | Promise<T>,

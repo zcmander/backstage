@@ -130,6 +130,12 @@ export interface MockedTracingServicePropagationAPI
  * `mockReturnValue` / `mockImplementation`, which takes precedence over
  * the default behaviour.
  *
+ * Unlike the real `DefaultTracingService`, the mock's `startActiveSpan`
+ * does **not** resolve `options.credentials` from `options.request` via
+ * `httpAuth`. Tests that need principal-derived span attributes should
+ * supply `options.credentials` directly on the span options, or assert
+ * on the raw `options` captured by `startActiveSpan.mock.calls`.
+ *
  * @alpha
  */
 export interface TracingServiceMock extends TracingService {
