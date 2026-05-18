@@ -16,9 +16,9 @@
 
 import { startTestBackend } from '@backstage/backend-test-utils';
 import { catalogModelExtensionPoint } from '@backstage/plugin-catalog-node/alpha';
-import { catalogModuleAIResourceEntityModel } from './module';
+import { catalogModuleAiResourceEntityModel } from './module';
 
-describe('catalogModuleAIResourceEntityModel', () => {
+describe('catalogModuleAiResourceEntityModel', () => {
   it('should register the model source', async () => {
     const extensionPoint = {
       setFieldValidators: jest.fn(),
@@ -28,7 +28,7 @@ describe('catalogModuleAIResourceEntityModel', () => {
 
     await startTestBackend({
       extensionPoints: [[catalogModelExtensionPoint, extensionPoint]],
-      features: [catalogModuleAIResourceEntityModel],
+      features: [catalogModuleAiResourceEntityModel],
     });
 
     expect(extensionPoint.addModelSource).toHaveBeenCalledTimes(1);

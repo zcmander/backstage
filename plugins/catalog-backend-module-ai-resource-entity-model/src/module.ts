@@ -17,14 +17,14 @@
 import { createBackendModule } from '@backstage/backend-plugin-api';
 import { CatalogModelSources } from '@backstage/catalog-model/alpha';
 import { catalogModelExtensionPoint } from '@backstage/plugin-catalog-node/alpha';
-import { aiResourceEntityModel } from './AIResourceEntityV1alpha1';
+import { aiResourceEntityModel } from './AiResourceEntityV1alpha1';
 
 /**
- * Registers support for the AIResource entity kind in the catalog.
+ * Registers support for the AiResource entity kind in the catalog.
  *
  * @public
  */
-export const catalogModuleAIResourceEntityModel = createBackendModule({
+export const catalogModuleAiResourceEntityModel = createBackendModule({
   pluginId: 'catalog',
   moduleId: 'ai-resource-entity-model',
   register(reg) {

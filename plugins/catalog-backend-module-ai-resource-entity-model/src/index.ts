@@ -15,20 +15,20 @@
  */
 
 /**
- * Adds support for the AIResource entity kind to the catalog backend plugin.
+ * Adds support for the AiResource entity kind to the catalog backend plugin.
  *
  * @packageDocumentation
  */
 
 export type {
-  AIResourceEntityV1alpha1,
-  AIResourceEntityV1alpha1Default,
-  SkillAIResourceEntityV1alpha1,
-} from './AIResourceEntityV1alpha1';
+  AiResourceEntityV1alpha1,
+  AiResourceEntityV1alpha1Default,
+  SkillAiResourceEntityV1alpha1,
+} from './AiResourceEntityV1alpha1';
 export {
   aiResourceEntityV1alpha1Validator,
-  skillAIResourceEntityV1alpha1Validator,
-  isAIResourceEntity,
-  isSkillAIResourceEntity,
-} from './AIResourceEntityV1alpha1';
-export { catalogModuleAIResourceEntityModel as default } from './module';
+  skillAiResourceEntityV1alpha1Validator,
+  isAiResourceEntity,
+  isSkillAiResourceEntity,
+} from './AiResourceEntityV1alpha1';
+export { catalogModuleAiResourceEntityModel as default } from './module';

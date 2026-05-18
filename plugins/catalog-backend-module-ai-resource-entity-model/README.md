@@ -1,6 +1,6 @@
 # @backstage/plugin-catalog-backend-module-ai-resource-entity-model
 
-Adds support for the `AIResource` entity kind to the catalog backend plugin. AI resources represent contextual information consumed by AI coding tools, such as skills and rules.
+Adds support for the `AiResource` entity kind to the catalog backend plugin. AI resources represent contextual information consumed by AI coding tools, such as skills and rules.
 
 ## Installation
 
@@ -16,7 +16,7 @@ backend.add(
 
 ```yaml
 apiVersion: backstage.io/v1alpha1
-kind: AIResource
+kind: AiResource
 metadata:
   name: frontend-design
   description: Skill for creating production-grade frontend interfaces

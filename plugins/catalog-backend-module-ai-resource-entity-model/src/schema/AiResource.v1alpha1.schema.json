@@ -1,11 +1,11 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema",
-  "$id": "AIResourceV1alpha1",
+  "$id": "AiResourceV1alpha1",
   "description": "An AI resource represents contextual information consumed by AI coding tools, such as skills and rules.",
   "examples": [
     {
       "apiVersion": "backstage.io/v1alpha1",
-      "kind": "AIResource",
+      "kind": "AiResource",
       "metadata": {
         "name": "frontend-design",
         "description": "Skill for creating production-grade frontend interfaces"
@@ -30,7 +30,7 @@
           "enum": ["backstage.io/v1alpha1"]
         },
         "kind": {
-          "enum": ["AIResource"]
+          "enum": ["AiResource"]
         },
         "spec": {
           "type": "object",

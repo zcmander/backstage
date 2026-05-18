@@ -1,5 +1,5 @@
 apiVersion: backstage.io/v1alpha1
-kind: AIResource
+kind: AiResource
 metadata:
   name: frontend-design
   description: Skill for creating production-grade frontend interfaces using the internal design system

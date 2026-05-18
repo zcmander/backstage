@@ -8,16 +8,16 @@ import { Entity } from '@backstage/catalog-model';
 import { KindValidator } from '@backstage/catalog-model';
 
 // @public
-export type AIResourceEntityV1alpha1 =
-  | AIResourceEntityV1alpha1Default
-  | SkillAIResourceEntityV1alpha1;
+export type AiResourceEntityV1alpha1 =
+  | AiResourceEntityV1alpha1Default
+  | SkillAiResourceEntityV1alpha1;
 
 // @public
-export interface AIResourceEntityV1alpha1Default extends Entity {
+export interface AiResourceEntityV1alpha1Default extends Entity {
   // (undocumented)
   apiVersion: 'backstage.io/v1alpha1';
   // (undocumented)
-  kind: 'AIResource';
+  kind: 'AiResource';
   // (undocumented)
   spec: {
     type: string;
@@ -31,25 +31,25 @@ export interface AIResourceEntityV1alpha1Default extends Entity {
 export const aiResourceEntityV1alpha1Validator: KindValidator;
 
 // @public
-const catalogModuleAIResourceEntityModel: BackendFeature;
-export default catalogModuleAIResourceEntityModel;
+const catalogModuleAiResourceEntityModel: BackendFeature;
+export default catalogModuleAiResourceEntityModel;
 
 // @public
-export const isAIResourceEntity: (
+export const isAiResourceEntity: (
   entity: Entity,
-) => entity is AIResourceEntityV1alpha1;
+) => entity is AiResourceEntityV1alpha1;
 
 // @public
-export const isSkillAIResourceEntity: (
+export const isSkillAiResourceEntity: (
   entity: Entity,
-) => entity is SkillAIResourceEntityV1alpha1;
+) => entity is SkillAiResourceEntityV1alpha1;
 
 // @public
-export interface SkillAIResourceEntityV1alpha1 extends Entity {
+export interface SkillAiResourceEntityV1alpha1 extends Entity {
   // (undocumented)
   apiVersion: 'backstage.io/v1alpha1';
   // (undocumented)
-  kind: 'AIResource';
+  kind: 'AiResource';
   // (undocumented)
   spec: {
     type: 'skill';
@@ -64,5 +64,5 @@ export interface SkillAIResourceEntityV1alpha1 extends Entity {
 }
 
 // @public
-export const skillAIResourceEntityV1alpha1Validator: KindValidator;
+export const skillAiResourceEntityV1alpha1Validator: KindValidator;
 ```

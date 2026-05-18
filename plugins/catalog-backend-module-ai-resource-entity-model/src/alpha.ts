@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-export { aiResourceEntityModel } from './AIResourceEntityV1alpha1';
+export { aiResourceEntityModel } from './AiResourceEntityV1alpha1';

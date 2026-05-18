@@ -21,17 +21,17 @@ import {
 } from '@backstage/catalog-model';
 import { createCatalogModelLayer } from '@backstage/catalog-model/alpha';
 import type { JsonObject } from '@backstage/types';
-import defaultJsonSchema from './schema/AIResource.v1alpha1.schema.json';
-import skillJsonSchema from './schema/AIResource.v1alpha1.skill.schema.json';
+import defaultJsonSchema from './schema/AiResource.v1alpha1.schema.json';
+import skillJsonSchema from './schema/AiResource.v1alpha1.skill.schema.json';
 
 /**
- * Default AIResource entity for types that don't have a structured spec.
+ * Default AiResource entity for types that don't have a structured spec.
  *
  * @public
  */
-export interface AIResourceEntityV1alpha1Default extends Entity {
+export interface AiResourceEntityV1alpha1Default extends Entity {
   apiVersion: 'backstage.io/v1alpha1';
-  kind: 'AIResource';
+  kind: 'AiResource';
   spec: {
     type: string;
     lifecycle: string;
@@ -41,14 +41,14 @@ export interface AIResourceEntityV1alpha1Default extends Entity {
 }
 
 /**
- * AIResource entity with spec.type 'skill'. Represents reusable contextual
+ * AiResource entity with spec.type 'skill'. Represents reusable contextual
  * knowledge consumed by AI coding tools.
  *
  * @public
  */
-export interface SkillAIResourceEntityV1alpha1 extends Entity {
+export interface SkillAiResourceEntityV1alpha1 extends Entity {
   apiVersion: 'backstage.io/v1alpha1';
-  kind: 'AIResource';
+  kind: 'AiResource';
   spec: {
     type: 'skill';
     lifecycle: string;
@@ -62,19 +62,19 @@ export interface SkillAIResourceEntityV1alpha1 extends Entity {
 }
 
 /**
- * Backstage catalog AIResource kind Entity. Represents contextual information
+ * Backstage catalog AiResource kind Entity. Represents contextual information
  * consumed by AI coding tools, such as skills and rules.
  *
  * @public
  */
-export type AIResourceEntityV1alpha1 =
-  | AIResourceEntityV1alpha1Default
-  | SkillAIResourceEntityV1alpha1;
+export type AiResourceEntityV1alpha1 =
+  | AiResourceEntityV1alpha1Default
+  | SkillAiResourceEntityV1alpha1;
 
 const defaultValidator = entityKindSchemaValidator(defaultJsonSchema);
 
 /**
- * Entity data validator for the default {@link AIResourceEntityV1alpha1}.
+ * Entity data validator for the default {@link AiResourceEntityV1alpha1}.
  *
  * @public
  */
@@ -87,54 +87,54 @@ export const aiResourceEntityV1alpha1Validator: KindValidator = {
 const skillValidator = entityKindSchemaValidator(skillJsonSchema);
 
 /**
- * Entity data validator for {@link SkillAIResourceEntityV1alpha1}.
+ * Entity data validator for {@link SkillAiResourceEntityV1alpha1}.
  *
  * @public
  */
-export const skillAIResourceEntityV1alpha1Validator: KindValidator = {
+export const skillAiResourceEntityV1alpha1Validator: KindValidator = {
   async check(data: Entity) {
     return skillValidator(data) === data;
   },
 };
 
 /**
- * Type guard for {@link AIResourceEntityV1alpha1}.
+ * Type guard for {@link AiResourceEntityV1alpha1}.
  *
  * @public
  */
-export const isAIResourceEntity = (
+export const isAiResourceEntity = (
   entity: Entity,
-): entity is AIResourceEntityV1alpha1 =>
-  entity.apiVersion === 'backstage.io/v1alpha1' && entity.kind === 'AIResource';
+): entity is AiResourceEntityV1alpha1 =>
+  entity.apiVersion === 'backstage.io/v1alpha1' && entity.kind === 'AiResource';
 
 /**
- * Type guard for {@link SkillAIResourceEntityV1alpha1}.
+ * Type guard for {@link SkillAiResourceEntityV1alpha1}.
  *
  * @public
  */
-export const isSkillAIResourceEntity = (
+export const isSkillAiResourceEntity = (
   entity: Entity,
-): entity is SkillAIResourceEntityV1alpha1 =>
-  isAIResourceEntity(entity) && entity.spec?.type === 'skill';
+): entity is SkillAiResourceEntityV1alpha1 =>
+  isAiResourceEntity(entity) && entity.spec?.type === 'skill';
 
 const baseRelationFields = [
   {
     selector: { path: 'spec.owner' },
     relation: 'ownedBy',
     defaultKind: 'Group',
-    defaultNamespace: 'inherit',
+    defaultNamespace: 'inherit' as const,
     allowedKinds: ['Group', 'User'],
   },
   {
     selector: { path: 'spec.system' },
     relation: 'partOf',
     defaultKind: 'System',
-    defaultNamespace: 'inherit',
+    defaultNamespace: 'inherit' as const,
   },
 ];
 
 /**
- * Extends the catalog model with the AIResource kind.
+ * Extends the catalog model with the AiResource kind.
  *
  * @alpha
  */
@@ -144,7 +144,7 @@ export const aiResourceEntityModel = createCatalogModelLayer({
     model.addKind({
       group: 'backstage.io',
       names: {
-        kind: 'AIResource',
+        kind: 'AiResource',
         singular: 'airesource',
         plural: 'airesources',
       },
@@ -166,8 +166,8 @@ export const aiResourceEntityModel = createCatalogModelLayer({
             {
               selector: { path: 'spec.dependsOn' },
               relation: 'dependsOn',
-              defaultKind: 'AIResource',
-              defaultNamespace: 'inherit',
+              defaultKind: 'AiResource',
+              defaultNamespace: 'inherit' as const,
             },
           ],
           schema: {

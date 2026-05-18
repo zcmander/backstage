@@ -16,21 +16,21 @@
 
 import type { Entity } from '@backstage/catalog-model';
 import {
-  type AIResourceEntityV1alpha1Default,
-  type SkillAIResourceEntityV1alpha1,
+  type AiResourceEntityV1alpha1Default,
+  type SkillAiResourceEntityV1alpha1,
   aiResourceEntityV1alpha1Validator as defaultValidator,
-  skillAIResourceEntityV1alpha1Validator as skillValidator,
-  isAIResourceEntity,
-  isSkillAIResourceEntity,
-} from './AIResourceEntityV1alpha1';
+  skillAiResourceEntityV1alpha1Validator as skillValidator,
+  isAiResourceEntity,
+  isSkillAiResourceEntity,
+} from './AiResourceEntityV1alpha1';
 
-describe('AIResourceV1alpha1 default validator', () => {
-  let entity: AIResourceEntityV1alpha1Default;
+describe('AiResourceV1alpha1 default validator', () => {
+  let entity: AiResourceEntityV1alpha1Default;
 
   beforeEach(() => {
     entity = {
       apiVersion: 'backstage.io/v1alpha1',
-      kind: 'AIResource',
+      kind: 'AiResource',
       metadata: {
         name: 'internal-design-system',
       },
@@ -118,13 +118,13 @@ describe('AIResourceV1alpha1 default validator', () => {
   });
 });
 
-describe('AIResourceV1alpha1 skill validator', () => {
-  let entity: SkillAIResourceEntityV1alpha1;
+describe('AiResourceV1alpha1 skill validator', () => {
+  let entity: SkillAiResourceEntityV1alpha1;
 
   beforeEach(() => {
     entity = {
       apiVersion: 'backstage.io/v1alpha1',
-      kind: 'AIResource',
+      kind: 'AiResource',
       metadata: {
         name: 'frontend-design',
       },
@@ -199,14 +199,14 @@ describe('AIResourceV1alpha1 skill validator', () => {
   });
 });
 
-describe('isAIResourceEntity', () => {
+describe('isAiResourceEntity', () => {
   it('returns true when apiVersion and kind match', () => {
     const entity: Entity = {
       apiVersion: 'backstage.io/v1alpha1',
-      kind: 'AIResource',
+      kind: 'AiResource',
       metadata: { name: 'test' },
     };
-    expect(isAIResourceEntity(entity)).toBe(true);
+    expect(isAiResourceEntity(entity)).toBe(true);
   });
 
   it('returns false for a different kind', () => {
@@ -215,38 +215,38 @@ describe('isAIResourceEntity', () => {
       kind: 'Component',
       metadata: { name: 'test' },
     };
-    expect(isAIResourceEntity(entity)).toBe(false);
+    expect(isAiResourceEntity(entity)).toBe(false);
   });
 
   it('returns false for a different apiVersion', () => {
     const entity: Entity = {
       apiVersion: 'backstage.io/v1beta1',
-      kind: 'AIResource',
+      kind: 'AiResource',
       metadata: { name: 'test' },
     };
-    expect(isAIResourceEntity(entity)).toBe(false);
+    expect(isAiResourceEntity(entity)).toBe(false);
   });
 });
 
-describe('isSkillAIResourceEntity', () => {
-  it('returns true for a skill AIResource', () => {
+describe('isSkillAiResourceEntity', () => {
+  it('returns true for a skill AiResource', () => {
     const entity: Entity = {
       apiVersion: 'backstage.io/v1alpha1',
-      kind: 'AIResource',
+      kind: 'AiResource',
       metadata: { name: 'test' },
       spec: { type: 'skill' },
     };
-    expect(isSkillAIResourceEntity(entity)).toBe(true);
+    expect(isSkillAiResourceEntity(entity)).toBe(true);
   });
 
-  it('returns false for a non-skill AIResource', () => {
+  it('returns false for a non-skill AiResource', () => {
     const entity: Entity = {
       apiVersion: 'backstage.io/v1alpha1',
-      kind: 'AIResource',
+      kind: 'AiResource',
       metadata: { name: 'test' },
       spec: { type: 'rule' },
     };
-    expect(isSkillAIResourceEntity(entity)).toBe(false);
+    expect(isSkillAiResourceEntity(entity)).toBe(false);
   });
 
   it('returns false for a different kind', () => {
@@ -256,6 +256,6 @@ describe('isSkillAIResourceEntity', () => {
       metadata: { name: 'test' },
       spec: { type: 'skill' },
     };
-    expect(isSkillAIResourceEntity(entity)).toBe(false);
+    expect(isSkillAiResourceEntity(entity)).toBe(false);
   });
 });

@@ -1,5 +1,5 @@
 apiVersion: backstage.io/v1alpha1
-kind: AIResource
+kind: AiResource
 metadata:
   name: use-internal-apis
   description: Agents must use internal API clients instead of raw HTTP calls
