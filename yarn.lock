@@ -4759,7 +4759,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@backstage/plugin-catalog-backend-module-ai-resource-entity-model@workspace:plugins/catalog-backend-module-ai-resource-entity-model":
+"@backstage/plugin-catalog-backend-module-ai-resource-entity-model@workspace:^, @backstage/plugin-catalog-backend-module-ai-resource-entity-model@workspace:plugins/catalog-backend-module-ai-resource-entity-model":
   version: 0.0.0-use.local
   resolution: "@backstage/plugin-catalog-backend-module-ai-resource-entity-model@workspace:plugins/catalog-backend-module-ai-resource-entity-model"
   dependencies:
@@ -29306,6 +29306,7 @@ __metadata:
     "@backstage/plugin-auth-backend-module-openshift-provider": "workspace:^"
     "@backstage/plugin-auth-node": "workspace:^"
     "@backstage/plugin-catalog-backend": "workspace:^"
+    "@backstage/plugin-catalog-backend-module-ai-resource-entity-model": "workspace:^"
     "@backstage/plugin-catalog-backend-module-backstage-openapi": "workspace:^"
     "@backstage/plugin-catalog-backend-module-logs": "workspace:^"
     "@backstage/plugin-catalog-backend-module-openapi": "workspace:^"
