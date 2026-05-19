@@ -315,8 +315,6 @@ it.each(databases.eachSupportedId())(
 describe.each(databases.eachSupportedId())(
   'performStitching edge cases, %p',
   databaseId => {
-    const logger = mockServices.logger.mock();
-
     it('stitches when final_entities row already exists', async () => {
       const knex = await databases.init(databaseId);
       await applyDatabaseMigrations(knex);

@@ -26,11 +26,7 @@ import { SerializedError } from '@backstage/errors';
 import { Knex } from 'knex';
 import { createHash } from 'node:crypto';
 import stableStringify from 'fast-json-stable-stringify';
-import {
-  DbFinalEntitiesRow,
-  DbRefreshStateRow,
-  DbStitchQueueRow,
-} from '../../tables';
+import { DbFinalEntitiesRow, DbStitchQueueRow } from '../../tables';
 import { buildEntitySearch } from './buildEntitySearch';
 import { markDeferredStitchCompleted } from './markDeferredStitchCompleted';
 import { syncSearchRows } from './syncSearchRows';
