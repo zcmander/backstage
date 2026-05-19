@@ -58,14 +58,6 @@ export class CachedUserInfoService implements UserInfoService {
 
     const now = Date.now();
 
-    const cached = this.#entries.get(token);
-    if (cached) {
-      if (cached.expiresAt > now) {
-        return cached.promise;
-      }
-      this.#entries.delete(token);
-    }
-
     if (now - this.#lastSweep > SWEEP_INTERVAL_MS) {
       this.#lastSweep = now;
       for (const [key, entry] of this.#entries) {
@@ -73,6 +65,11 @@ export class CachedUserInfoService implements UserInfoService {
           this.#entries.delete(key);
         }
       }
+    }
+
+    const cached = this.#entries.get(token);
+    if (cached && cached.expiresAt > now) {
+      return cached.promise;
     }
 
     const promise = this.#delegate.getUserInfo(credentials).catch(error => {
