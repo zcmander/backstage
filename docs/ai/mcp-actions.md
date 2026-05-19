@@ -200,14 +200,21 @@ This can be enabled in the `auth-backend` plugin by using the `auth.experimental
 auth:
   experimentalClientIdMetadataDocuments:
     enabled: true
-    # Optional: restrict which `client_id` URLs are allowed (defaults to ['*'])
-    allowedClientIdPatterns:
-      - 'https://example.com/*'
-      - 'https://*.trusted-domain.com/*'
-    # Optional: restrict which redirect URIs are allowed (defaults to ['*'])
-    allowedRedirectUriPatterns:
-      - 'http://localhost:*'
-      - 'https://*.example.com/*'
+    # Optional: override which client_id URLs are allowed.
+    # Defaults to Claude, VS Code, and the built-in Backstage CLI.
+    # Note: setting this replaces the defaults entirely. The built-in
+    # CLI pattern is derived from your auth backend's base URL and
+    # must be re-added manually if you override this list.
+    # allowedClientIdPatterns:
+    #   - 'https://claude.ai/*'
+    #   - 'https://vscode.dev/*'
+    #   - 'https://my-custom-client.example.com/*'
+    # Optional: override which redirect URIs are allowed.
+    # Defaults to loopback addresses (localhost, 127.0.0.1, [::1]).
+    # allowedRedirectUriPatterns:
+    #   - 'http://localhost:*'
+    #   - 'http://127.0.0.1:*'
+    #   - 'http://[::1]:*'
 ```
 
 #### Dynamic Client Registration
@@ -224,10 +231,13 @@ This can be enabled in the `auth-backend` plugin by using the `auth.experimental
 auth:
   experimentalDynamicClientRegistration:
     enabled: true
-
-    # Optional: limit valid callback URLs for added security
-    allowedRedirectUriPatterns:
-      - cursor://*
+    # Optional: restrict which redirect URIs are allowed.
+    # Defaults to Cursor and loopback addresses (localhost, 127.0.0.1, [::1]).
+    # allowedRedirectUriPatterns:
+    #   - 'cursor://*'
+    #   - 'http://localhost:*'
+    #   - 'http://127.0.0.1:*'
+    #   - 'http://[::1]:*'
 ```
 
 ## Configuring MCP Clients
