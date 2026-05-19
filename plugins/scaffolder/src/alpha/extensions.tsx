@@ -51,7 +51,7 @@ export const scaffolderPage = PageBlueprint.makeWithOverrides({
     return originalFactory({
       routeRef: rootRouteRef,
       path: '/create',
-      title: 'Create...',
+      title: 'Create',
       icon: <CreateComponentIcon fontSize="inherit" />,
     });
   },
