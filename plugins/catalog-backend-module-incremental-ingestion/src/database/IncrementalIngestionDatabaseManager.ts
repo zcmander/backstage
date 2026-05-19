@@ -34,15 +34,15 @@ export class IncrementalIngestionDatabaseManager {
     this.client = options.client;
   }
 
-  private whereInArray(
-    query: Knex.QueryBuilder,
-    column: string,
-    values: string[],
-  ): Knex.QueryBuilder {
-    if (this.client.client.config.client === 'pg') {
-      return query.whereRaw('?? = ANY(?)', [column, values]);
-    }
-    return query.whereIn(column, values);
+  private whereInArray(column: string, values: string[]) {
+    const isPg = this.client.client.config.client === 'pg';
+    return (qb: Knex.QueryBuilder) => {
+      if (isPg) {
+        qb.whereRaw('?? = ANY(?)', [column, values]);
+      } else {
+        qb.whereIn(column, values);
+      }
+    };
   }
 
   /**
@@ -94,11 +94,9 @@ export class IncrementalIngestionDatabaseManager {
     const allIds = ids.map(entry => entry.id);
 
     if (this.client.client.config.client === 'pg') {
-      return await this.whereInArray(
-        tx('ingestion_mark_entities').delete(),
-        'id',
-        allIds,
-      );
+      return await tx('ingestion_mark_entities')
+        .delete()
+        .modify(this.whereInArray('id', allIds));
     }
 
     let deleted = 0;
@@ -290,11 +288,9 @@ export class IncrementalIngestionDatabaseManager {
   async deleteEntityRecordsByRef(entities: { entityRef: string }[]) {
     const refs = entities.map(e => e.entityRef);
     await this.client.transaction(async tx => {
-      await this.whereInArray(
-        tx('ingestion_mark_entities').delete(),
-        'ref',
-        refs,
-      );
+      await tx('ingestion_mark_entities')
+        .delete()
+        .modify(this.whereInArray('ref', refs));
     });
   }
 
@@ -619,11 +615,9 @@ export class IncrementalIngestionDatabaseManager {
 
     await this.client.transaction(async tx => {
       const existingRefsArray = (
-        await this.whereInArray(
-          tx<{ ref: string }>('ingestion_mark_entities').select('ref'),
-          'ref',
-          refs,
-        )
+        await tx<{ ref: string }>('ingestion_mark_entities')
+          .select('ref')
+          .modify(this.whereInArray('ref', refs))
       ).map((e: { ref: string }) => e.ref);
 
       const existingRefsSet = new Set(existingRefsArray);
@@ -631,11 +625,9 @@ export class IncrementalIngestionDatabaseManager {
       const newRefs = refs.filter(e => !existingRefsSet.has(e));
 
       if (existingRefsArray.length > 0) {
-        await this.whereInArray(
-          tx('ingestion_mark_entities').update('ingestion_mark_id', markId),
-          'ref',
-          existingRefsArray,
-        );
+        await tx('ingestion_mark_entities')
+          .update('ingestion_mark_id', markId)
+          .modify(this.whereInArray('ref', existingRefsArray));
       }
 
       if (newRefs.length > 0) {
