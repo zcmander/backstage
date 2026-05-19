@@ -20,3 +20,23 @@ If you were still using `NavItemBlueprint`, migrate by moving `title` and `icon`
    },
  });
 ```
+
+`PageBlueprint` expects an `IconElement` rather than a Material UI `IconComponent`, so this is also a good time to switch to [Remix Icon](https://remixicon.com/) if you were using Material UI icons only for the nav item:
+
+```diff
+-import ExampleIcon from '@material-ui/icons/Extension';
++import { RiPuzzleLine } from '@remixicon/react';
+
+-const navItem = NavItemBlueprint.make({
+-  params: { title: 'Example', icon: ExampleIcon, routeRef },
+-});
+ const page = PageBlueprint.make({
+   params: {
++    title: 'Example',
++    icon: <RiPuzzleLine />,
+     routeRef,
+     path: '/example',
+     loader: () => import('./Page').then(m => <m.Page />),
+   },
+ });
+```
