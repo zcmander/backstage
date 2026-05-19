@@ -130,7 +130,7 @@ A plugin might not always behave exactly the way you want. It could be that you 
 ```tsx
 import plugin from '@backstage/plugin-catalog';
 import { PageBlueprint } from '@backstage/frontend-plugin-api';
-import CustomCatalogIcon from '@material-ui/icons/Category';
+import { RiLayoutGridLine } from '@remixicon/react';
 
 export default plugin.withOverrides({
   // These overrides are merged with the original extensions
@@ -139,7 +139,7 @@ export default plugin.withOverrides({
     plugin.getExtension('page:catalog').override({
       factory: origFactory =>
         origFactory({
-          icon: <CustomCatalogIcon fontSize="inherit" />,
+          icon: <RiLayoutGridLine />,
           loader: () =>
             import('./CustomCatalogIndexPage').then(m => <m.Page />),
         }),
