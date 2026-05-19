@@ -26,17 +26,7 @@ If you were still using `NavItemBlueprint`, migrate by moving `title` and `icon`
 ```diff
 -import ExampleIcon from '@material-ui/icons/Extension';
 +import { RiPuzzleLine } from '@remixicon/react';
-
--const navItem = NavItemBlueprint.make({
--  params: { title: 'Example', icon: ExampleIcon, routeRef },
--});
- const page = PageBlueprint.make({
-   params: {
-+    title: 'Example',
+ ...
+-    icon: ExampleIcon,
 +    icon: <RiPuzzleLine />,
-     routeRef,
-     path: '/example',
-     loader: () => import('./Page').then(m => <m.Page />),
-   },
- });
 ```
