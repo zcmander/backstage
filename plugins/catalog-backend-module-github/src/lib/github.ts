@@ -1101,8 +1101,6 @@ function installConditionalRequestCache(
 
 /**
  * Checks whether a user is suspended via the REST API.
- *
- * @public
  */
 export async function isSuspended(
   username: string,
@@ -1141,8 +1139,6 @@ export async function isSuspended(
 
 /**
  * Checks whether the GitHub instance is a GitHub Enterprise server.
- *
- * @public
  */
 export async function isGitHubEnterprise(octokit: Octokit): Promise<boolean> {
   try {
