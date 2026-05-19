@@ -555,11 +555,8 @@ export type McpServerRemote = {
 };
 
 // @alpha
-export interface RuleAiResourceEntityV1alpha1 extends Entity {
-  // (undocumented)
-  apiVersion: 'backstage.io/v1alpha1';
-  // (undocumented)
-  kind: 'AiResource';
+export interface RuleAiResourceEntityV1alpha1
+  extends AiResourceEntityV1alpha1Default {
   // (undocumented)
   spec: {
     type: 'rule';
@@ -576,11 +573,8 @@ export interface RuleAiResourceEntityV1alpha1 extends Entity {
 export const ruleAiResourceEntityV1alpha1Validator: KindValidator;
 
 // @alpha
-export interface SkillAiResourceEntityV1alpha1 extends Entity {
-  // (undocumented)
-  apiVersion: 'backstage.io/v1alpha1';
-  // (undocumented)
-  kind: 'AiResource';
+export interface SkillAiResourceEntityV1alpha1
+  extends AiResourceEntityV1alpha1Default {
   // (undocumented)
   spec: {
     type: 'skill';
