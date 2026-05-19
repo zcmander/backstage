@@ -1282,4 +1282,75 @@ describe.each(databases.eachSupportedId())('migrations, %p', databaseId => {
 
     await knex.destroy();
   });
+
+  it('20260516000000_relations_target_index.js', async () => {
+    const knex = await databases.init(databaseId);
+
+    await migrateUntilBefore(knex, '20260516000000_relations_target_index.js');
+
+    // Set up FK dependency chain: relations → refresh_state
+    await knex('refresh_state').insert({
+      entity_id: 'e1',
+      entity_ref: 'k:ns/n1',
+      unprocessed_entity: '{}',
+      errors: '[]',
+      next_update_at: knex.fn.now(),
+      last_discovery_at: knex.fn.now(),
+    });
+
+    await knex('relations').insert([
+      {
+        originating_entity_id: 'e1',
+        source_entity_ref: 'k:ns/n1',
+        type: 'ownedBy',
+        target_entity_ref: 'group:default/team-a',
+      },
+      {
+        originating_entity_id: 'e1',
+        source_entity_ref: 'k:ns/n1',
+        type: 'dependsOn',
+        target_entity_ref: 'component:default/other',
+      },
+    ]);
+
+    // Verify index does not exist before migration
+    const client = knex.client.config.client;
+    async function indexExists(name: string): Promise<boolean> {
+      if (typeof client === 'string' && client.includes('pg')) {
+        const r = await knex.raw(
+          `SELECT 1 FROM pg_class c
+           JOIN pg_namespace n ON n.oid = c.relnamespace
+           WHERE c.relname = ? AND c.relkind = 'i'
+             AND n.nspname = current_schema()`,
+          [name],
+        );
+        return r.rows.length > 0;
+      } else if (typeof client === 'string' && client.includes('mysql')) {
+        const [rows] = await knex.raw(
+          'SHOW INDEX FROM `relations` WHERE Key_name = ?',
+          [name],
+        );
+        return rows.length > 0;
+      }
+      // SQLite
+      const r = await knex.raw(
+        `SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = ?`,
+        [name],
+      );
+      return r.length > 0;
+    }
+
+    expect(await indexExists('relations_target_entity_ref_idx')).toBe(false);
+
+    await migrateUpOnce(knex);
+
+    // Verify the index was created
+    expect(await indexExists('relations_target_entity_ref_idx')).toBe(true);
+
+    // Verify rollback drops the index
+    await migrateDownOnce(knex);
+    expect(await indexExists('relations_target_entity_ref_idx')).toBe(false);
+
+    await knex.destroy();
+  });
 });
