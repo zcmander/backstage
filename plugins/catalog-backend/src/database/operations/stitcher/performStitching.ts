@@ -67,15 +67,6 @@ export async function performStitching(options: {
   let removeFromStitchQueueOnCompletion = true;
 
   try {
-    const entityResult = await knex<DbRefreshStateRow>('refresh_state')
-      .where({ entity_ref: entityRef })
-      .limit(1)
-      .select('entity_id');
-    if (!entityResult.length) {
-      // Entity does no exist in refresh state table, no stitching required.
-      return 'abandoned';
-    }
-
     // Selecting from refresh_state (with an optional left join to
     // final_entities for the previous hash) should yield exactly one row,
     // except in abnormal cases where the entity was deleted between the
