@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The Backstage Authors
+ * Copyright 2026 The Backstage Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,59 +15,71 @@
  */
 
 import { createCatalogModelLayer } from '../model/createCatalogModelLayer';
-import type { Entity } from '../entity/Entity';
-import jsonSchema from '../schema/kinds/API.v1alpha1.schema.json';
+import type { ApiEntityV1alpha1 } from './ApiEntityV1alpha1';
+import mcpServerSchema from '../schema/kinds/API.v1alpha1.mcp-server.schema.json';
 import { ajvCompiledJsonSchemaValidator } from './util';
 
 /**
- * Backstage API kind Entity. APIs describe the interfaces for Components to communicate.
+ * An MCP (Model Context Protocol) server represented as an API entity
+ * (spec.type: 'mcp-server').
  *
- * @remarks
- *
- * See {@link https://backstage.io/docs/features/software-catalog/system-model}
- *
- * @public
+ * @alpha
  */
-export interface ApiEntityV1alpha1 extends Entity {
-  apiVersion: 'backstage.io/v1alpha1' | 'backstage.io/v1beta1';
-  kind: 'API';
+export interface McpServerApiEntity extends Omit<ApiEntityV1alpha1, 'spec'> {
   spec: {
-    type: string;
+    type: 'mcp-server';
     lifecycle: string;
     owner: string;
-    definition: string;
     system?: string;
+    remotes: McpServerRemote[];
   };
 }
 
 /**
- * {@link KindValidator} for {@link ApiEntityV1alpha1}.
- *
- * @public
- */
-export const apiEntityV1alpha1Validator =
-  ajvCompiledJsonSchemaValidator(jsonSchema);
-
-/**
- * Extends the catalog model with the API kind.
+ * A transport endpoint for an MCP server.
  *
  * @alpha
  */
-export const apiEntityModel = createCatalogModelLayer({
-  layerId: 'catalog.backstage.io/kind-api',
+export type McpServerRemote = {
+  type: string;
+  url: string;
+};
+
+/**
+ * {@link KindValidator} for the `mcp-server` specType of API entities.
+ *
+ * @alpha
+ */
+export const mcpServerApiEntityValidator =
+  ajvCompiledJsonSchemaValidator(mcpServerSchema);
+
+/**
+ * Type guard: narrows an entity to the MCP server API subtype.
+ *
+ * @alpha
+ */
+export function isMcpServerApiEntity(
+  entity: ApiEntityV1alpha1 | McpServerApiEntity,
+): entity is McpServerApiEntity {
+  return entity.spec.type === 'mcp-server';
+}
+
+/**
+ * Extends the API kind with the mcp-server specType.
+ *
+ * @alpha
+ */
+export const mcpServerApiEntityModel = createCatalogModelLayer({
+  layerId: 'catalog.backstage.io/kind-api-mcp-server',
   builder: model => {
-    model.addKind({
-      group: 'backstage.io',
-      names: {
-        kind: 'API',
-        singular: 'api',
-        plural: 'apis',
-      },
-      description:
-        'An API describes an interface that can be exposed by a component.',
+    model.addKindVersion({
+      kind: 'API',
       versions: [
         {
           name: ['v1alpha1', 'v1beta1'],
+          specType: 'mcp-server',
+          description:
+            'An MCP (Model Context Protocol) server exposed as an API entity.',
           relationFields: [
             {
               selector: { path: 'spec.owner' },
@@ -83,7 +95,7 @@ export const apiEntityModel = createCatalogModelLayer({
               defaultNamespace: 'inherit',
             },
           ],
-          schema: { jsonSchema },
+          schema: { jsonSchema: mcpServerSchema },
         },
       ],
     });

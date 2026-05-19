@@ -40,6 +40,24 @@ export interface AlphaEntity extends Entity_2 {
   status?: EntityStatus;
 }
 
+// @public
+interface ApiEntityV1alpha1 extends Entity {
+  // (undocumented)
+  apiVersion: 'backstage.io/v1alpha1' | 'backstage.io/v1beta1';
+  // (undocumented)
+  kind: 'API';
+  // (undocumented)
+  spec: {
+    type: string;
+    lifecycle: string;
+    owner: string;
+    definition: string;
+    system?: string;
+  };
+}
+export { ApiEntityV1alpha1 as ApiEntity };
+export { ApiEntityV1alpha1 };
+
 // @alpha
 export type AsyncCatalogModelSourceGenerator = AsyncGenerator<
   {
@@ -68,6 +86,12 @@ export interface CatalogModel {
   getRelations(options: { kind: string }): CatalogModelRelation[] | undefined;
   listKinds(): CatalogModelKindSummary[];
   listRelations(): CatalogModelRelationSummary[];
+}
+
+// @alpha
+export interface CatalogModelAddKindVersionDefinition {
+  kind: string;
+  versions: CatalogModelKindVersionDefinition[];
 }
 
 // @alpha
@@ -229,6 +253,7 @@ export interface CatalogModelLayer {
 export interface CatalogModelLayerBuilder {
   addAnnotation(annotation: CatalogModelAnnotationDefinition): void;
   addKind(kind: CatalogModelKindDefinition): void;
+  addKindVersion(definition: CatalogModelAddKindVersionDefinition): void;
   addLabel(label: CatalogModelLabelDefinition): void;
   addRelationPair(relation: CatalogModelRelationPairDefinition): void;
   addTag(tag: CatalogModelTagDefinition): void;
@@ -486,6 +511,11 @@ export const isAiResourceEntity: (
 ) => entity is AiResourceEntityV1alpha1;
 
 // @alpha
+export function isMcpServerApiEntity(
+  entity: ApiEntityV1alpha1 | McpServerApiEntity,
+): entity is McpServerApiEntity;
+
+// @alpha
 export const isRuleAiResourceEntity: (
   entity: Entity,
 ) => entity is RuleAiResourceEntityV1alpha1;
@@ -498,6 +528,30 @@ export const isSkillAiResourceEntity: (
 // @public
 export type KindValidator = {
   check(entity: Entity): Promise<boolean>;
+};
+
+// @alpha
+export interface McpServerApiEntity extends Omit<ApiEntityV1alpha1, 'spec'> {
+  // (undocumented)
+  spec: {
+    type: 'mcp-server';
+    lifecycle: string;
+    owner: string;
+    system?: string;
+    remotes: McpServerRemote[];
+  };
+}
+
+// @alpha
+export const mcpServerApiEntityModel: CatalogModelLayer;
+
+// @alpha
+export const mcpServerApiEntityValidator: KindValidator;
+
+// @alpha
+export type McpServerRemote = {
+  type: string;
+  url: string;
 };
 
 // @alpha
