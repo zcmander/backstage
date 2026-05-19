@@ -117,7 +117,7 @@ async function startEmbeddedDbInternal(
 
   const host = userConfig?.host ?? 'localhost';
   const user = userConfig?.user ?? 'postgres';
-  const password = userConfig?.password ?? 'password';
+  const password = userConfig?.password ?? 'postgres';
   const port = userConfig?.port ?? (await getPortPromise());
   const tmpDir = await fs.mkdtemp(resolvePath(os.tmpdir(), TEMP_DIR_PREFIX));
 
