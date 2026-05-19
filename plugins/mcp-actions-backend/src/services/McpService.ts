@@ -37,7 +37,7 @@ import { FilterRule, McpServerConfig } from '../config';
 
 function safeStringify(value: unknown): string {
   try {
-    return JSON.stringify(value);
+    return JSON.stringify(value) ?? String(value);
   } catch {
     return String(value);
   }
@@ -245,7 +245,7 @@ export class McpService {
                 content: [
                   {
                     type: 'text',
-                    text: JSON.stringify(output),
+                    text: safeStringify(output),
                   },
                 ],
                 structuredContent: output,
