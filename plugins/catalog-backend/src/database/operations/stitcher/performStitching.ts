@@ -34,10 +34,7 @@ import {
 import { buildEntitySearch } from './buildEntitySearch';
 import { markDeferredStitchCompleted } from './markDeferredStitchCompleted';
 import { syncSearchRows } from './syncSearchRows';
-import {
-  LoggerService,
-  isDatabaseConflictError,
-} from '@backstage/backend-plugin-api';
+import { LoggerService } from '@backstage/backend-plugin-api';
 
 function generateStableHash(entity: Entity) {
   return createHash('sha1')
@@ -79,34 +76,10 @@ export async function performStitching(options: {
       return 'abandoned';
     }
 
-    // Ensure that a final_entities row exists for this entity.
-    try {
-      await knex<DbFinalEntitiesRow>('final_entities')
-        .insert({
-          entity_id: entityResult[0].entity_id,
-          hash: '',
-          entity_ref: entityRef,
-        })
-        .onConflict('entity_id')
-        .ignore();
-    } catch (error) {
-      // It's possible to hit a race where a refresh_state table delete + insert
-      // is done just after we read the entity_id from it. This conflict is safe
-      // to ignore because the current stitching operation will be triggered by
-      // the old entry, and the new entry will trigger it's own stitching that
-      // will update the entity.
-      if (isDatabaseConflictError(error)) {
-        logger.debug(`Skipping stitching of ${entityRef}, conflict`, error);
-        return 'abandoned';
-      }
-
-      throw error;
-    }
-
-    // Selecting from refresh_state and final_entities should yield exactly
-    // one row (except in abnormal cases where the stitch was invoked for
-    // something that didn't exist at all, in which case it's zero rows).
-    // The join with the temporary incoming_references still gives one row.
+    // Selecting from refresh_state (with an optional left join to
+    // final_entities for the previous hash) should yield exactly one row,
+    // except in abnormal cases where the entity was deleted between the
+    // stitch request and now.
     const [processedResult, relationsResult] = await Promise.all([
       knex
         .with('incoming_references', function incomingReferences(builder) {
@@ -236,31 +209,31 @@ export async function performStitching(options: {
     // to write the search index.
     const searchEntries = buildEntitySearch(entityId, entity);
 
-    let updateQuery = knex<DbFinalEntitiesRow>('final_entities')
-      .update({
+    // Guard against concurrent stitchers by checking that the stitch_ticket
+    // in stitch_queue still matches what we were given.
+    if (stitchTicket) {
+      const ticketValid = await knex<DbStitchQueueRow>('stitch_queue')
+        .where('entity_ref', entityRef)
+        .where('stitch_ticket', stitchTicket)
+        .first();
+      if (!ticketValid) {
+        logger.debug(
+          `Entity ${entityRef} is already stitched, skipping write.`,
+        );
+        return 'abandoned';
+      }
+    }
+
+    await knex<DbFinalEntitiesRow>('final_entities')
+      .insert({
+        entity_id: entityId,
+        entity_ref: entityRef,
         final_entity: JSON.stringify(entity),
         hash,
         last_updated_at: knex.fn.now(),
       })
-      .where('entity_id', entityId);
-
-    // Guard against concurrent stitchers by checking that the stitch_ticket
-    // in stitch_queue still matches what we were given.
-    if (stitchTicket) {
-      updateQuery = updateQuery.whereExists(
-        knex<DbStitchQueueRow>('stitch_queue')
-          .where('stitch_queue.entity_ref', entityRef)
-          .where('stitch_queue.stitch_ticket', stitchTicket)
-          .select(knex.raw('1')),
-      );
-    }
-
-    const amountOfRowsChanged = await updateQuery;
-
-    if (amountOfRowsChanged === 0) {
-      logger.debug(`Entity ${entityRef} is already stitched, skipping write.`);
-      return 'abandoned';
-    }
+      .onConflict('entity_id')
+      .merge(['final_entity', 'hash', 'last_updated_at']);
 
     await syncSearchRows(knex, entityId, searchEntries);
 
