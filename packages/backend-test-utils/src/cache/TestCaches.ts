@@ -108,9 +108,6 @@ export class TestCaches {
   }
 
   eachSupportedId(): [TestCacheId][] {
-    if (this.supportedIds.length === 0) {
-      return [['MISSING' as TestCacheId]];
-    }
     return this.supportedIds.map(id => [id]);
   }
 
