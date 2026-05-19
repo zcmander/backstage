@@ -19,7 +19,10 @@ import {
   UserInfoService,
 } from '@backstage/backend-plugin-api';
 import { mockCredentials } from '@backstage/backend-test-utils';
-import { CachedUserInfoService } from './CachedUserInfoService';
+import {
+  CachedUserInfoService,
+  UserInfoCacheEntry,
+} from './CachedUserInfoService';
 
 const aliceInfo: BackstageUserInfo = {
   userEntityRef: 'user:default/alice',
@@ -85,19 +88,24 @@ describe('CachedUserInfoService', () => {
   });
 
   it('re-fetches after the TTL expires', async () => {
-    const delegate: UserInfoService = {
-      getUserInfo: jest.fn().mockResolvedValue(aliceInfo),
-    };
-    const service = new CachedUserInfoService(delegate, { ttlMs: 50 });
-    const creds = mockCredentials.user();
+    jest.useFakeTimers();
+    try {
+      const delegate: UserInfoService = {
+        getUserInfo: jest.fn().mockResolvedValue(aliceInfo),
+      };
+      const service = new CachedUserInfoService(delegate, { ttlMs: 50 });
+      const creds = mockCredentials.user();
 
-    await service.getUserInfo(creds);
-    expect(delegate.getUserInfo).toHaveBeenCalledTimes(1);
+      await service.getUserInfo(creds);
+      expect(delegate.getUserInfo).toHaveBeenCalledTimes(1);
 
-    await new Promise(resolve => setTimeout(resolve, 60));
+      jest.advanceTimersByTime(60);
 
-    await service.getUserInfo(creds);
-    expect(delegate.getUserInfo).toHaveBeenCalledTimes(2);
+      await service.getUserInfo(creds);
+      expect(delegate.getUserInfo).toHaveBeenCalledTimes(2);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('evicts the cache entry on rejection and retries on next call', async () => {
@@ -167,7 +175,7 @@ describe('CachedUserInfoService', () => {
     const delegate2: UserInfoService = {
       getUserInfo: jest.fn().mockResolvedValue(aliceInfo),
     };
-    const entries = new Map();
+    const entries = new Map<string, UserInfoCacheEntry>();
     const service1 = new CachedUserInfoService(delegate1, { entries });
     const service2 = new CachedUserInfoService(delegate2, { entries });
     const creds = mockCredentials.user();
