@@ -22,12 +22,12 @@ import { ConfigReader } from '@backstage/config';
 import { JsonObject } from '@backstage/types';
 import {
   createExtension,
+  createExtensionDataRef,
   ExtensionDefinition,
   coreExtensionData,
   RouteRef,
   useRouteRef,
   IconComponent,
-  NavItemBlueprint,
   createFrontendPlugin,
   FrontendFeature,
   createFrontendModule,
@@ -48,6 +48,13 @@ const DEFAULT_MOCK_CONFIG = {
   app: { baseUrl: 'http://localhost:3000' },
   backend: { baseUrl: 'http://localhost:7007' },
 };
+
+// Must match the data ref in @backstage/plugin-app/src/extensions/legacyNavItem.ts
+const legacyNavItemTargetDataRef = createExtensionDataRef<{
+  title: string;
+  icon: IconComponent;
+  routeRef: RouteRef<undefined>;
+}>().with({ id: 'core.nav-item.target' });
 
 /**
  * Options to customize the behavior of the test app.
@@ -143,7 +150,7 @@ const appPluginOverride = appPlugin.withOverrides({
                 {inputs.items.map(
                   (item: (typeof inputs.items)[number], index: number) => {
                     const { icon, title, routeRef } = item.get(
-                      NavItemBlueprint.dataRefs.target,
+                      legacyNavItemTargetDataRef,
                     );
 
                     return (

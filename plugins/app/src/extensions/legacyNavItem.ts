@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 The Backstage Authors
+ * Copyright 2026 The Backstage Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,20 @@
  * limitations under the License.
  */
 
-import HomeIcon from '@material-ui/icons/Home';
-import { NavItemBlueprint } from '@backstage/frontend-plugin-api';
-import { rootRouteRef } from '../routes';
+import {
+  createExtensionDataRef,
+  IconComponent,
+  RouteRef,
+} from '@backstage/frontend-plugin-api';
 
-export const catalogNavItem = NavItemBlueprint.make({
-  params: {
-    routeRef: rootRouteRef,
-    title: 'Catalog',
-    icon: HomeIcon,
-  },
-});
-
-export default [catalogNavItem];
+/**
+ * @internal
+ *
+ * Data ref for legacy nav-item extensions. Kept for backward compatibility with
+ * extensions created by older versions of the framework.
+ */
+export const legacyNavItemTargetDataRef = createExtensionDataRef<{
+  title: string;
+  icon: IconComponent;
+  routeRef: RouteRef<undefined>;
+}>().with({ id: 'core.nav-item.target' });

@@ -19,11 +19,15 @@ import {
   ExtensionDataRef,
   coreExtensionData,
   ApiBlueprint,
-  NavItemBlueprint,
   useApi,
   routeResolutionApiRef,
   appTreeApiRef,
+  createExtensionDataRef,
 } from '@backstage/frontend-plugin-api';
+
+const legacyNavItemTargetDataRef = createExtensionDataRef<unknown>().with({
+  id: 'core.nav-item.target',
+});
 import {
   Box,
   Flex,
@@ -86,7 +90,7 @@ const getOutputColor = createOutputColorGenerator(
     [coreExtensionData.routePath.id]: '#ffeb3b',
     [coreExtensionData.routeRef.id]: '#9c27b0',
     [ApiBlueprint.dataRefs.factory.id]: '#2196f3',
-    [NavItemBlueprint.dataRefs.target.id]: '#ff9800',
+    [legacyNavItemTargetDataRef.id]: '#ff9800',
   },
 
   ['#90caf9', '#ffcc80', '#a5d6a7', '#ef9a9a', '#fff59d', '#ce93d8', '#e6ee9c'],
@@ -335,7 +339,7 @@ const legendMap = {
   'Utility API': ApiBlueprint.dataRefs.factory,
   'Route Path': coreExtensionData.routePath,
   'Route Ref': coreExtensionData.routeRef,
-  'Nav Target': NavItemBlueprint.dataRefs.target,
+  'Nav Target': legacyNavItemTargetDataRef,
 };
 
 function Legend() {
