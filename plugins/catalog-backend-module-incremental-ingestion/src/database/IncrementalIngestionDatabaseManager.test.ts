@@ -23,18 +23,20 @@ const migrationsDir = `${__dirname}/../../migrations`;
 
 jest.setTimeout(60_000);
 
-describe('IncrementalIngestionDatabaseManager', () => {
-  const databases = TestDatabases.create({
-    ids: ['POSTGRES_18', 'POSTGRES_14', 'SQLITE_3'],
-  });
+const databases = TestDatabases.create({
+  ids: ['POSTGRES_18', 'POSTGRES_14', 'SQLITE_3'],
+});
 
-  it.each(databases.eachSupportedId())(
-    'stores and retrieves marks, %p',
-    async databaseId => {
+describe.each(databases.eachSupportedId())(
+  'IncrementalIngestionDatabaseManager, %p',
+  databaseId => {
+    it('stores and retrieves marks', async () => {
       const knex = await databases.init(databaseId);
       await knex.migrate.latest({ directory: migrationsDir });
 
-      const manager = new IncrementalIngestionDatabaseManager({ client: knex });
+      const manager = new IncrementalIngestionDatabaseManager({
+        client: knex,
+      });
       const { ingestionId } = (await manager.createProviderIngestionRecord(
         'myProvider',
       ))!;
@@ -75,16 +77,15 @@ describe('IncrementalIngestionDatabaseManager', () => {
           sequence: 1,
         },
       ]);
-    },
-  );
+    });
 
-  it.each(databases.eachSupportedId())(
-    'computeRemoved correctly sums total count from count query, %p',
-    async databaseId => {
+    it('computeRemoved correctly sums total count from count query', async () => {
       const knex = await databases.init(databaseId);
       await knex.migrate.latest({ directory: migrationsDir });
 
-      const manager = new IncrementalIngestionDatabaseManager({ client: knex });
+      const manager = new IncrementalIngestionDatabaseManager({
+        client: knex,
+      });
       const { ingestionId } = (await manager.createProviderIngestionRecord(
         'testProvider',
       ))!;
@@ -119,6 +120,6 @@ describe('IncrementalIngestionDatabaseManager', () => {
       // On PostgreSQL, count queries return strings, so total should be 3 not NaN or string concatenation
       expect(result.total).toBe(3);
       expect(typeof result.total).toBe('number');
-    },
-  );
-});
+    });
+  },
+);
