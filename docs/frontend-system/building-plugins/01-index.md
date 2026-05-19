@@ -44,7 +44,7 @@ The plugin ID should be a lowercase dash-separated string, while the plugin inst
 
 ## Adding extensions
 
-The plugin that we created above is empty, and doesn't provide any actual functionality. To add functionality to a plugin you need to create and provide it with one or more [extensions](../architecture/20-extensions.md). Let's continue by adding a standalone page to our plugin, as well as a navigation item that allows users to navigate to the page.
+The plugin that we created above is empty, and doesn't provide any actual functionality. To add functionality to a plugin you need to create and provide it with one or more [extensions](../architecture/20-extensions.md). Let's continue by adding a standalone page to our plugin, with a title and icon that appear in the app sidebar.
 
 To create a new extension you typically use pre-defined [extension blueprints](../architecture/23-extension-blueprints.md), provided either by the framework itself or by other plugins. In this case we'll use `PageBlueprint` from `@backstage/frontend-plugin-api`. We will also need to [create a route reference](../architecture/36-routes.md#creating-a-route-reference) to use as a reference for our page, allowing us to dynamically create URLs that link to our page.
 
@@ -63,7 +63,7 @@ import {
   createFrontendPlugin,
   PageBlueprint,
 } from '@backstage/frontend-plugin-api';
-import ExampleIcon from '@material-ui/icons/Extension';
+import { RiPuzzleLine } from '@remixicon/react';
 import { rootRouteRef } from './routes';
 
 // Note that these extensions aren't exported, only the plugin itself is.
@@ -77,7 +77,7 @@ const examplePage = PageBlueprint.make({
 
     // The title and icon are used to populate the app sidebar automatically
     title: 'Example',
-    icon: <ExampleIcon fontSize="inherit" />,
+    icon: <RiPuzzleLine />,
 
     // Page extensions are always dynamically loaded using React.lazy().
     // All of the functionality of this page is implemented in the
@@ -101,7 +101,7 @@ export const examplePlugin = createFrontendPlugin({
 });
 ```
 
-What we've built here is a very common type of plugin. It's a top-level tool that provides a single page, along with a method for navigating to that page. The implementation of the page component, in this case the highlighted `ExamplePage`, can be arbitrarily complex. It can be anything from a single simple information page, to a full-blown application with multiple sub-pages.
+What we've built here is a very common type of plugin. It's a top-level tool that provides a single page, which the app discovers and links to from the sidebar automatically. The implementation of the page component, in this case the highlighted `ExamplePage`, can be arbitrarily complex. It can be anything from a single simple information page, to a full-blown application with multiple sub-pages.
 
 We have also provided external access to our route reference by passing it to the plugin `routes` option. This makes it possible for app integrators to bind an external link from a different plugin to our plugin page. You can read more about how this works in the [External Route References](../architecture/36-routes.md#external-route-references) section.
 
@@ -177,7 +177,7 @@ const exampleApi = ApiBlueprint.make({
 });
 // highlight-add-end
 
-/* Omitted definitions for examplePage, exampleNavItem, and rootRouteRef. */
+/* Omitted definitions for examplePage and rootRouteRef. */
 
 export const examplePlugin = createFrontendPlugin({
   pluginId: 'example',
@@ -185,7 +185,6 @@ export const examplePlugin = createFrontendPlugin({
     // highlight-add-next-line
     exampleApi,
     examplePage,
-    exampleNavItem,
   ],
   routes: {
     root: rootRouteRef,
@@ -222,7 +221,6 @@ export const examplePlugin = createFrontendPlugin({
     exampleEntityContent,
     exampleApi,
     examplePage,
-    exampleNavItem,
   ],
   routes: {
     root: rootRouteRef,
