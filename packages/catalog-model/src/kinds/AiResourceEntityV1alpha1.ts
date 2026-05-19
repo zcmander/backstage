@@ -26,6 +26,13 @@ import ruleJsonSchema from '../schema/kinds/AiResource.v1alpha1.rule.schema.json
 /**
  * Default AiResource entity for types that don't have a structured spec.
  *
+ * @remarks
+ *
+ * The actual content of skills and rules is not stored in the entity spec.
+ * Instead, the source file is referenced via the standard
+ * `backstage.io/source-location` annotation, consistent with how other
+ * Backstage entities reference their source files.
+ *
  * @alpha
  */
 export interface AiResourceEntityV1alpha1Default extends Entity {

@@ -36,5 +36,10 @@ spec:
 The `type` field determines which spec fields are available. Currently supported types:
 
 - **`skill`** — reusable contextual knowledge for AI coding tools. Supports additional fields: `disciplines`, `categories`, `agents`, `dependsOn`.
+- **`rule`** — governance rules and constraints for AI coding tools. Supports additional fields: `disciplines`, `category` (required), `rationale` (required).
 
 Any other `type` value is accepted with the base spec fields: `type`, `lifecycle`, `owner`, and optionally `system`.
+
+## Accessing skill and rule content
+
+The actual content of skills and rules is not stored in the entity spec. Instead, the source file is referenced via the standard `backstage.io/source-location` annotation, consistent with how other Backstage entities reference their source files. Entity providers that generate `AiResource` entities from `SKILL.md` or rule files should set this annotation to point to the source file.
