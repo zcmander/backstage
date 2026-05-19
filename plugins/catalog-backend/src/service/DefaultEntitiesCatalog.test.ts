@@ -712,7 +712,6 @@ describe.each(databases.eachSupportedId())(
         const catalog = new DefaultEntitiesCatalog({
           database: knex,
           logger: mockServices.logger.mock(),
-
         });
 
         async function page(limit: number, offset?: number): Promise<string[]> {
@@ -781,7 +780,6 @@ describe.each(databases.eachSupportedId())(
         const catalog = new DefaultEntitiesCatalog({
           database: knex,
           logger: mockServices.logger.mock(),
-
         });
 
         async function page(
@@ -848,7 +846,6 @@ describe.each(databases.eachSupportedId())(
         const catalog = new DefaultEntitiesCatalog({
           database: knex,
           logger: mockServices.logger.mock(),
-
         });
 
         async function page(order: 'asc' | 'desc'): Promise<string[]> {

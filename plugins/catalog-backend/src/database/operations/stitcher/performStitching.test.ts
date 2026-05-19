@@ -62,9 +62,9 @@ it.each(databases.eachSupportedId())(
         last_discovery_at: knex.fn.now(),
       },
     ]);
-    await knex<DbRefreshStateReferencesRow>(
-      'refresh_state_references',
-    ).insert([{ source_key: 'a', target_entity_ref: 'k:ns/n' }]);
+    await knex<DbRefreshStateReferencesRow>('refresh_state_references').insert([
+      { source_key: 'a', target_entity_ref: 'k:ns/n' },
+    ]);
     await knex<DbRelationsRow>('relations').insert([
       {
         originating_entity_id: 'my-id',
