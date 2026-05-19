@@ -18,10 +18,13 @@ import type { Entity } from '../entity/Entity';
 import {
   type AiResourceEntityV1alpha1Default,
   type SkillAiResourceEntityV1alpha1,
+  type RuleAiResourceEntityV1alpha1,
   aiResourceEntityV1alpha1Validator as defaultValidator,
   skillAiResourceEntityV1alpha1Validator as skillValidator,
+  ruleAiResourceEntityV1alpha1Validator as ruleValidator,
   isAiResourceEntity,
   isSkillAiResourceEntity,
+  isRuleAiResourceEntity,
 } from './AiResourceEntityV1alpha1';
 
 describe('AiResourceV1alpha1 default validator', () => {
@@ -196,6 +199,101 @@ describe('AiResourceV1alpha1 skill validator', () => {
   it('rejects dependsOn with empty strings', async () => {
     (entity as any).spec.dependsOn = [''];
     await expect(skillValidator.check(entity)).rejects.toThrow(/dependsOn/);
+  });
+});
+
+describe('AiResourceV1alpha1 rule validator', () => {
+  let entity: RuleAiResourceEntityV1alpha1;
+
+  beforeEach(() => {
+    entity = {
+      apiVersion: 'backstage.io/v1alpha1',
+      kind: 'AiResource',
+      metadata: {
+        name: 'use-internal-apis',
+      },
+      spec: {
+        type: 'rule',
+        lifecycle: 'production',
+        owner: 'frontend-platform',
+        disciplines: ['web', 'backend'],
+        category: 'architecture',
+        rationale: 'Ensures consistent error handling across all service calls',
+      },
+    };
+  });
+
+  it('accepts valid rule data with all fields', async () => {
+    await expect(ruleValidator.check(entity)).resolves.toBe(true);
+  });
+
+  it('accepts rule with only required fields', async () => {
+    entity.spec = {
+      type: 'rule',
+      lifecycle: 'production',
+      owner: 'team-a',
+      category: 'security',
+      rationale: 'Prevents credential leaks',
+    };
+    await expect(ruleValidator.check(entity)).resolves.toBe(true);
+  });
+
+  it('rejects non-rule type', async () => {
+    (entity as any).spec.type = 'skill';
+    await expect(ruleValidator.check(entity)).rejects.toThrow(/type/);
+  });
+
+  it('rejects missing category', async () => {
+    delete (entity as any).spec.category;
+    await expect(ruleValidator.check(entity)).rejects.toThrow(/category/);
+  });
+
+  it('rejects empty category', async () => {
+    (entity as any).spec.category = '';
+    await expect(ruleValidator.check(entity)).rejects.toThrow(/category/);
+  });
+
+  it('rejects missing rationale', async () => {
+    delete (entity as any).spec.rationale;
+    await expect(ruleValidator.check(entity)).rejects.toThrow(/rationale/);
+  });
+
+  it('rejects empty rationale', async () => {
+    (entity as any).spec.rationale = '';
+    await expect(ruleValidator.check(entity)).rejects.toThrow(/rationale/);
+  });
+
+  it('accepts missing optional fields', async () => {
+    delete (entity as any).spec.system;
+    delete (entity as any).spec.disciplines;
+    await expect(ruleValidator.check(entity)).resolves.toBe(true);
+  });
+
+  it('rejects disciplines with empty strings', async () => {
+    (entity as any).spec.disciplines = [''];
+    await expect(ruleValidator.check(entity)).rejects.toThrow(/disciplines/);
+  });
+});
+
+describe('isRuleAiResourceEntity', () => {
+  it('returns true for a rule AiResource', () => {
+    const entity: Entity = {
+      apiVersion: 'backstage.io/v1alpha1',
+      kind: 'AiResource',
+      metadata: { name: 'test' },
+      spec: { type: 'rule' },
+    };
+    expect(isRuleAiResourceEntity(entity)).toBe(true);
+  });
+
+  it('returns false for a non-rule AiResource', () => {
+    const entity: Entity = {
+      apiVersion: 'backstage.io/v1alpha1',
+      kind: 'AiResource',
+      metadata: { name: 'test' },
+      spec: { type: 'skill' },
+    };
+    expect(isRuleAiResourceEntity(entity)).toBe(false);
   });
 });
 

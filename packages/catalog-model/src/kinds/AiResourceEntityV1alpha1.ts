@@ -21,6 +21,7 @@ import type { KindValidator } from './types';
 import type { JsonObject } from '@backstage/types';
 import defaultJsonSchema from '../schema/kinds/AiResource.v1alpha1.schema.json';
 import skillJsonSchema from '../schema/kinds/AiResource.v1alpha1.skill.schema.json';
+import ruleJsonSchema from '../schema/kinds/AiResource.v1alpha1.rule.schema.json';
 
 /**
  * Default AiResource entity for types that don't have a structured spec.
@@ -60,6 +61,26 @@ export interface SkillAiResourceEntityV1alpha1 extends Entity {
 }
 
 /**
+ * AiResource entity with spec.type 'rule'. Represents a governance rule
+ * or constraint for AI coding tools.
+ *
+ * @alpha
+ */
+export interface RuleAiResourceEntityV1alpha1 extends Entity {
+  apiVersion: 'backstage.io/v1alpha1';
+  kind: 'AiResource';
+  spec: {
+    type: 'rule';
+    lifecycle: string;
+    owner: string;
+    system?: string;
+    disciplines?: string[];
+    category: string;
+    rationale: string;
+  };
+}
+
+/**
  * Backstage catalog AiResource kind Entity. Represents contextual information
  * consumed by AI coding tools, such as skills and rules.
  *
@@ -67,7 +88,8 @@ export interface SkillAiResourceEntityV1alpha1 extends Entity {
  */
 export type AiResourceEntityV1alpha1 =
   | AiResourceEntityV1alpha1Default
-  | SkillAiResourceEntityV1alpha1;
+  | SkillAiResourceEntityV1alpha1
+  | RuleAiResourceEntityV1alpha1;
 
 const defaultValidator = entityKindSchemaValidator(defaultJsonSchema);
 
@@ -114,6 +136,29 @@ export const isSkillAiResourceEntity = (
   entity: Entity,
 ): entity is SkillAiResourceEntityV1alpha1 =>
   isAiResourceEntity(entity) && entity.spec?.type === 'skill';
+
+const ruleValidator = entityKindSchemaValidator(ruleJsonSchema);
+
+/**
+ * Entity data validator for {@link RuleAiResourceEntityV1alpha1}.
+ *
+ * @alpha
+ */
+export const ruleAiResourceEntityV1alpha1Validator: KindValidator = {
+  async check(data: Entity) {
+    return ruleValidator(data) === data;
+  },
+};
+
+/**
+ * Type guard for {@link RuleAiResourceEntityV1alpha1}.
+ *
+ * @alpha
+ */
+export const isRuleAiResourceEntity = (
+  entity: Entity,
+): entity is RuleAiResourceEntityV1alpha1 =>
+  isAiResourceEntity(entity) && entity.spec?.type === 'rule';
 
 const baseRelationFields = [
   {
@@ -170,6 +215,14 @@ export const aiResourceEntityModel = createCatalogModelLayer({
           ],
           schema: {
             jsonSchema: skillJsonSchema as JsonObject,
+          },
+        },
+        {
+          name: 'v1alpha1',
+          specType: 'rule',
+          relationFields: baseRelationFields,
+          schema: {
+            jsonSchema: ruleJsonSchema as JsonObject,
           },
         },
       ],

@@ -8,3 +8,8 @@ spec:
   lifecycle: production
   owner: team-a
   system: artist-engagement-portal
+  disciplines:
+    - web
+    - backend
+  category: architecture
+  rationale: Ensures consistent error handling, authentication, and observability across all service calls
