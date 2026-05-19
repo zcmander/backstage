@@ -39,7 +39,7 @@ import { Entity } from '@backstage/catalog-model';
 jest.setTimeout(30_000);
 
 describe('Entity page', () => {
-  const entityMock = {
+  const entityMock: Entity = {
     metadata: {
       namespace: 'default',
       annotations: {
@@ -108,7 +108,7 @@ describe('Entity page', () => {
   };
 
   const mockCatalogApi = catalogApiMock({
-    entities: [entityMock as Entity],
+    entities: [entityMock],
   });
 
   const mockStarredEntitiesApi = new MockStarredEntitiesApi();
