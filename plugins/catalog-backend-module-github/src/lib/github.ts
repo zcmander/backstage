@@ -836,18 +836,17 @@ export async function queryWithPaging<
       throw new Error(`Found no match for ${JSON.stringify(variables)}`);
     }
 
-    const transformed = await Promise.all(
-      conn.nodes.map(async node => {
-        if (filter && !(await filter(node))) {
-          return undefined;
-        }
-        return transformer(node, { client, query, org });
-      }),
-    );
-
-    for (const node of transformed) {
-      if (node) {
-        result.push(node);
+    for (const node of conn.nodes) {
+      if (filter && !(await filter(node))) {
+        continue;
+      }
+      const transformedNode = await transformer(node, {
+        client,
+        query,
+        org,
+      });
+      if (transformedNode) {
+        result.push(transformedNode);
       }
     }
 
