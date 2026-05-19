@@ -94,9 +94,11 @@ export class IncrementalIngestionDatabaseManager {
     const allIds = ids.map(entry => entry.id);
 
     if (this.client.client.config.client === 'pg') {
-      return await tx('ingestion_mark_entities')
-        .delete()
-        .whereRaw('?? = ANY(?)', ['id', allIds]);
+      return await this.whereInArray(
+        tx('ingestion_mark_entities').delete(),
+        'id',
+        allIds,
+      );
     }
 
     let deleted = 0;
