@@ -4759,6 +4759,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@backstage/plugin-catalog-backend-module-ai-model@workspace:^, @backstage/plugin-catalog-backend-module-ai-model@workspace:plugins/catalog-backend-module-ai-model":
+  version: 0.0.0-use.local
+  resolution: "@backstage/plugin-catalog-backend-module-ai-model@workspace:plugins/catalog-backend-module-ai-model"
+  dependencies:
+    "@backstage/backend-plugin-api": "workspace:^"
+    "@backstage/backend-test-utils": "workspace:^"
+    "@backstage/catalog-model": "workspace:^"
+    "@backstage/cli": "workspace:^"
+    "@backstage/plugin-catalog-node": "workspace:^"
+  languageName: unknown
+  linkType: soft
+
 "@backstage/plugin-catalog-backend-module-aws@workspace:plugins/catalog-backend-module-aws":
   version: 0.0.0-use.local
   resolution: "@backstage/plugin-catalog-backend-module-aws@workspace:plugins/catalog-backend-module-aws"
@@ -29292,6 +29304,7 @@ __metadata:
     "@backstage/plugin-auth-backend-module-openshift-provider": "workspace:^"
     "@backstage/plugin-auth-node": "workspace:^"
     "@backstage/plugin-catalog-backend": "workspace:^"
+    "@backstage/plugin-catalog-backend-module-ai-model": "workspace:^"
     "@backstage/plugin-catalog-backend-module-backstage-openapi": "workspace:^"
     "@backstage/plugin-catalog-backend-module-logs": "workspace:^"
     "@backstage/plugin-catalog-backend-module-openapi": "workspace:^"

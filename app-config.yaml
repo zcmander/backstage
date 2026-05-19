@@ -280,6 +280,7 @@ catalog:
     pullRequestBranchName: backstage-integration
   rules:
     - allow:
+        - AiResource
         - Component
         - API
         - Resource
