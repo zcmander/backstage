@@ -60,7 +60,7 @@ export async function getDeferredStitchableEntities(options: {
   // next_stitch_at has been bumped. Without the transaction the locks
   // are released after the SELECT auto-commits, and another worker can
   // claim the same rows before the UPDATE runs.
-  return knex.transaction(async tx => {
+  const run = async (tx: Knex | Knex.Transaction) => {
     let itemsQuery = tx<DbStitchQueueRow>('stitch_queue').select(
       'entity_ref',
       'next_stitch_at',
@@ -94,7 +94,12 @@ export async function getDeferredStitchableEntities(options: {
       stitchTicket: i.stitch_ticket,
       stitchRequestedAt: timestampToDateTime(i.next_stitch_at),
     }));
-  });
+  };
+
+  if (knex.isTransaction) {
+    return run(knex);
+  }
+  return knex.transaction(run);
 }
 
 function nowPlus(knex: Knex, duration: HumanDuration): Knex.Raw {
