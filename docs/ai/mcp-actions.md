@@ -326,13 +326,13 @@ This flag is honored by every plugin that creates spans through the [Tracing Ser
 
 ### Capturing tool arguments and results
 
-When `backend.tracing.capture.mcpActionsToolPayloads` is enabled, the tool's input arguments and output result are recorded on the span as `gen_ai.tool.call.arguments` and `gen_ai.tool.call.result`.
+When `mcpActions.tracing.capture.toolPayload` is enabled, the tool's input arguments and output result are recorded on the span as `gen_ai.tool.call.arguments` and `gen_ai.tool.call.result`.
 
 ```yaml title="app-config.yaml"
-backend:
+mcpActions:
   tracing:
     capture:
-      mcpActionsToolPayloads: true # defaults to false
+      toolPayload: true # defaults to false
 ```
 
 :::warning

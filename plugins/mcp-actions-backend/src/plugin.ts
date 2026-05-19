@@ -68,9 +68,8 @@ export const mcpPlugin = createBackendPlugin({
           'mcpActions.namespacedToolNames',
         );
         const captureToolPayloads =
-          config.getOptionalBoolean(
-            'backend.tracing.capture.mcpActionsToolPayloads',
-          ) ?? false;
+          config.getOptionalBoolean('mcpActions.tracing.capture.toolPayload') ??
+          false;
 
         const mcpService = await McpService.create({
           actions,
