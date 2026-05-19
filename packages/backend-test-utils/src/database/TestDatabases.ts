@@ -124,6 +124,13 @@ export class TestDatabases {
   }
 
   eachSupportedId(): [TestDatabaseId][] {
+    if (this.supportedIds.length === 0) {
+      // Return a placeholder so that describe.each/it.each does not throw
+      // when no databases are available. The init() call will throw for
+      // the unknown ID, causing the test to be reported as failed rather
+      // than crashing the entire suite.
+      return [['MISSING' as TestDatabaseId]];
+    }
     return this.supportedIds.map(id => [id]);
   }
 
