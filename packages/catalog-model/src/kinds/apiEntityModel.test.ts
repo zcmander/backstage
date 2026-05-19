@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import lodash from 'lodash';
 import { compileCatalogModel } from '../model/compileCatalogModel';
 import { defaultCatalogEntityModel } from '../model/defaultCatalogEntityModel';
 import { mcpServerApiEntityModel } from './McpServerApiEntity';
@@ -40,10 +41,14 @@ describe('apiEntityModel mcp-server dispatch', () => {
     expect(openapi).toBeDefined();
     expect(mcp!.description).not.toBe(openapi!.description);
 
-    const mcpSpecRequired = (mcp!.jsonSchema.properties as any).spec
-      .required as string[];
-    const openapiSpecRequired = (openapi!.jsonSchema.properties as any).spec
-      .required as string[];
+    const mcpSpecRequired = lodash.get(
+      mcp,
+      'jsonSchema.properties.spec.required',
+    );
+    const openapiSpecRequired = lodash.get(
+      openapi,
+      'jsonSchema.properties.spec.required',
+    );
 
     expect(mcpSpecRequired).toContain('remotes');
     expect(mcpSpecRequired).not.toContain('definition');
@@ -58,8 +63,7 @@ describe('apiEntityModel mcp-server dispatch', () => {
       spec: { type: 'mcp-server' },
     });
     expect(mcp).toBeDefined();
-    const required = (mcp!.jsonSchema.properties as any).spec
-      .required as string[];
+    const required = lodash.get(mcp, 'jsonSchema.properties.spec.required');
     expect(required).toContain('remotes');
   });
 });

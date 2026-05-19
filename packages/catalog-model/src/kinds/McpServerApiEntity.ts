@@ -15,7 +15,7 @@
  */
 
 import { createCatalogModelLayer } from '../model/createCatalogModelLayer';
-import type { Entity } from '../entity/Entity';
+import type { ApiEntityV1alpha1 } from './ApiEntityV1alpha1';
 import mcpServerSchema from '../schema/kinds/API.v1alpha1.mcp-server.schema.json';
 import { ajvCompiledJsonSchemaValidator } from './util';
 
@@ -25,9 +25,7 @@ import { ajvCompiledJsonSchemaValidator } from './util';
  *
  * @alpha
  */
-export interface McpServerApiEntity extends Entity {
-  apiVersion: 'backstage.io/v1alpha1' | 'backstage.io/v1beta1';
-  kind: 'API';
+export interface McpServerApiEntity extends Omit<ApiEntityV1alpha1, 'spec'> {
   spec: {
     type: 'mcp-server';
     lifecycle: string;
@@ -61,12 +59,9 @@ export const mcpServerApiEntityValidator =
  * @alpha
  */
 export function isMcpServerApiEntity(
-  entity: Entity,
+  entity: ApiEntityV1alpha1 | McpServerApiEntity,
 ): entity is McpServerApiEntity {
-  return (
-    entity.kind === 'API' &&
-    (entity as McpServerApiEntity).spec?.type === 'mcp-server'
-  );
+  return entity.spec.type === 'mcp-server';
 }
 
 /**

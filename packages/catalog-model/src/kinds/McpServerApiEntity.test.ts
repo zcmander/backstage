@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import type { ApiEntityV1alpha1 } from './ApiEntityV1alpha1';
 import {
   McpServerApiEntity,
   mcpServerApiEntityValidator,
@@ -104,29 +105,17 @@ describe('isMcpServerApiEntity', () => {
   });
 
   it('returns false for a non-mcp-server API entity', () => {
-    expect(
-      isMcpServerApiEntity({
-        apiVersion: 'backstage.io/v1alpha1',
-        kind: 'API',
-        metadata: { name: 'a' },
-        spec: {
-          type: 'openapi',
-          lifecycle: 'production',
-          owner: 'me',
-          definition: 'x',
-        },
-      }),
-    ).toBe(false);
-  });
-
-  it('returns false for a non-API entity', () => {
-    expect(
-      isMcpServerApiEntity({
-        apiVersion: 'backstage.io/v1alpha1',
-        kind: 'Component',
-        metadata: { name: 'c' },
-        spec: { type: 'service', lifecycle: 'production', owner: 'me' },
-      }),
-    ).toBe(false);
+    const entity: ApiEntityV1alpha1 = {
+      apiVersion: 'backstage.io/v1alpha1',
+      kind: 'API',
+      metadata: { name: 'a' },
+      spec: {
+        type: 'openapi',
+        lifecycle: 'production',
+        owner: 'me',
+        definition: 'x',
+      },
+    };
+    expect(isMcpServerApiEntity(entity)).toBe(false);
   });
 });

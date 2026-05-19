@@ -39,6 +39,24 @@ export interface AlphaEntity extends Entity_2 {
   status?: EntityStatus;
 }
 
+// @public
+interface ApiEntityV1alpha1 extends Entity {
+  // (undocumented)
+  apiVersion: 'backstage.io/v1alpha1' | 'backstage.io/v1beta1';
+  // (undocumented)
+  kind: 'API';
+  // (undocumented)
+  spec: {
+    type: string;
+    lifecycle: string;
+    owner: string;
+    definition: string;
+    system?: string;
+  };
+}
+export { ApiEntityV1alpha1 as ApiEntity };
+export { ApiEntityV1alpha1 };
+
 // @alpha
 export type AsyncCatalogModelSourceGenerator = AsyncGenerator<
   {
@@ -493,7 +511,7 @@ export const isAiResourceEntity: (
 
 // @alpha
 export function isMcpServerApiEntity(
-  entity: Entity,
+  entity: ApiEntityV1alpha1 | McpServerApiEntity,
 ): entity is McpServerApiEntity;
 
 // @alpha
@@ -507,11 +525,7 @@ export type KindValidator = {
 };
 
 // @alpha
-export interface McpServerApiEntity extends Entity {
-  // (undocumented)
-  apiVersion: 'backstage.io/v1alpha1' | 'backstage.io/v1beta1';
-  // (undocumented)
-  kind: 'API';
+export interface McpServerApiEntity extends Omit<ApiEntityV1alpha1, 'spec'> {
   // (undocumented)
   spec: {
     type: 'mcp-server';
