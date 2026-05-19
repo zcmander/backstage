@@ -52,7 +52,7 @@ import {
   TeamEditedEvent,
   TeamEvent,
 } from '@octokit/webhooks-types';
-import { merge } from 'lodash';
+import { memoize, merge } from 'lodash';
 import { randomUUID } from 'node:crypto';
 
 import {
@@ -315,13 +315,17 @@ export class GithubMultiOrgEntityProvider implements EntityProvider {
     return client;
   }
 
+  private isGitHubEnterprise = memoize((org: string) =>
+    isGitHubEnterprise(this.getRestClient(org)),
+  );
+
   private async shouldExclude(login: string, org: string): Promise<boolean> {
     if (!this.useRestSuspendedCheck) {
       return false;
     }
     const restClient = this.getRestClient(org);
     return (
-      (await isGitHubEnterprise(restClient)) &&
+      (await this.isGitHubEnterprise(org)) &&
       (await isSuspended(login, restClient, { org }))
     );
   }

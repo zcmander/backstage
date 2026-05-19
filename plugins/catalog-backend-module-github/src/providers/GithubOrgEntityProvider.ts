@@ -75,6 +75,7 @@ import {
 } from '../lib/org';
 import { parseGithubOrgUrl } from '../lib/util';
 import { withLocations } from '../lib/withLocations';
+import { memoize } from 'lodash';
 
 const EVENT_TOPICS = [
   'github.membership',
@@ -260,6 +261,10 @@ export class GithubOrgEntityProvider implements EntityProvider {
     );
   }
 
+  private isGitHubEnterprise = memoize(() =>
+    isGitHubEnterprise(this.getRestClient()),
+  );
+
   private getRestClient(): Octokit {
     if (!this.cachedRestClient) {
       this.cachedRestClient = createRestClient({
@@ -279,7 +284,7 @@ export class GithubOrgEntityProvider implements EntityProvider {
     }
     const restClient = this.getRestClient();
     return (
-      (await isGitHubEnterprise(restClient)) &&
+      (await this.isGitHubEnterprise()) &&
       (await isSuspended(login, restClient, { org }))
     );
   }
