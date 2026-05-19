@@ -164,7 +164,6 @@ Extension responsible for rendering the logo and items in the app's sidebar.
 | Name    | Description                                  | Type                                                                                                                                     | Optional | Default | Extension creator                                                                                                     |
 | ------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------- | --------------------------------------------------------------------------------------------------------------------- |
 | content | Overrides the default content of the navbar. | [NavContentBlueprint.dataRefs.component](https://backstage.io/api/stable/variables/_backstage_plugin-app-react.NavContentBlueprint.html) | true     | -       | [NavContentBlueprint](https://backstage.io/api/stable/variables/_backstage_plugin-app-react.NavContentBlueprint.html) |
-| items   | Legacy nav item target objects.              | `core.nav-item.target`                                                                                                                   | true     | -       | Legacy extensions only; nav items are auto-discovered from page extensions.                                           |
 
 ### App routes
 
