@@ -27,6 +27,8 @@ export type StitchingStrategy = {
   stitchTimeout: HumanDuration;
 };
 
+let immediateDeprecationLogged = false;
+
 export function stitchingStrategyFromConfig(
   config: Config,
   options?: { logger?: LoggerService },
@@ -35,7 +37,8 @@ export function stitchingStrategyFromConfig(
     'catalog.stitchingStrategy.mode',
   );
 
-  if (strategyMode === 'immediate') {
+  if (strategyMode === 'immediate' && !immediateDeprecationLogged) {
+    immediateDeprecationLogged = true;
     options?.logger?.warn(
       "The 'immediate' stitching strategy mode has been removed and is no longer supported. Falling back to deferred stitching. Please remove the 'catalog.stitchingStrategy.mode' configuration key.",
     );
