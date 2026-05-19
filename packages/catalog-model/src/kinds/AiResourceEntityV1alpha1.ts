@@ -125,6 +125,26 @@ export const isAiResourceEntity = (
 ): entity is AiResourceEntityV1alpha1 =>
   entity.apiVersion === 'backstage.io/v1alpha1' && entity.kind === 'AiResource';
 
+/**
+ * Type guard for {@link SkillAiResourceEntityV1alpha1}.
+ *
+ * @alpha
+ */
+export const isSkillAiResourceEntity = (
+  entity: Entity,
+): entity is SkillAiResourceEntityV1alpha1 =>
+  isAiResourceEntity(entity) && entity.spec?.type === 'skill';
+
+/**
+ * Type guard for {@link RuleAiResourceEntityV1alpha1}.
+ *
+ * @alpha
+ */
+export const isRuleAiResourceEntity = (
+  entity: Entity,
+): entity is RuleAiResourceEntityV1alpha1 =>
+  isAiResourceEntity(entity) && entity.spec?.type === 'rule';
+
 const ruleValidator = entityKindSchemaValidator(ruleJsonSchema);
 
 /**

@@ -485,6 +485,16 @@ export const isAiResourceEntity: (
   entity: Entity,
 ) => entity is AiResourceEntityV1alpha1;
 
+// @alpha
+export const isRuleAiResourceEntity: (
+  entity: Entity,
+) => entity is RuleAiResourceEntityV1alpha1;
+
+// @alpha
+export const isSkillAiResourceEntity: (
+  entity: Entity,
+) => entity is SkillAiResourceEntityV1alpha1;
+
 // @public
 export type KindValidator = {
   check(entity: Entity): Promise<boolean>;
