@@ -23,8 +23,6 @@ import {
   skillAiResourceEntityV1alpha1Validator as skillValidator,
   ruleAiResourceEntityV1alpha1Validator as ruleValidator,
   isAiResourceEntity,
-  isSkillAiResourceEntity,
-  isRuleAiResourceEntity,
 } from './AiResourceEntityV1alpha1';
 
 describe('AiResourceV1alpha1 default validator', () => {
@@ -275,28 +273,6 @@ describe('AiResourceV1alpha1 rule validator', () => {
   });
 });
 
-describe('isRuleAiResourceEntity', () => {
-  it('returns true for a rule AiResource', () => {
-    const entity: Entity = {
-      apiVersion: 'backstage.io/v1alpha1',
-      kind: 'AiResource',
-      metadata: { name: 'test' },
-      spec: { type: 'rule' },
-    };
-    expect(isRuleAiResourceEntity(entity)).toBe(true);
-  });
-
-  it('returns false for a non-rule AiResource', () => {
-    const entity: Entity = {
-      apiVersion: 'backstage.io/v1alpha1',
-      kind: 'AiResource',
-      metadata: { name: 'test' },
-      spec: { type: 'skill' },
-    };
-    expect(isRuleAiResourceEntity(entity)).toBe(false);
-  });
-});
-
 describe('isAiResourceEntity', () => {
   it('returns true when apiVersion and kind match', () => {
     const entity: Entity = {
@@ -323,37 +299,5 @@ describe('isAiResourceEntity', () => {
       metadata: { name: 'test' },
     };
     expect(isAiResourceEntity(entity)).toBe(false);
-  });
-});
-
-describe('isSkillAiResourceEntity', () => {
-  it('returns true for a skill AiResource', () => {
-    const entity: Entity = {
-      apiVersion: 'backstage.io/v1alpha1',
-      kind: 'AiResource',
-      metadata: { name: 'test' },
-      spec: { type: 'skill' },
-    };
-    expect(isSkillAiResourceEntity(entity)).toBe(true);
-  });
-
-  it('returns false for a non-skill AiResource', () => {
-    const entity: Entity = {
-      apiVersion: 'backstage.io/v1alpha1',
-      kind: 'AiResource',
-      metadata: { name: 'test' },
-      spec: { type: 'rule' },
-    };
-    expect(isSkillAiResourceEntity(entity)).toBe(false);
-  });
-
-  it('returns false for a different kind', () => {
-    const entity: Entity = {
-      apiVersion: 'backstage.io/v1alpha1',
-      kind: 'Component',
-      metadata: { name: 'test' },
-      spec: { type: 'skill' },
-    };
-    expect(isSkillAiResourceEntity(entity)).toBe(false);
   });
 });

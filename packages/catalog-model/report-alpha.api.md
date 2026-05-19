@@ -485,27 +485,14 @@ export const isAiResourceEntity: (
   entity: Entity,
 ) => entity is AiResourceEntityV1alpha1;
 
-// @alpha
-export const isRuleAiResourceEntity: (
-  entity: Entity,
-) => entity is RuleAiResourceEntityV1alpha1;
-
-// @alpha
-export const isSkillAiResourceEntity: (
-  entity: Entity,
-) => entity is SkillAiResourceEntityV1alpha1;
-
 // @public
 export type KindValidator = {
   check(entity: Entity): Promise<boolean>;
 };
 
 // @alpha
-export interface RuleAiResourceEntityV1alpha1 extends Entity {
-  // (undocumented)
-  apiVersion: 'backstage.io/v1alpha1';
-  // (undocumented)
-  kind: 'AiResource';
+export interface RuleAiResourceEntityV1alpha1
+  extends AiResourceEntityV1alpha1Default {
   // (undocumented)
   spec: {
     type: 'rule';
@@ -522,11 +509,8 @@ export interface RuleAiResourceEntityV1alpha1 extends Entity {
 export const ruleAiResourceEntityV1alpha1Validator: KindValidator;
 
 // @alpha
-export interface SkillAiResourceEntityV1alpha1 extends Entity {
-  // (undocumented)
-  apiVersion: 'backstage.io/v1alpha1';
-  // (undocumented)
-  kind: 'AiResource';
+export interface SkillAiResourceEntityV1alpha1
+  extends AiResourceEntityV1alpha1Default {
   // (undocumented)
   spec: {
     type: 'skill';

@@ -45,9 +45,8 @@ export interface AiResourceEntityV1alpha1Default extends Entity {
  *
  * @alpha
  */
-export interface SkillAiResourceEntityV1alpha1 extends Entity {
-  apiVersion: 'backstage.io/v1alpha1';
-  kind: 'AiResource';
+export interface SkillAiResourceEntityV1alpha1
+  extends AiResourceEntityV1alpha1Default {
   spec: {
     type: 'skill';
     lifecycle: string;
@@ -66,9 +65,8 @@ export interface SkillAiResourceEntityV1alpha1 extends Entity {
  *
  * @alpha
  */
-export interface RuleAiResourceEntityV1alpha1 extends Entity {
-  apiVersion: 'backstage.io/v1alpha1';
-  kind: 'AiResource';
+export interface RuleAiResourceEntityV1alpha1
+  extends AiResourceEntityV1alpha1Default {
   spec: {
     type: 'rule';
     lifecycle: string;
@@ -127,16 +125,6 @@ export const isAiResourceEntity = (
 ): entity is AiResourceEntityV1alpha1 =>
   entity.apiVersion === 'backstage.io/v1alpha1' && entity.kind === 'AiResource';
 
-/**
- * Type guard for {@link SkillAiResourceEntityV1alpha1}.
- *
- * @alpha
- */
-export const isSkillAiResourceEntity = (
-  entity: Entity,
-): entity is SkillAiResourceEntityV1alpha1 =>
-  isAiResourceEntity(entity) && entity.spec?.type === 'skill';
-
 const ruleValidator = entityKindSchemaValidator(ruleJsonSchema);
 
 /**
@@ -149,16 +137,6 @@ export const ruleAiResourceEntityV1alpha1Validator: KindValidator = {
     return ruleValidator(data) === data;
   },
 };
-
-/**
- * Type guard for {@link RuleAiResourceEntityV1alpha1}.
- *
- * @alpha
- */
-export const isRuleAiResourceEntity = (
-  entity: Entity,
-): entity is RuleAiResourceEntityV1alpha1 =>
-  isAiResourceEntity(entity) && entity.spec?.type === 'rule';
 
 const baseRelationFields = [
   {

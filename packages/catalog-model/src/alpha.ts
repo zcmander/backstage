@@ -38,8 +38,6 @@ export {
   skillAiResourceEntityV1alpha1Validator,
   ruleAiResourceEntityV1alpha1Validator,
   isAiResourceEntity,
-  isSkillAiResourceEntity,
-  isRuleAiResourceEntity,
   aiResourceEntityModel,
 } from './kinds/AiResourceEntityV1alpha1';
 export * from './model';
