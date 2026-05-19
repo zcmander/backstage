@@ -292,10 +292,16 @@ export const rootSystemMetadataServiceRef: ServiceRef<
 
 // @alpha
 export interface TracingService {
+  readonly context: TracingServiceContextAPI;
+  readonly propagation: TracingServicePropagationAPI;
   startActiveSpan<T>(
     name: string,
     fn: (span: TracingServiceSpan) => T | Promise<T>,
-    options?: TracingServiceSpanOptions,
+  ): Promise<T>;
+  startActiveSpan<T>(
+    name: string,
+    options: TracingServiceSpanOptions,
+    fn: (span: TracingServiceSpan) => T | Promise<T>,
   ): Promise<T>;
 }
 
@@ -313,6 +319,40 @@ export type TracingServiceAttributeValue =
   | Array<null | undefined | string>
   | Array<null | undefined | number>
   | Array<null | undefined | boolean>;
+
+// @alpha
+export interface TracingServiceBaggage {
+  // (undocumented)
+  getAllEntries(): Array<[string, TracingServiceBaggageEntry]>;
+}
+
+// @alpha
+export interface TracingServiceBaggageEntry {
+  // (undocumented)
+  value: string;
+}
+
+// @alpha
+export interface TracingServiceContext {
+  // (undocumented)
+  readonly $$type: '@backstage/TracingServiceContext';
+}
+
+// @alpha
+export interface TracingServiceContextAPI {
+  active(): TracingServiceContext;
+  with<T>(context: TracingServiceContext, fn: () => T | Promise<T>): Promise<T>;
+}
+
+// @alpha
+export interface TracingServicePropagationAPI {
+  extract(
+    context: TracingServiceContext,
+    carrier: Record<string, string | string[] | undefined>,
+  ): TracingServiceContext;
+  getActiveBaggage(): TracingServiceBaggage | undefined;
+  getBaggage(context: TracingServiceContext): TracingServiceBaggage | undefined;
+}
 
 // @alpha
 export const tracingServiceRef: ServiceRef<

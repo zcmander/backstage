@@ -16,6 +16,8 @@ import { MetricsService } from '@backstage/backend-plugin-api/alpha';
 import { ServiceFactory } from '@backstage/backend-plugin-api';
 import { TracingService } from '@backstage/backend-plugin-api/alpha';
 import { TracingServiceAttributeValue } from '@backstage/backend-plugin-api/alpha';
+import { TracingServiceContextAPI } from '@backstage/backend-plugin-api/alpha';
+import { TracingServicePropagationAPI } from '@backstage/backend-plugin-api/alpha';
 import { TracingServiceSpan } from '@backstage/backend-plugin-api/alpha';
 import { TracingServiceSpanStatus } from '@backstage/backend-plugin-api/alpha';
 
@@ -86,6 +88,28 @@ export class MockActionsRegistry
 }
 
 // @alpha
+export interface MockedTracingServiceContextAPI
+  extends TracingServiceContextAPI {
+  // (undocumented)
+  active: jest.MockedFunction<TracingServiceContextAPI['active']>;
+  // (undocumented)
+  with: jest.MockedFunction<TracingServiceContextAPI['with']>;
+}
+
+// @alpha
+export interface MockedTracingServicePropagationAPI
+  extends TracingServicePropagationAPI {
+  // (undocumented)
+  extract: jest.MockedFunction<TracingServicePropagationAPI['extract']>;
+  // (undocumented)
+  getActiveBaggage: jest.MockedFunction<
+    TracingServicePropagationAPI['getActiveBaggage']
+  >;
+  // (undocumented)
+  getBaggage: jest.MockedFunction<TracingServicePropagationAPI['getBaggage']>;
+}
+
+// @alpha
 export interface MockedTracingServiceSpan extends TracingServiceSpan {
   // (undocumented)
   setAttribute: jest.Mock<void, [string, TracingServiceAttributeValue]>;
@@ -107,7 +131,11 @@ export type ServiceMock<TService> = {
 // @alpha
 export interface TracingServiceMock extends TracingService {
   // (undocumented)
+  context: MockedTracingServiceContextAPI;
+  // (undocumented)
   factory: ServiceFactory<TracingService>;
+  // (undocumented)
+  propagation: MockedTracingServicePropagationAPI;
   spans: MockedTracingServiceSpan[];
   // (undocumented)
   startActiveSpan: jest.MockedFunction<TracingService['startActiveSpan']>;

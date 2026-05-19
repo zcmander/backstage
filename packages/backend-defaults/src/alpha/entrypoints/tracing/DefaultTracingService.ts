@@ -14,7 +14,15 @@
  * limitations under the License.
  */
 
-import { SpanKind, SpanStatusCode, Tracer, trace } from '@opentelemetry/api';
+import {
+  Context,
+  SpanKind,
+  SpanStatusCode,
+  Tracer,
+  context as otelContext,
+  propagation as otelPropagation,
+  trace,
+} from '@opentelemetry/api';
 import {
   BackstageCredentials,
   HttpAuthService,
@@ -22,6 +30,10 @@ import {
 import {
   TracingService,
   TracingServiceAttributes,
+  TracingServiceBaggage,
+  TracingServiceContext,
+  TracingServiceContextAPI,
+  TracingServicePropagationAPI,
   TracingServiceSpan,
   TracingServiceSpanKind,
   TracingServiceSpanOptions,
@@ -42,6 +54,28 @@ export interface DefaultTracingServiceOptions {
   httpAuth: HttpAuthService;
 }
 
+// `TracingServiceContext` is an opaque handle for an OTel `Context`. Internally
+// the value *is* the OTel context; we just narrow the type so consumers can't
+// poke at it directly.
+function toOtelContext(ctx: TracingServiceContext): Context {
+  return ctx as unknown as Context;
+}
+function fromOtelContext(ctx: Context): TracingServiceContext {
+  return ctx as unknown as TracingServiceContext;
+}
+
+function wrapOtelBaggage(
+  baggage: ReturnType<typeof otelPropagation.getActiveBaggage>,
+): TracingServiceBaggage | undefined {
+  if (!baggage) return undefined;
+  return {
+    getAllEntries: () =>
+      baggage
+        .getAllEntries()
+        .map(([key, entry]) => [key, { value: entry.value }]),
+  };
+}
+
 /**
  * Default implementation of the {@link TracingService} interface.
  *
@@ -52,6 +86,32 @@ export class DefaultTracingService implements TracingService {
   private readonly pluginId: string;
   private readonly captureEndUser: boolean;
   private readonly httpAuth: HttpAuthService;
+
+  readonly context: TracingServiceContextAPI = {
+    active: () => fromOtelContext(otelContext.active()),
+    // `otelContext.with` is synchronous: it activates `ctx`, invokes `fn`,
+    // then restores the previous active context before this call returns.
+    // When `fn` is async, the AsyncLocalStorage context manager installed
+    // by the OTel SDK is what keeps `ctx` active across the callback's
+    // `await`s. If no context manager is registered (e.g. in a test that
+    // does not wire up the OTel SDK) the `await` continuations will run
+    // outside `ctx`.
+    with: async <T>(
+      ctx: TracingServiceContext,
+      fn: () => T | Promise<T>,
+    ): Promise<T> => otelContext.with(toOtelContext(ctx), fn),
+  };
+
+  readonly propagation: TracingServicePropagationAPI = {
+    extract: (
+      ctx: TracingServiceContext,
+      carrier: Record<string, string | string[] | undefined>,
+    ): TracingServiceContext =>
+      fromOtelContext(otelPropagation.extract(toOtelContext(ctx), carrier)),
+    getBaggage: (ctx: TracingServiceContext) =>
+      wrapOtelBaggage(otelPropagation.getBaggage(toOtelContext(ctx))),
+    getActiveBaggage: () => wrapOtelBaggage(otelPropagation.getActiveBaggage()),
+  };
 
   private constructor(opts: DefaultTracingServiceOptions) {
     this.tracer = trace
@@ -66,11 +126,30 @@ export class DefaultTracingService implements TracingService {
     return new DefaultTracingService(opts);
   }
 
-  async startActiveSpan<T>(
+  startActiveSpan<T>(
     name: string,
     fn: (span: TracingServiceSpan) => T | Promise<T>,
-    options: TracingServiceSpanOptions = {},
+  ): Promise<T>;
+  startActiveSpan<T>(
+    name: string,
+    options: TracingServiceSpanOptions,
+    fn: (span: TracingServiceSpan) => T | Promise<T>,
+  ): Promise<T>;
+  async startActiveSpan<T>(
+    name: string,
+    optionsOrFn:
+      | TracingServiceSpanOptions
+      | ((span: TracingServiceSpan) => T | Promise<T>),
+    maybeFn?: (span: TracingServiceSpan) => T | Promise<T>,
   ): Promise<T> {
+    const [options, fn]: [
+      TracingServiceSpanOptions,
+      (span: TracingServiceSpan) => T | Promise<T>,
+    ] =
+      typeof optionsOrFn === 'function'
+        ? [{}, optionsOrFn]
+        : [optionsOrFn, maybeFn!];
+
     let credentials = options.credentials;
     if (!credentials && options.request) {
       credentials = await this.httpAuth.credentials(options.request);
