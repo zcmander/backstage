@@ -1047,23 +1047,24 @@ function installConditionalRequestCache(
   octokit: Octokit,
   cache: CacheService,
 ): void {
-  octokit.hook.wrap('request', async (request, options_) => {
-    const resolvedUrl = (options_.url || '').replace(/\{([^}]+)\}/g, (_, key) =>
-      encodeURIComponent((options_ as any)[key]),
+  octokit.hook.wrap('request', async (request, wrappedOptions) => {
+    const resolvedUrl = (wrappedOptions.url || '').replace(
+      /\{([^}]+)\}/g,
+      (_, key) => encodeURIComponent((wrappedOptions as any)[key]),
     );
-    const cacheKey = `catalog-backend-module-github:${options_.method}:${options_.baseUrl}${resolvedUrl}`;
+    const cacheKey = `catalog-backend-module-github:${wrappedOptions.method}:${wrappedOptions.baseUrl}${resolvedUrl}`;
     const cached = await cache
       .get<CachedGitHubResponse>(cacheKey)
       .catch(() => undefined);
 
     if (cached?.lastModified) {
-      options_.headers['if-modified-since'] = cached.lastModified;
+      wrappedOptions.headers['if-modified-since'] = cached.lastModified;
     } else if (cached?.etag) {
-      options_.headers['if-none-match'] = cached.etag;
+      wrappedOptions.headers['if-none-match'] = cached.etag;
     }
 
     try {
-      const response = await request(options_);
+      const response = await request(wrappedOptions);
 
       const lastModified = response.headers['last-modified'];
       const etag = response.headers.etag;
