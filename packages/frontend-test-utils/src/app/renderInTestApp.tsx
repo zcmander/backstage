@@ -15,19 +15,16 @@
  */
 
 import { Fragment } from 'react';
-import { Link, MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 import { prepareSpecializedApp } from '@backstage/frontend-app-api';
 import { RenderResult, render } from '@testing-library/react';
 import { ConfigReader } from '@backstage/config';
 import { JsonObject } from '@backstage/types';
 import {
   createExtension,
-  createExtensionDataRef,
   ExtensionDefinition,
   coreExtensionData,
   RouteRef,
-  useRouteRef,
-  IconComponent,
   createFrontendPlugin,
   FrontendFeature,
   createFrontendModule,
@@ -48,13 +45,6 @@ const DEFAULT_MOCK_CONFIG = {
   app: { baseUrl: 'http://localhost:3000' },
   backend: { baseUrl: 'http://localhost:7007' },
 };
-
-// Must match the data ref in @backstage/plugin-app/src/extensions/legacyNavItem.ts
-const legacyNavItemTargetDataRef = createExtensionDataRef<{
-  title: string;
-  icon: IconComponent;
-  routeRef: RouteRef<undefined>;
-}>().with({ id: 'core.nav-item.target' });
 
 /**
  * Options to customize the behavior of the test app.
@@ -110,25 +100,6 @@ export type TestAppOptions<TApiPairs extends any[] = any[]> = {
   apis?: readonly [...TestApiPairs<TApiPairs>];
 };
 
-const NavItem = (props: {
-  routeRef: RouteRef<undefined>;
-  title: string;
-  icon: IconComponent;
-}) => {
-  const { routeRef, title, icon: Icon } = props;
-  const link = useRouteRef(routeRef);
-  if (!link) {
-    return null;
-  }
-  return (
-    <li>
-      <Link to={link()}>
-        <Icon /> {title}
-      </Link>
-    </li>
-  );
-};
-
 const appPluginOverride = appPlugin.withOverrides({
   extensions: [
     appPlugin.getExtension('sign-in-page:app').override({
@@ -141,33 +112,7 @@ const appPluginOverride = appPlugin.withOverrides({
       disabled: true,
     }),
     appPlugin.getExtension('app/nav').override({
-      output: [coreExtensionData.reactElement],
-      factory(_originalFactory, { inputs }) {
-        return [
-          coreExtensionData.reactElement(
-            <nav>
-              <ul>
-                {inputs.items.map(
-                  (item: (typeof inputs.items)[number], index: number) => {
-                    const { icon, title, routeRef } = item.get(
-                      legacyNavItemTargetDataRef,
-                    );
-
-                    return (
-                      <NavItem
-                        key={index}
-                        icon={icon}
-                        title={title}
-                        routeRef={routeRef}
-                      />
-                    );
-                  },
-                )}
-              </ul>
-            </nav>,
-          ),
-        ];
-      },
+      disabled: true,
     }),
   ],
 });

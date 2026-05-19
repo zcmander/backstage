@@ -2,4 +2,4 @@
 '@backstage/frontend-test-utils': patch
 ---
 
-Updated `renderInTestApp` to render legacy nav-item extensions without relying on the removed `NavItemBlueprint` from `@backstage/frontend-plugin-api`.
+Disabled the app nav extension in `renderInTestApp`, removing the legacy nav-item rendering stub.
