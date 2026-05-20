@@ -61,7 +61,7 @@ export async function getDeferredStitchableEntities(options: {
   // are released after the SELECT auto-commits, and another worker can
   // claim the same rows before the UPDATE runs.
   const run = async (tx: Knex | Knex.Transaction) => {
-    const items = await tx<DbStitchQueueRow>('stitch_queue')
+    const items: DbStitchQueueRow[] = await tx('stitch_queue')
       .select('entity_ref', 'next_stitch_at', 'stitch_ticket')
       .where('next_stitch_at', '<=', tx.fn.now())
       .orderBy('next_stitch_at', 'asc')
@@ -76,7 +76,7 @@ export async function getDeferredStitchableEntities(options: {
       return [];
     }
 
-    await tx<DbStitchQueueRow>('stitch_queue')
+    await tx('stitch_queue')
       .whereIn(
         'entity_ref',
         items.map(i => i.entity_ref),

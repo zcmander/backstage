@@ -229,7 +229,7 @@ export class DefaultProcessingDatabase implements ProcessingDatabase {
     // single transaction so that the row locks persist until
     // next_update_at has been bumped.
     const run = async (tx: Knex | Knex.Transaction) => {
-      const items = await tx<DbRefreshStateRow>('refresh_state')
+      const items: DbRefreshStateRow[] = await tx('refresh_state')
         .select([
           'entity_id',
           'entity_ref',
@@ -250,7 +250,7 @@ export class DefaultProcessingDatabase implements ProcessingDatabase {
         });
 
       if (items.length > 0) {
-        await tx<DbRefreshStateRow>('refresh_state')
+        await tx('refresh_state')
           .whereIn(
             'entity_ref',
             items.map(i => i.entity_ref),
