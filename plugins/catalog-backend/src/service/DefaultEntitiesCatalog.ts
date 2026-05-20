@@ -505,7 +505,8 @@ export class DefaultEntitiesCatalog implements EntitiesCatalog {
           this.database('search')
             .select(this.database.raw(1))
             .whereRaw('search.entity_id = final_entities.entity_id')
-            .where('search.key', sortField.field),
+            .where('search.key', sortField.field)
+            .whereNotNull('search.value'),
         );
       }
 
