@@ -156,6 +156,7 @@ describe('Entity page', () => {
           [catalogApiRef, mockCatalogApi],
           [starredEntitiesApiRef, mockStarredEntitiesApi],
         ],
+        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
             title: 'Custom app',
@@ -203,6 +204,7 @@ describe('Entity page', () => {
           [catalogApiRef, mockCatalogApi],
           [starredEntitiesApiRef, mockStarredEntitiesApi],
         ],
+        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
             title: 'Custom app',
@@ -243,6 +245,7 @@ describe('Entity page', () => {
           [catalogApiRef, mockCatalogApi],
           [starredEntitiesApiRef, mockStarredEntitiesApi],
         ],
+        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
             title: 'Custom app',
@@ -296,6 +299,7 @@ describe('Entity page', () => {
           [catalogApiRef, mockCatalogApi],
           [starredEntitiesApiRef, mockStarredEntitiesApi],
         ],
+        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
             title: 'Custom app',
@@ -337,6 +341,7 @@ describe('Entity page', () => {
           [catalogApiRef, mockCatalogApi],
           [starredEntitiesApiRef, mockStarredEntitiesApi],
         ],
+        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
             title: 'Custom app',
@@ -371,6 +376,7 @@ describe('Entity page', () => {
           [catalogApiRef, mockCatalogApi],
           [starredEntitiesApiRef, mockStarredEntitiesApi],
         ],
+        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
             title: 'Custom app',
@@ -417,6 +423,7 @@ describe('Entity page', () => {
           [catalogApiRef, mockCatalogApi],
           [starredEntitiesApiRef, mockStarredEntitiesApi],
         ],
+        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
             title: 'Custom app',
@@ -453,6 +460,7 @@ describe('Entity page', () => {
           [catalogApiRef, mockCatalogApi],
           [starredEntitiesApiRef, mockStarredEntitiesApi],
         ],
+        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
             title: 'Custom app',
@@ -494,6 +502,7 @@ describe('Entity page', () => {
           [catalogApiRef, mockCatalogApi],
           [starredEntitiesApiRef, mockStarredEntitiesApi],
         ],
+        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
             title: 'Custom app',
@@ -543,6 +552,7 @@ describe('Entity page', () => {
           [catalogApiRef, mockCatalogApi],
           [starredEntitiesApiRef, mockStarredEntitiesApi],
         ],
+        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
             title: 'Custom app',
@@ -592,6 +602,7 @@ describe('Entity page', () => {
           [catalogApiRef, mockCatalogApi],
           [starredEntitiesApiRef, mockStarredEntitiesApi],
         ],
+        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
             title: 'Custom app',
@@ -629,6 +640,7 @@ describe('Entity page', () => {
           [catalogApiRef, mockCatalogApi],
           [starredEntitiesApiRef, mockStarredEntitiesApi],
         ],
+        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
             title: 'Custom app',
@@ -668,6 +680,7 @@ describe('Entity page', () => {
           [catalogApiRef, mockCatalogApi],
           [starredEntitiesApiRef, mockStarredEntitiesApi],
         ],
+        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
             title: 'Custom app',
@@ -727,6 +740,7 @@ describe('Entity page', () => {
           [catalogApiRef, mockCatalogApi],
           [starredEntitiesApiRef, mockStarredEntitiesApi],
         ],
+        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
             title: 'Custom app',
@@ -782,6 +796,7 @@ describe('Entity page', () => {
           [catalogApiRef, mockCatalogApi],
           [starredEntitiesApiRef, mockStarredEntitiesApi],
         ],
+        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
             title: 'Custom app',
