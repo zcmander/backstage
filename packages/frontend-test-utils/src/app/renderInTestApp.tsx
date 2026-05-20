@@ -135,6 +135,7 @@ export function renderInTestApp<const TApiPairs extends any[] = any[]>(
       output: [coreExtensionData.reactElement],
       factory: () => {
         let content: JSX.Element = element;
+
         if (mountedPaths.length > 0) {
           content = (
             <Routes>
@@ -142,13 +143,14 @@ export function renderInTestApp<const TApiPairs extends any[] = any[]>(
                 <Route
                   key={path}
                   path={path === '/' ? path : `${path.replace(/\/$/, '')}/*`}
-                  element={element}
+                  element={content}
                 />
               ))}
-              <Route path="*" element={element} />
+              <Route path="*" element={content} />
             </Routes>
           );
         }
+
         return [coreExtensionData.reactElement(content)];
       },
     }),
