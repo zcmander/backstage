@@ -263,9 +263,10 @@ export class DefaultProcessingDatabase implements ProcessingDatabase {
       return items;
     };
 
-    const items = knex.isTransaction
-      ? await run(knex)
-      : await knex.transaction(run);
+    const items =
+      knex.isTransaction || !useLocking
+        ? await run(knex)
+        : await knex.transaction(run);
 
     return {
       items: items.map(
