@@ -311,6 +311,7 @@ export const EntityListProvider = <EntityFilters extends DefaultEntityFilters>(
     if (isEqual(fetchParams, lastFetchParamsRef.current)) {
       return;
     }
+    const prevFetchParams = lastFetchParamsRef.current;
     lastFetchParamsRef.current = fetchParams;
 
     const gen = ++fetchGenRef.current;
@@ -324,6 +325,7 @@ export const EntityListProvider = <EntityFilters extends DefaultEntityFilters>(
       }
     } catch (e) {
       if (gen === fetchGenRef.current) {
+        lastFetchParamsRef.current = prevFetchParams;
         setError(e as Error);
       }
     } finally {
