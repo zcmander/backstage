@@ -301,6 +301,13 @@ export const EntityListProvider = <EntityFilters extends DefaultEntityFilters>(
       };
     }
 
+    // No filters registered yet — wait for filter components to
+    // call updateFilters before making the first request.
+    if (compacted.length === 0 && lastFetchParamsRef.current === undefined) {
+      setLoading(false);
+      return;
+    }
+
     if (isEqual(fetchParams, lastFetchParamsRef.current)) {
       return;
     }
@@ -351,7 +358,7 @@ export const EntityListProvider = <EntityFilters extends DefaultEntityFilters>(
   // to replace the state rather than pushing, since we don't want
   // there to be back/forward slots for every single filter change.
   useEffect(() => {
-    if (!isMounted()) {
+    if (!isMounted() || Object.keys(requestedFilters).length === 0) {
       return;
     }
     const queryParams = Object.keys(requestedFilters).reduce((params, key) => {
