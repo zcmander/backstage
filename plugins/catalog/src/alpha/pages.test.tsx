@@ -176,11 +176,17 @@ describe('Entity page', () => {
 
       await expect(
         screen.findByRole('button', { name: /TechDocs/ }),
-      ).resolves.toHaveAttribute('href', '/techdocs');
+      ).resolves.toHaveAttribute(
+        'href',
+        '/catalog/default/component/artist-lookup/techdocs',
+      );
 
       await expect(
         screen.findByRole('button', { name: /ApiDocs/ }),
-      ).resolves.toHaveAttribute('href', '/apidocs');
+      ).resolves.toHaveAttribute(
+        'href',
+        '/catalog/default/component/artist-lookup/apidocs',
+      );
     });
 
     it('Should rename a default group', async () => {
@@ -222,11 +228,17 @@ describe('Entity page', () => {
 
       await expect(
         screen.findByRole('button', { name: /TechDocs/ }),
-      ).resolves.toHaveAttribute('href', '/techdocs');
+      ).resolves.toHaveAttribute(
+        'href',
+        '/catalog/default/component/artist-lookup/techdocs',
+      );
 
       await expect(
         screen.findByRole('button', { name: /ApiDocs/ }),
-      ).resolves.toHaveAttribute('href', '/apidocs');
+      ).resolves.toHaveAttribute(
+        'href',
+        '/catalog/default/component/artist-lookup/apidocs',
+      );
     });
 
     it('Should disassociate a content with a default group', async () => {
@@ -317,11 +329,17 @@ describe('Entity page', () => {
 
       await expect(
         screen.findByRole('button', { name: /TechDocs/ }),
-      ).resolves.toHaveAttribute('href', '/techdocs');
+      ).resolves.toHaveAttribute(
+        'href',
+        '/catalog/default/component/artist-lookup/techdocs',
+      );
 
       await expect(
         screen.findByRole('button', { name: /ApiDocs/ }),
-      ).resolves.toHaveAttribute('href', '/apidocs');
+      ).resolves.toHaveAttribute(
+        'href',
+        '/catalog/default/component/artist-lookup/apidocs',
+      );
     });
 
     it('Should render a single-content groups as a normal tab', async () => {
@@ -441,11 +459,17 @@ describe('Entity page', () => {
 
       await expect(
         screen.findByRole('button', { name: /TechDocs/ }),
-      ).resolves.toHaveAttribute('href', '/techdocs');
+      ).resolves.toHaveAttribute(
+        'href',
+        '/catalog/default/component/artist-lookup/techdocs',
+      );
 
       await expect(
         screen.findByRole('button', { name: /ApiDocs/ }),
-      ).resolves.toHaveAttribute('href', '/apidocs');
+      ).resolves.toHaveAttribute(
+        'href',
+        '/catalog/default/component/artist-lookup/apidocs',
+      );
     });
 
     it('Should sort content by title by default', async () => {
@@ -816,14 +840,14 @@ describe('Entity page', () => {
         screen.findByText(/artist-lookup/),
       ).resolves.toBeInTheDocument();
 
-      await userEvent.click(screen.getByTestId('menu-button'));
+      await userEvent.click(await screen.findByTestId('menu-button'));
 
       await expect(
         screen.findByText('Test Title'),
       ).resolves.toBeInTheDocument();
 
       await expect(screen.findByText('Test Icon')).resolves.toBeInTheDocument();
-      const listItem = screen.getByText('Test Title').closest('li');
+      const listItem = (await screen.findByText('Test Title')).closest('li');
       expect(listItem).toHaveAttribute('aria-disabled', disabled.toString());
       if (!disabled) {
         await userEvent.click(screen.getByText('Test Title'));

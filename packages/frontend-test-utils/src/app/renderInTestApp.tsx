@@ -15,7 +15,7 @@
  */
 
 import { Fragment } from 'react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { prepareSpecializedApp } from '@backstage/frontend-app-api';
 import { RenderResult, render } from '@testing-library/react';
 import { ConfigReader } from '@backstage/config';
@@ -125,11 +125,31 @@ export function renderInTestApp<const TApiPairs extends any[] = any[]>(
   element: JSX.Element,
   options?: TestAppOptions<TApiPairs>,
 ): RenderResult {
+  const mountedPaths = options?.mountedRoutes
+    ? Object.keys(options.mountedRoutes)
+    : [];
+
   const extensions: Array<ExtensionDefinition> = [
     createExtension({
       attachTo: { id: 'app/root', input: 'children' },
       output: [coreExtensionData.reactElement],
       factory: () => {
+        if (mountedPaths.length > 0) {
+          return [
+            coreExtensionData.reactElement(
+              <Routes>
+                {mountedPaths.map(path => (
+                  <Route
+                    key={path}
+                    path={path === '/' ? path : `${path.replace(/\/$/, '')}/*`}
+                    element={element}
+                  />
+                ))}
+                <Route path="*" element={element} />
+              </Routes>,
+            ),
+          ];
+        }
         return [coreExtensionData.reactElement(element)];
       },
     }),
