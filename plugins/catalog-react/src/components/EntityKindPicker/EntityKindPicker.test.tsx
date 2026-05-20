@@ -140,7 +140,7 @@ describe('<EntityKindPicker/>', () => {
     );
 
     expect(updateFilters).toHaveBeenLastCalledWith({
-      kind: new EntityKindFilter('group', 'group'),
+      kind: new EntityKindFilter('group', 'Group'),
     });
   });
 

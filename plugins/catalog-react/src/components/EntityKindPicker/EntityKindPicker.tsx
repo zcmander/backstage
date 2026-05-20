@@ -17,7 +17,7 @@
 import { Select } from '@backstage/core-components';
 import { alertApiRef, useApi } from '@backstage/core-plugin-api';
 import Box from '@material-ui/core/Box';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { EntityKindFilter } from '../../filters';
 import { useEntityList } from '../../hooks';
 import { filterKinds, useAllKinds } from './kindFilterUtils';
@@ -65,16 +65,13 @@ function useEntityKindFilter(opts: { initialFilter: string }): {
   const { allKinds, loading, error } = useAllKinds();
   const selectedKindLabel = allKinds.get(selectedKind) || selectedKind;
 
-  const kindLabelRef = useRef(selectedKindLabel);
-  kindLabelRef.current = selectedKindLabel;
-
   useEffect(() => {
     updateFilters({
       kind: selectedKind
-        ? new EntityKindFilter(selectedKind, kindLabelRef.current)
+        ? new EntityKindFilter(selectedKind, selectedKindLabel)
         : undefined,
     });
-  }, [selectedKind, updateFilters]);
+  }, [selectedKind, selectedKindLabel, updateFilters]);
 
   return {
     loading,
