@@ -92,10 +92,9 @@ export async function getDeferredStitchableEntities(options: {
     }));
   };
 
-  if (knex.isTransaction || !useLocking) {
-    return run(knex);
-  }
-  return knex.transaction(run);
+  return knex.isTransaction || !useLocking
+    ? await run(knex)
+    : await knex.transaction(run);
 }
 
 function nowPlus(knex: Knex, duration: HumanDuration): Knex.Raw {
