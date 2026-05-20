@@ -134,23 +134,22 @@ export function renderInTestApp<const TApiPairs extends any[] = any[]>(
       attachTo: { id: 'app/root', input: 'children' },
       output: [coreExtensionData.reactElement],
       factory: () => {
+        let content: JSX.Element = element;
         if (mountedPaths.length > 0) {
-          return [
-            coreExtensionData.reactElement(
-              <Routes>
-                {mountedPaths.map(path => (
-                  <Route
-                    key={path}
-                    path={path === '/' ? path : `${path.replace(/\/$/, '')}/*`}
-                    element={element}
-                  />
-                ))}
-                <Route path="*" element={element} />
-              </Routes>,
-            ),
-          ];
+          content = (
+            <Routes>
+              {mountedPaths.map(path => (
+                <Route
+                  key={path}
+                  path={path === '/' ? path : `${path.replace(/\/$/, '')}/*`}
+                  element={element}
+                />
+              ))}
+              <Route path="*" element={element} />
+            </Routes>
+          );
         }
-        return [coreExtensionData.reactElement(element)];
+        return [coreExtensionData.reactElement(content)];
       },
     }),
   ];
