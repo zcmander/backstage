@@ -246,12 +246,16 @@ export const EntityListProvider = <EntityFilters extends DefaultEntityFilters>(
   // so out-of-order responses from overlapping requests are discarded.
   const fetchGenRef = useRef(0);
 
-  const refresh = useCallback(async () => {
+  // Adjusted filters remove the owners filter for user/group kinds,
+  // since ownership is not meaningful for those entity types.
+  const adjustedFilters = useMemo(() => {
     const kindValue = requestedFilters.kind?.value?.toLocaleLowerCase('en-US');
-    const adjustedFilters =
-      kindValue === 'user' || kindValue === 'group'
-        ? { ...requestedFilters, owners: undefined }
-        : requestedFilters;
+    return kindValue === 'user' || kindValue === 'group'
+      ? { ...requestedFilters, owners: undefined }
+      : requestedFilters;
+  }, [requestedFilters]);
+
+  const refresh = useCallback(async () => {
     const compacted = compact(Object.values(adjustedFilters));
 
     let fetchParams: unknown;
@@ -333,21 +337,14 @@ export const EntityListProvider = <EntityFilters extends DefaultEntityFilters>(
         setLoading(false);
       }
     }
-  }, [catalogApi, requestedFilters, cursor, paginationMode, limit, offset]);
+  }, [catalogApi, adjustedFilters, cursor, paginationMode, limit, offset]);
 
   // Slight debounce on the refresh, since (especially on page load)
   // several filters will be calling updateFilters in rapid succession.
-  useDebounce(refresh, 10, [requestedFilters, cursor, limit, offset]);
+  useDebounce(refresh, 10, [adjustedFilters, cursor, limit, offset]);
 
   // Frontend filtering — synchronous, no debounce needed. Updates
   // instantly when requestedFilters or backendEntities change.
-  const adjustedFilters = useMemo(() => {
-    const kindValue = requestedFilters.kind?.value?.toLocaleLowerCase('en-US');
-    return kindValue === 'user' || kindValue === 'group'
-      ? { ...requestedFilters, owners: undefined }
-      : requestedFilters;
-  }, [requestedFilters]);
-
   const entities = useMemo(() => {
     const compacted = compact(Object.values(adjustedFilters));
     const entityFilter = reduceEntityFilters(compacted);
