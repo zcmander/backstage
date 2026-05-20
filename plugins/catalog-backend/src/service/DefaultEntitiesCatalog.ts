@@ -484,22 +484,9 @@ export class DefaultEntitiesCatalog implements EntitiesCatalog {
       },
     );
 
-    // Only pay the cost of counting the number of items if needed
-    if (shouldComputeTotalItems) {
-      // Note the intentional cross join here. The filtered_count dataset is
-      // always exactly one row, so it won't grow the result unnecessarily. But
-      // it's also important that there IS at least one row, because even if the
-      // filtered dataset is empty, we still want to know the total number of
-      // items.
-      dbQuery
-        .with('filtered_count', ['count'], inner =>
-          inner.from('filtered').count('*', { as: 'count' }),
-        )
-        .fromRaw('filtered_count, filtered')
-        .select('count', 'filtered.*');
-    } else {
-      dbQuery.from('filtered').select('*');
-    }
+    // The list query always references the 'filtered' CTE exactly once,
+    // allowing Postgres 12+ to inline it and short-circuit on LIMIT.
+    dbQuery.from('filtered').select('*');
 
     const isOrderingDescending = sortField?.order === 'desc';
 
@@ -585,15 +572,69 @@ export class DefaultEntitiesCatalog implements EntitiesCatalog {
     // fetch an extra item to check if there are more items.
     dbQuery.limit(isFetchingBackwards ? limit : limit + 1);
 
-    const rows = shouldComputeTotalItems || limit > 0 ? await dbQuery : [];
+    // Build a standalone count query that reproduces the same filtering as
+    // the 'filtered' CTE. Running it separately ensures the list CTE is
+    // only referenced once, letting Postgres 12+ inline it and
+    // short-circuit on LIMIT.
+    let countQuery: Knex.QueryBuilder | undefined;
+    if (shouldComputeTotalItems) {
+      countQuery = this.database('final_entities')
+        .whereNotNull('final_entities.final_entity')
+        .count('*', { as: 'count' });
+
+      if (sortField) {
+        countQuery.whereExists(
+          this.database('search')
+            .select(this.database.raw(1))
+            .whereRaw('search.entity_id = final_entities.entity_id')
+            .where('search.key', sortField.field),
+        );
+      }
+
+      if (cursor.filter || cursor.query) {
+        applyEntityFilterToQuery({
+          filter: cursor.filter,
+          query: cursor.query,
+          targetQuery: countQuery,
+          onEntityIdField: 'final_entities.entity_id',
+          knex: this.database,
+        });
+      }
+
+      const normalizedFullTextFilterTerm = cursor.fullTextFilter?.term?.trim();
+      if (normalizedFullTextFilterTerm) {
+        const textFilterFields = cursor.fullTextFilter?.fields ?? [
+          sortField?.field || 'metadata.uid',
+        ];
+        const matchQuery = this.database<DbSearchRow>('search')
+          .select('search.entity_id')
+          .whereIn(
+            'search.key',
+            textFilterFields.map(field => field.toLocaleLowerCase('en-US')),
+          )
+          .andWhere(function keyFilter() {
+            this.andWhereRaw(
+              'search.value like ?',
+              `%${normalizedFullTextFilterTerm.toLocaleLowerCase('en-US')}%`,
+            );
+          });
+        countQuery.andWhere('final_entities.entity_id', 'in', matchQuery);
+      }
+    }
+
+    // Run list and count queries concurrently
+    const [rows, countResult] = await Promise.all([
+      limit > 0 ? dbQuery : Promise.resolve([]),
+      countQuery ?? Promise.resolve(undefined),
+    ]);
 
     let totalItems: number;
     if (cursor.totalItems !== undefined) {
       totalItems = cursor.totalItems;
     } else if (cursor.skipTotalItems) {
       totalItems = 0;
-    } else if (rows.length) {
-      totalItems = Number(rows[0].count);
+    } else if (countResult?.[0]) {
+      totalItems = Number(countResult[0].count);
     } else {
       totalItems = 0;
     }
