@@ -28,6 +28,7 @@ import {
 } from '@backstage/plugin-catalog-react/alpha';
 import { catalogApiMock } from '@backstage/plugin-catalog-react/testUtils';
 import {
+  catalogApiRef,
   entityRouteRef,
   MockStarredEntitiesApi,
   starredEntitiesApiRef,
@@ -107,8 +108,8 @@ describe('Entity page', () => {
     ],
   };
 
-  const mockCatalogApi = catalogApiMock({
-    entities: [entityMock],
+  const mockCatalogApi = catalogApiMock.mock({
+    getEntityByRef: async () => entityMock,
   });
 
   const mockStarredEntitiesApi = new MockStarredEntitiesApi();
@@ -151,8 +152,10 @@ describe('Entity page', () => {
         .add(apidocsEntityContent);
 
       await renderInTestApp(tester.reactElement(), {
-        apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        apis: [
+          [catalogApiRef, mockCatalogApi],
+          [starredEntitiesApiRef, mockStarredEntitiesApi],
+        ],
         config: {
           app: {
             title: 'Custom app',
@@ -196,8 +199,10 @@ describe('Entity page', () => {
         .add(apidocsEntityContent);
 
       await renderInTestApp(tester.reactElement(), {
-        apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        apis: [
+          [catalogApiRef, mockCatalogApi],
+          [starredEntitiesApiRef, mockStarredEntitiesApi],
+        ],
         config: {
           app: {
             title: 'Custom app',
@@ -234,8 +239,10 @@ describe('Entity page', () => {
         });
 
       await renderInTestApp(tester.reactElement(), {
-        apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        apis: [
+          [catalogApiRef, mockCatalogApi],
+          [starredEntitiesApiRef, mockStarredEntitiesApi],
+        ],
         config: {
           app: {
             title: 'Custom app',
@@ -285,8 +292,10 @@ describe('Entity page', () => {
         });
 
       await renderInTestApp(tester.reactElement(), {
-        apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        apis: [
+          [catalogApiRef, mockCatalogApi],
+          [starredEntitiesApiRef, mockStarredEntitiesApi],
+        ],
         config: {
           app: {
             title: 'Custom app',
@@ -324,8 +333,10 @@ describe('Entity page', () => {
         });
 
       await renderInTestApp(tester.reactElement(), {
-        apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        apis: [
+          [catalogApiRef, mockCatalogApi],
+          [starredEntitiesApiRef, mockStarredEntitiesApi],
+        ],
         config: {
           app: {
             title: 'Custom app',
@@ -356,8 +367,10 @@ describe('Entity page', () => {
         .add(overviewEntityContent);
 
       await renderInTestApp(tester.reactElement(), {
-        apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        apis: [
+          [catalogApiRef, mockCatalogApi],
+          [starredEntitiesApiRef, mockStarredEntitiesApi],
+        ],
         config: {
           app: {
             title: 'Custom app',
@@ -400,8 +413,10 @@ describe('Entity page', () => {
         .add(apidocsEntityContent);
 
       await renderInTestApp(tester.reactElement(), {
-        apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        apis: [
+          [catalogApiRef, mockCatalogApi],
+          [starredEntitiesApiRef, mockStarredEntitiesApi],
+        ],
         config: {
           app: {
             title: 'Custom app',
@@ -434,8 +449,10 @@ describe('Entity page', () => {
         .add(apidocsEntityContent);
 
       await renderInTestApp(tester.reactElement(), {
-        apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        apis: [
+          [catalogApiRef, mockCatalogApi],
+          [starredEntitiesApiRef, mockStarredEntitiesApi],
+        ],
         config: {
           app: {
             title: 'Custom app',
@@ -473,8 +490,10 @@ describe('Entity page', () => {
         .add(apidocsEntityContent);
 
       await renderInTestApp(tester.reactElement(), {
-        apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        apis: [
+          [catalogApiRef, mockCatalogApi],
+          [starredEntitiesApiRef, mockStarredEntitiesApi],
+        ],
         config: {
           app: {
             title: 'Custom app',
@@ -520,8 +539,10 @@ describe('Entity page', () => {
         .add(apidocsEntityContent);
 
       await renderInTestApp(tester.reactElement(), {
-        apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        apis: [
+          [catalogApiRef, mockCatalogApi],
+          [starredEntitiesApiRef, mockStarredEntitiesApi],
+        ],
         config: {
           app: {
             title: 'Custom app',
@@ -567,8 +588,10 @@ describe('Entity page', () => {
         });
 
       await renderInTestApp(tester.reactElement(), {
-        apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        apis: [
+          [catalogApiRef, mockCatalogApi],
+          [starredEntitiesApiRef, mockStarredEntitiesApi],
+        ],
         config: {
           app: {
             title: 'Custom app',
@@ -602,8 +625,10 @@ describe('Entity page', () => {
       );
 
       await renderInTestApp(tester.reactElement(), {
-        apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        apis: [
+          [catalogApiRef, mockCatalogApi],
+          [starredEntitiesApiRef, mockStarredEntitiesApi],
+        ],
         config: {
           app: {
             title: 'Custom app',
@@ -639,8 +664,10 @@ describe('Entity page', () => {
       ).add(customEntityHeader);
 
       await renderInTestApp(tester.reactElement(), {
-        apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        apis: [
+          [catalogApiRef, mockCatalogApi],
+          [starredEntitiesApiRef, mockStarredEntitiesApi],
+        ],
         config: {
           app: {
             title: 'Custom app',
@@ -696,8 +723,10 @@ describe('Entity page', () => {
       ).add(menuItem);
 
       await renderInTestApp(tester.reactElement(), {
-        apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        apis: [
+          [catalogApiRef, mockCatalogApi],
+          [starredEntitiesApiRef, mockStarredEntitiesApi],
+        ],
         config: {
           app: {
             title: 'Custom app',
@@ -749,8 +778,10 @@ describe('Entity page', () => {
       ).add(menuItem);
 
       await renderInTestApp(tester.reactElement(), {
-        apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        apis: [
+          [catalogApiRef, mockCatalogApi],
+          [starredEntitiesApiRef, mockStarredEntitiesApi],
+        ],
         config: {
           app: {
             title: 'Custom app',
@@ -851,10 +882,9 @@ describe('Entity page', () => {
               convertLegacyRouteRef(entityRouteRef),
           },
           apis: [
-            mockCatalogApi,
+            [catalogApiRef, mockCatalogApi],
             [starredEntitiesApiRef, mockStarredEntitiesApi],
           ],
-          initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         });
 
         await userEvent.click(await screen.findByTestId('menu-button'));
