@@ -315,7 +315,6 @@ export const EntityListProvider = <EntityFilters extends DefaultEntityFilters>(
     if (isEqual(fetchParams, lastFetchParamsRef.current)) {
       return;
     }
-    const prevFetchParams = lastFetchParamsRef.current;
     lastFetchParamsRef.current = fetchParams;
 
     const gen = ++fetchGenRef.current;
@@ -329,7 +328,10 @@ export const EntityListProvider = <EntityFilters extends DefaultEntityFilters>(
       }
     } catch (e) {
       if (gen === fetchGenRef.current) {
-        lastFetchParamsRef.current = prevFetchParams;
+        // Clear the ref so the same params can be retried, and so
+        // a response discarded due to a concurrent request (gen mismatch)
+        // doesn't permanently block fetching those params again.
+        lastFetchParamsRef.current = undefined;
         setError(e as Error);
       }
     } finally {
