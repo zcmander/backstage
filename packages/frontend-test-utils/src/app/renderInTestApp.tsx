@@ -157,11 +157,12 @@ export function renderInTestApp<const TApiPairs extends any[] = any[]>(
 
         if (mountPath) {
           const routePath =
-            mountPath === '/' ? mountPath : `${mountPath.replace(/\/$/, '')}/*`;
+            mountPath === '/' || mountPath.endsWith('/*')
+              ? mountPath
+              : `${mountPath.replace(/\/$/, '')}/*`;
           content = (
             <Routes>
               <Route path={routePath} element={content} />
-              <Route path="*" element={content} />
             </Routes>
           );
         }

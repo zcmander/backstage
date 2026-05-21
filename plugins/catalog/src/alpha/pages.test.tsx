@@ -107,6 +107,8 @@ describe('Entity page', () => {
     ],
   };
 
+  const entityPath = '/catalog/default/component/artist-lookup';
+
   const mockCatalogApi = catalogApiMock({ entities: [entityMock] });
 
   const mockStarredEntitiesApi = new MockStarredEntitiesApi();
@@ -151,7 +153,7 @@ describe('Entity page', () => {
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
         mountPath: '/catalog/:namespace/:kind/:name',
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        initialRouteEntries: [entityPath],
         config: {
           app: {
             title: 'Custom app',
@@ -171,17 +173,11 @@ describe('Entity page', () => {
 
       await expect(
         screen.findByRole('button', { name: /TechDocs/ }),
-      ).resolves.toHaveAttribute(
-        'href',
-        '/catalog/default/component/artist-lookup/techdocs',
-      );
+      ).resolves.toHaveAttribute('href', `${entityPath}/techdocs`);
 
       await expect(
         screen.findByRole('button', { name: /ApiDocs/ }),
-      ).resolves.toHaveAttribute(
-        'href',
-        '/catalog/default/component/artist-lookup/apidocs',
-      );
+      ).resolves.toHaveAttribute('href', `${entityPath}/apidocs`);
     });
 
     it('Should rename a default group', async () => {
@@ -203,7 +199,7 @@ describe('Entity page', () => {
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
         mountPath: '/catalog/:namespace/:kind/:name',
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        initialRouteEntries: [entityPath],
         config: {
           app: {
             title: 'Custom app',
@@ -221,17 +217,11 @@ describe('Entity page', () => {
 
       await expect(
         screen.findByRole('button', { name: /TechDocs/ }),
-      ).resolves.toHaveAttribute(
-        'href',
-        '/catalog/default/component/artist-lookup/techdocs',
-      );
+      ).resolves.toHaveAttribute('href', `${entityPath}/techdocs`);
 
       await expect(
         screen.findByRole('button', { name: /ApiDocs/ }),
-      ).resolves.toHaveAttribute(
-        'href',
-        '/catalog/default/component/artist-lookup/apidocs',
-      );
+      ).resolves.toHaveAttribute('href', `${entityPath}/apidocs`);
     });
 
     it('Should disassociate a content with a default group', async () => {
@@ -248,7 +238,7 @@ describe('Entity page', () => {
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
         mountPath: '/catalog/:namespace/:kind/:name',
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        initialRouteEntries: [entityPath],
         config: {
           app: {
             title: 'Custom app',
@@ -300,7 +290,7 @@ describe('Entity page', () => {
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
         mountPath: '/catalog/:namespace/:kind/:name',
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        initialRouteEntries: [entityPath],
         config: {
           app: {
             title: 'Custom app',
@@ -318,17 +308,11 @@ describe('Entity page', () => {
 
       await expect(
         screen.findByRole('button', { name: /TechDocs/ }),
-      ).resolves.toHaveAttribute(
-        'href',
-        '/catalog/default/component/artist-lookup/techdocs',
-      );
+      ).resolves.toHaveAttribute('href', `${entityPath}/techdocs`);
 
       await expect(
         screen.findByRole('button', { name: /ApiDocs/ }),
-      ).resolves.toHaveAttribute(
-        'href',
-        '/catalog/default/component/artist-lookup/apidocs',
-      );
+      ).resolves.toHaveAttribute('href', `${entityPath}/apidocs`);
     });
 
     it('Should render a single-content groups as a normal tab', async () => {
@@ -346,7 +330,7 @@ describe('Entity page', () => {
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
         mountPath: '/catalog/:namespace/:kind/:name',
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        initialRouteEntries: [entityPath],
         config: {
           app: {
             title: 'Custom app',
@@ -379,7 +363,7 @@ describe('Entity page', () => {
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
         mountPath: '/catalog/:namespace/:kind/:name',
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        initialRouteEntries: [entityPath],
         config: {
           app: {
             title: 'Custom app',
@@ -424,7 +408,7 @@ describe('Entity page', () => {
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
         mountPath: '/catalog/:namespace/:kind/:name',
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        initialRouteEntries: [entityPath],
         config: {
           app: {
             title: 'Custom app',
@@ -442,17 +426,11 @@ describe('Entity page', () => {
 
       await expect(
         screen.findByRole('button', { name: /TechDocs/ }),
-      ).resolves.toHaveAttribute(
-        'href',
-        '/catalog/default/component/artist-lookup/techdocs',
-      );
+      ).resolves.toHaveAttribute('href', `${entityPath}/techdocs`);
 
       await expect(
         screen.findByRole('button', { name: /ApiDocs/ }),
-      ).resolves.toHaveAttribute(
-        'href',
-        '/catalog/default/component/artist-lookup/apidocs',
-      );
+      ).resolves.toHaveAttribute('href', `${entityPath}/apidocs`);
     });
 
     it('Should sort content by title by default', async () => {
@@ -465,7 +443,7 @@ describe('Entity page', () => {
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
         mountPath: '/catalog/:namespace/:kind/:name',
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        initialRouteEntries: [entityPath],
         config: {
           app: {
             title: 'Custom app',
@@ -505,7 +483,7 @@ describe('Entity page', () => {
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
         mountPath: '/catalog/:namespace/:kind/:name',
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        initialRouteEntries: [entityPath],
         config: {
           app: {
             title: 'Custom app',
@@ -553,7 +531,7 @@ describe('Entity page', () => {
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
         mountPath: '/catalog/:namespace/:kind/:name',
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        initialRouteEntries: [entityPath],
         config: {
           app: {
             title: 'Custom app',
@@ -601,7 +579,7 @@ describe('Entity page', () => {
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
         mountPath: '/catalog/:namespace/:kind/:name',
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        initialRouteEntries: [entityPath],
         config: {
           app: {
             title: 'Custom app',
@@ -637,7 +615,7 @@ describe('Entity page', () => {
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
         mountPath: '/catalog/:namespace/:kind/:name',
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        initialRouteEntries: [entityPath],
         config: {
           app: {
             title: 'Custom app',
@@ -675,7 +653,7 @@ describe('Entity page', () => {
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
         mountPath: '/catalog/:namespace/:kind/:name',
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        initialRouteEntries: [entityPath],
         config: {
           app: {
             title: 'Custom app',
@@ -733,7 +711,7 @@ describe('Entity page', () => {
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
         mountPath: '/catalog/:namespace/:kind/:name',
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        initialRouteEntries: [entityPath],
         config: {
           app: {
             title: 'Custom app',
@@ -787,7 +765,7 @@ describe('Entity page', () => {
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
         mountPath: '/catalog/:namespace/:kind/:name',
-        initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+        initialRouteEntries: [entityPath],
         config: {
           app: {
             title: 'Custom app',
@@ -877,7 +855,7 @@ describe('Entity page', () => {
 
         await renderInTestApp(tester.reactElement(), {
           mountPath: '/catalog/:namespace/:kind/:name',
-          initialRouteEntries: ['/catalog/default/component/artist-lookup'],
+          initialRouteEntries: [entityPath],
           config: {
             app: {
               title: 'Custom app',
