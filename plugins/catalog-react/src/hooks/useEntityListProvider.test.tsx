@@ -299,6 +299,46 @@ describe('<EntityListProvider />', () => {
     });
   });
 
+  it('does not re-fetch when backend filter params are unchanged', async () => {
+    const deferred = createDeferred<GetEntitiesResponse>();
+    mockCatalogApi.getEntities!.mockReturnValueOnce(deferred);
+
+    const { result } = renderHook(() => useEntityList(), {
+      wrapper: createWrapper({ pagination }),
+    });
+
+    act(() => {
+      result.current.updateFilters({
+        kind: new EntityKindFilter('component', 'component'),
+      });
+    });
+
+    await waitFor(() => {
+      expect(mockCatalogApi.getEntities).toHaveBeenCalledTimes(1);
+    });
+
+    act(() => {
+      result.current.updateFilters({
+        kind: new EntityKindFilter('component', 'Component'),
+      });
+    });
+    act(() => {
+      result.current.updateFilters({
+        user: EntityUserFilter.all(),
+      });
+    });
+
+    await act(async () => {
+      deferred.resolve({ items: entities });
+    });
+
+    await waitFor(() => {
+      expect(result.current.backendEntities.length).toBe(2);
+    });
+
+    expect(mockCatalogApi.getEntities).toHaveBeenCalledTimes(1);
+  });
+
   it('returns an error on catalogApi failure', async () => {
     const { result } = renderHook(() => useEntityList(), {
       wrapper: createWrapper({ pagination }),
@@ -646,6 +686,47 @@ describe('<EntityListProvider pagination />', () => {
         totalItems: 'exclude',
       });
     });
+  });
+
+  it('fetches count separately and does not re-count on cursor navigation', async () => {
+    const { result } = renderHook(() => useEntityList(), {
+      wrapper: createWrapper({ pagination }),
+    });
+
+    await waitFor(() => {
+      expect(result.current.backendEntities.length).toBe(2);
+    });
+
+    // The count query uses limit: 0 (without totalItems: 'exclude')
+    await waitFor(() => {
+      expect(mockCatalogApi.queryEntities).toHaveBeenCalledWith(
+        expect.objectContaining({ limit: 0 }),
+      );
+    });
+
+    const countCallsBefore = (
+      mockCatalogApi.queryEntities as jest.Mock
+    ).mock.calls.filter((c: any) => c[0]?.limit === 0).length;
+
+    // Navigate to next page via cursor — should NOT re-run the count
+    act(() => {
+      result.current.pageInfo?.next?.();
+    });
+
+    await waitFor(() => {
+      expect(mockCatalogApi.queryEntities).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cursor: expect.any(String),
+          totalItems: 'exclude',
+        }),
+      );
+    });
+
+    const countCallsAfter = (
+      mockCatalogApi.queryEntities as jest.Mock
+    ).mock.calls.filter((c: any) => c[0]?.limit === 0).length;
+
+    expect(countCallsAfter).toBe(countCallsBefore);
   });
 
   it('returns an error on catalogApi failure', async () => {
