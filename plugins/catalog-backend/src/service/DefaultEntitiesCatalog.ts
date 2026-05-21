@@ -870,7 +870,9 @@ function parseCursorFromRequest(
   if (isQueryEntitiesCursorRequest(request)) {
     return {
       ...request.cursor,
-      totalItemsMode: 'include',
+      // Doesn't matter — cursor already carries the computed totalItems
+      // number from the first page, so the count query is skipped regardless.
+      totalItemsMode: 'exclude',
     };
   }
   return {
