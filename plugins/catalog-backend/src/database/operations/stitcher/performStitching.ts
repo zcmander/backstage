@@ -196,9 +196,15 @@ export async function performStitching(options: {
     // to write the search index.
     const searchEntries = buildEntitySearch(entityId, entity);
 
-    // Guard against concurrent stitchers by checking that the stitch_ticket
-    // in stitch_queue still matches what we were given.
-    if (stitchTicket) {
+    const isMySQL = String(knex.client.config.client).includes('mysql');
+
+    // Guard against concurrent stitchers: if our stitch_ticket no longer
+    // matches stitch_queue, another worker has newer data and we should
+    // not overwrite it. On PostgreSQL and SQLite, this is done atomically
+    // via a WHERE on the upsert merge path. MySQL does not support that
+    // syntax, so it falls back to a separate check with a negligible
+    // TOCTOU window (self-corrects on the next ~1s stitch cycle).
+    if (stitchTicket && isMySQL) {
       const ticketValid = await knex<DbStitchQueueRow>('stitch_queue')
         .where('entity_ref', entityRef)
         .where('stitch_ticket', stitchTicket)
@@ -211,7 +217,7 @@ export async function performStitching(options: {
       }
     }
 
-    await knex<DbFinalEntitiesRow>('final_entities')
+    let upsert = knex<DbFinalEntitiesRow>('final_entities')
       .insert({
         entity_id: entityId,
         entity_ref: entityRef,
@@ -221,6 +227,36 @@ export async function performStitching(options: {
       })
       .onConflict('entity_id')
       .merge(['final_entity', 'hash', 'last_updated_at']);
+
+    if (stitchTicket && !isMySQL) {
+      upsert = upsert.where(
+        knex.raw(
+          'exists (select 1 from stitch_queue where entity_ref = ? and stitch_ticket = ?)',
+          [entityRef, stitchTicket],
+        ),
+      );
+    }
+
+    const rowsAffected = await upsert;
+
+    // PostgreSQL correctly reports 0 rows when the WHERE blocks the
+    // merge. SQLite always reports 1, so fall back to a hash check.
+    if (stitchTicket && !isMySQL) {
+      const isSQLite = String(knex.client.config.client).includes('sqlite');
+      const blocked = isSQLite
+        ? !(await knex<DbFinalEntitiesRow>('final_entities')
+            .where('entity_id', entityId)
+            .where('hash', hash)
+            .select(knex.raw('1'))
+            .first())
+        : rowsAffected === 0;
+      if (blocked) {
+        logger.debug(
+          `Entity ${entityRef} is already stitched, skipping write.`,
+        );
+        return 'abandoned';
+      }
+    }
 
     await syncSearchRows(knex, entityId, searchEntries);
 
