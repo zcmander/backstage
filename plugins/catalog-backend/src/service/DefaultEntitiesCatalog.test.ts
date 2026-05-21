@@ -1678,7 +1678,7 @@ describe.each(databases.eachSupportedId())(
         const request: QueryEntitiesInitialRequest = {
           limit: 10,
           credentials: mockCredentials.none(),
-          skipTotalItems: true,
+          totalItems: 'exclude',
         };
         let response = await catalog.queryEntities(request);
         expect(response).toEqual({
@@ -2176,6 +2176,127 @@ describe.each(databases.eachSupportedId())(
         expect(resultEntities).toEqual([
           entityFrom('A', { kind: 'component' }),
         ]);
+      });
+
+      it('should exclude entities with NULL sort-field values from all pages', async () => {
+        await createDatabase();
+
+        // n1, n2, n3 have spec.b with real values
+        // n4 has spec.b with a value exceeding MAX_VALUE_LENGTH (200 chars),
+        //   which buildEntitySearch stores as value=NULL in the search table
+        // n5 has no spec.b at all
+        //
+        // When sorting by spec.b, queryEntities should exclude both n4
+        // (NULL value from truncation) and n5 (missing key) from the
+        // result set AND the totalItems count, so that cursor pagination
+        // covers exactly the reachable set with no unreachable entities.
+        await addEntityToSearch({
+          apiVersion: 'a',
+          kind: 'k',
+          metadata: { name: 'n1', uid: 'uid-n1' },
+          spec: { b: 'alpha', should_include_this: 'yes' },
+        });
+        await addEntityToSearch({
+          apiVersion: 'a',
+          kind: 'k',
+          metadata: { name: 'n2', uid: 'uid-n2' },
+          spec: { b: 'beta', should_include_this: 'yes' },
+        });
+        await addEntityToSearch({
+          apiVersion: 'a',
+          kind: 'k',
+          metadata: { name: 'n3', uid: 'uid-n3' },
+          spec: { b: 'gamma', should_include_this: 'yes' },
+        });
+        await addEntityToSearch({
+          apiVersion: 'a',
+          kind: 'k',
+          metadata: { name: 'n4', uid: 'uid-n4' },
+          spec: { b: 'x'.repeat(201), should_include_this: 'yes' },
+        });
+        await addEntityToSearch({
+          apiVersion: 'a',
+          kind: 'k',
+          metadata: { name: 'n5', uid: 'uid-n5' },
+          spec: { should_include_this: 'yes' },
+        });
+
+        const catalog = new DefaultEntitiesCatalog({
+          database: knex,
+          logger: mockServices.logger.mock(),
+          stitcher,
+        });
+
+        const filter = { key: 'spec.should_include_this' };
+
+        // Page through all entities with limit=2, sorting by spec.b ASC.
+        // We expect to see n1(alpha), n2(beta), n3(gamma) — and NOT n4 or n5.
+        const response1 = await catalog.queryEntities({
+          filter,
+          limit: 2,
+          orderFields: [{ field: 'spec.b', order: 'asc' }],
+          credentials: mockCredentials.none(),
+        });
+        const page1 = entitiesResponseToObjects(response1.items).map(
+          e => e!.metadata.name,
+        );
+        expect(page1).toEqual(['n1', 'n2']);
+        expect(response1.pageInfo.nextCursor).toBeDefined();
+        expect(response1.totalItems).toBe(3);
+
+        // Page 2 via cursor
+        const response2 = await catalog.queryEntities({
+          cursor: response1.pageInfo.nextCursor!,
+          limit: 2,
+          credentials: mockCredentials.none(),
+        });
+        const page2 = entitiesResponseToObjects(response2.items).map(
+          e => e!.metadata.name,
+        );
+        expect(page2).toEqual(['n3']);
+        expect(response2.pageInfo.nextCursor).toBeUndefined();
+
+        // Verify: all entities across all pages = n1, n2, n3 (no n4, no n5)
+        expect([...page1, ...page2]).toEqual(['n1', 'n2', 'n3']);
+      });
+
+      it('should not inflate totalItems when a sort field has multiple search rows per entity', async () => {
+        await createDatabase();
+
+        // Entity e1 has TWO search rows for spec.tags: 'java' and 'go'.
+        // When sorting by spec.tags, the list query may return e1 twice
+        // (one row per tag value), but totalItems should still count e1
+        // only once — not inflate the count.
+        const e1 = {
+          apiVersion: 'a',
+          kind: 'k',
+          metadata: { name: 'e1', uid: 'uid-e1', tags: ['java', 'go'] },
+          spec: {},
+        };
+        const e2 = {
+          apiVersion: 'a',
+          kind: 'k',
+          metadata: { name: 'e2', uid: 'uid-e2', tags: ['rust'] },
+          spec: {},
+        };
+
+        await addEntityToSearch(e1);
+        await addEntityToSearch(e2);
+
+        const catalog = new DefaultEntitiesCatalog({
+          database: knex,
+          logger: mockServices.logger.mock(),
+          stitcher,
+        });
+
+        const response = await catalog.queryEntities({
+          orderFields: [{ field: 'metadata.tags', order: 'asc' }],
+          limit: 100,
+          credentials: mockCredentials.none(),
+        });
+
+        // totalItems counts distinct entities, not search rows
+        expect(response.totalItems).toBe(2);
       });
     });
 
