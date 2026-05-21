@@ -145,7 +145,6 @@ type BackendState = {
   backendEntities: Entity[];
   pageInfo?: QueryEntitiesResponse['pageInfo'];
   totalItems?: number;
-  appliedCursor?: string;
 };
 
 /**
@@ -174,16 +173,12 @@ export const EntityListProvider = <EntityFilters extends DefaultEntityFilters>(
   // update of the URL or two catalog sidebar links with different catalog filters.
   const location = useLocation();
 
-  const getPaginationMode = (): PaginationMode => {
-    if (props.pagination === true) {
-      return 'cursor';
-    }
-    return typeof props.pagination === 'object'
-      ? props.pagination.mode ?? 'cursor'
-      : 'none';
-  };
-
-  const paginationMode = getPaginationMode();
+  let paginationMode: PaginationMode = 'none';
+  if (props.pagination === true) {
+    paginationMode = 'cursor';
+  } else if (typeof props.pagination === 'object') {
+    paginationMode = props.pagination.mode ?? 'cursor';
+  }
   const paginationLimit =
     typeof props.pagination === 'object' ? props.pagination.limit ?? 20 : 20;
 
@@ -273,7 +268,6 @@ export const EntityListProvider = <EntityFilters extends DefaultEntityFilters>(
             backendEntities: response.items,
             pageInfo: response.pageInfo,
             totalItems: response.totalItems,
-            appliedCursor: cursor,
           };
         };
       } else {
@@ -307,7 +301,13 @@ export const EntityListProvider = <EntityFilters extends DefaultEntityFilters>(
 
     // No filters registered yet — wait for filter components to
     // call updateFilters before making the first request.
-    if (compacted.length === 0 && lastFetchParamsRef.current === undefined) {
+    // Exception: a cursor in the URL is a self-contained page reference
+    // that doesn't need filter state to be valid.
+    if (
+      compacted.length === 0 &&
+      lastFetchParamsRef.current === undefined &&
+      !cursor
+    ) {
       setLoading(false);
       return;
     }
