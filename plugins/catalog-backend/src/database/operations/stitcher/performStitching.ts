@@ -249,7 +249,7 @@ export async function performStitching(options: {
             .where('hash', hash)
             .select(knex.raw('1'))
             .first())
-        : rowsAffected === 0;
+        : rowsAffected[0] === 0;
       if (blocked) {
         logger.debug(
           `Entity ${entityRef} is already stitched, skipping write.`,
