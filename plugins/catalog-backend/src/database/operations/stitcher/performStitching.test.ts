@@ -363,5 +363,98 @@ describe.each(databases.eachSupportedId())(
       expect(entities[0].hash).not.toBe('');
       expect(entities[0].final_entity).toBeDefined();
     });
+
+    it('rejects a stale stitch ticket without overwriting', async () => {
+      const knex = await databases.init(databaseId);
+      await applyDatabaseMigrations(knex);
+
+      await knex<DbRefreshStateRow>('refresh_state').insert([
+        {
+          entity_id: 'my-id',
+          entity_ref: 'k:ns/n',
+          unprocessed_entity: JSON.stringify({}),
+          processed_entity: JSON.stringify({
+            apiVersion: 'a',
+            kind: 'k',
+            metadata: { name: 'n', namespace: 'ns' },
+            spec: { original: true },
+          }),
+          errors: '[]',
+          next_update_at: knex.fn.now(),
+          last_discovery_at: knex.fn.now(),
+        },
+      ]);
+
+      // First stitch: create the final_entities row with a valid ticket
+      await markForStitching({ knex, entityRefs: ['k:ns/n'] });
+      const validTicket = (
+        await knex('stitch_queue')
+          .where('entity_ref', 'k:ns/n')
+          .select('stitch_ticket')
+          .first()
+      )?.stitch_ticket;
+
+      const result1 = await performStitching({
+        knex,
+        logger: mockServices.logger.mock(),
+        entityRef: 'k:ns/n',
+        stitchTicket: validTicket,
+      });
+      expect(result1).toBe('changed');
+
+      const afterFirst = await knex<DbFinalEntitiesRow>('final_entities');
+      expect(afterFirst).toHaveLength(1);
+      const firstHash = afterFirst[0].hash;
+
+      // Now change the processed entity and mark for stitching again
+      await knex<DbRefreshStateRow>('refresh_state')
+        .where('entity_id', 'my-id')
+        .update({
+          processed_entity: JSON.stringify({
+            apiVersion: 'a',
+            kind: 'k',
+            metadata: { name: 'n', namespace: 'ns' },
+            spec: { original: false, stale: true },
+          }),
+        });
+
+      await markForStitching({ knex, entityRefs: ['k:ns/n'] });
+      const freshTicket = (
+        await knex('stitch_queue')
+          .where('entity_ref', 'k:ns/n')
+          .select('stitch_ticket')
+          .first()
+      )?.stitch_ticket;
+
+      // Attempt to stitch with a WRONG ticket (simulating a stale worker)
+      const result2 = await performStitching({
+        knex,
+        logger: mockServices.logger.mock(),
+        entityRef: 'k:ns/n',
+        stitchTicket: 'stale-ticket-that-does-not-match',
+      });
+      expect(result2).toBe('abandoned');
+
+      // The final_entities row should still have the FIRST hash,
+      // not be overwritten by the stale worker
+      const afterStale = await knex<DbFinalEntitiesRow>('final_entities');
+      expect(afterStale).toHaveLength(1);
+      expect(afterStale[0].hash).toBe(firstHash);
+
+      // Now stitch with the correct fresh ticket — should succeed
+      const result3 = await performStitching({
+        knex,
+        logger: mockServices.logger.mock(),
+        entityRef: 'k:ns/n',
+        stitchTicket: freshTicket,
+      });
+      expect(result3).toBe('changed');
+
+      const afterFresh = await knex<DbFinalEntitiesRow>('final_entities');
+      expect(afterFresh).toHaveLength(1);
+      expect(afterFresh[0].hash).not.toBe(firstHash);
+      const freshEntity = JSON.parse(afterFresh[0].final_entity!);
+      expect(freshEntity.spec).toEqual({ original: false, stale: true });
+    });
   },
 );
