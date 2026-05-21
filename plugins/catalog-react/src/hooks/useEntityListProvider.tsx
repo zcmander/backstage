@@ -250,7 +250,7 @@ export const EntityListProvider = <EntityFilters extends DefaultEntityFilters>(
       : requestedFilters;
   }, [requestedFilters]);
 
-  const refresh = useCallback(async () => {
+  const refresh = async () => {
     const compacted = compact(Object.values(adjustedFilters));
 
     let fetchParams: unknown;
@@ -339,7 +339,7 @@ export const EntityListProvider = <EntityFilters extends DefaultEntityFilters>(
         setLoading(false);
       }
     }
-  }, [catalogApi, adjustedFilters, cursor, paginationMode, limit, offset]);
+  };
 
   // Slight debounce on the refresh, since (especially on page load)
   // several filters will be calling updateFilters in rapid succession.
