@@ -80,7 +80,7 @@ export class DefaultStitcher {
 
   async start() {
     if (this.stopFunc) {
-      throw new Error('Processing engine is already started');
+      throw new Error('Stitcher is already started');
     }
 
     const { pollingInterval, stitchTimeout } = this.strategy;

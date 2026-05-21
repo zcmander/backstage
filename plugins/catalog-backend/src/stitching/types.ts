@@ -42,6 +42,10 @@ export function stitchingStrategyFromConfig(
     options?.logger?.warn(
       "The 'immediate' stitching strategy mode has been removed and is no longer supported. Falling back to deferred stitching. Please remove the 'catalog.stitchingStrategy.mode' configuration key.",
     );
+  } else if (strategyMode !== undefined && strategyMode !== 'deferred') {
+    options?.logger?.warn(
+      `Unknown stitching strategy mode '${strategyMode}', falling back to deferred stitching. Please remove or correct the 'catalog.stitchingStrategy.mode' configuration key.`,
+    );
   }
 
   const pollingIntervalKey = 'catalog.stitchingStrategy.pollingInterval';
