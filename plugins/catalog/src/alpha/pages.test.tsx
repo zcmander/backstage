@@ -150,6 +150,7 @@ describe('Entity page', () => {
 
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
+        mountPath: '/catalog/:namespace/:kind/:name',
         initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
@@ -201,6 +202,7 @@ describe('Entity page', () => {
 
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
+        mountPath: '/catalog/:namespace/:kind/:name',
         initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
@@ -245,6 +247,7 @@ describe('Entity page', () => {
 
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
+        mountPath: '/catalog/:namespace/:kind/:name',
         initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
@@ -296,6 +299,7 @@ describe('Entity page', () => {
 
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
+        mountPath: '/catalog/:namespace/:kind/:name',
         initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
@@ -341,6 +345,7 @@ describe('Entity page', () => {
 
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
+        mountPath: '/catalog/:namespace/:kind/:name',
         initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
@@ -373,6 +378,7 @@ describe('Entity page', () => {
 
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
+        mountPath: '/catalog/:namespace/:kind/:name',
         initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
@@ -417,6 +423,7 @@ describe('Entity page', () => {
 
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
+        mountPath: '/catalog/:namespace/:kind/:name',
         initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
@@ -457,6 +464,7 @@ describe('Entity page', () => {
 
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
+        mountPath: '/catalog/:namespace/:kind/:name',
         initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
@@ -496,6 +504,7 @@ describe('Entity page', () => {
 
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
+        mountPath: '/catalog/:namespace/:kind/:name',
         initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
@@ -543,6 +552,7 @@ describe('Entity page', () => {
 
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
+        mountPath: '/catalog/:namespace/:kind/:name',
         initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
@@ -590,6 +600,7 @@ describe('Entity page', () => {
 
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
+        mountPath: '/catalog/:namespace/:kind/:name',
         initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
@@ -625,6 +636,7 @@ describe('Entity page', () => {
 
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
+        mountPath: '/catalog/:namespace/:kind/:name',
         initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
@@ -662,6 +674,7 @@ describe('Entity page', () => {
 
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
+        mountPath: '/catalog/:namespace/:kind/:name',
         initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
@@ -719,6 +732,7 @@ describe('Entity page', () => {
 
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
+        mountPath: '/catalog/:namespace/:kind/:name',
         initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
@@ -772,6 +786,7 @@ describe('Entity page', () => {
 
       await renderInTestApp(tester.reactElement(), {
         apis: [mockCatalogApi, [starredEntitiesApiRef, mockStarredEntitiesApi]],
+        mountPath: '/catalog/:namespace/:kind/:name',
         initialRouteEntries: ['/catalog/default/component/artist-lookup'],
         config: {
           app: {
@@ -861,6 +876,7 @@ describe('Entity page', () => {
           .add(filteredMenuItem);
 
         await renderInTestApp(tester.reactElement(), {
+          mountPath: '/catalog/:namespace/:kind/:name',
           initialRouteEntries: ['/catalog/default/component/artist-lookup'],
           config: {
             app: {

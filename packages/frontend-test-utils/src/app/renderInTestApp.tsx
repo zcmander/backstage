@@ -80,7 +80,28 @@ export type TestAppOptions<TApiPairs extends any[] = any[]> = {
   features?: FrontendFeature[];
 
   /**
-   * Initial route entries to use for the router.
+   * The route path pattern that the test element is rendered at. When set,
+   * the element is wrapped in a `<Route>` with this path, enabling
+   * `useParams()` to extract parameters from the URL. Defaults to `'/'`.
+   *
+   * When `mountPath` is set and `initialRouteEntries` is not, the
+   * initial route entry defaults to `mountPath` (which works for paths
+   * without parameters). For parameterized paths you must also set
+   * `initialRouteEntries` to a concrete URL that matches the pattern.
+   *
+   * @example
+   * ```ts
+   * renderInTestApp(<EntityPage />, {
+   *   mountPath: '/catalog/:namespace/:kind/:name',
+   *   initialRouteEntries: ['/catalog/default/component/my-entity'],
+   * })
+   * ```
+   */
+  mountPath?: string;
+
+  /**
+   * Initial route entries to use for the router. When `mountPath` is set
+   * and this is not, defaults to `[mountPath]`.
    */
   initialRouteEntries?: string[];
 
@@ -125,9 +146,7 @@ export function renderInTestApp<const TApiPairs extends any[] = any[]>(
   element: JSX.Element,
   options?: TestAppOptions<TApiPairs>,
 ): RenderResult {
-  const mountedPaths = options?.mountedRoutes
-    ? Object.keys(options.mountedRoutes)
-    : [];
+  const mountPath = options?.mountPath;
 
   const extensions: Array<ExtensionDefinition> = [
     createExtension({
@@ -136,16 +155,12 @@ export function renderInTestApp<const TApiPairs extends any[] = any[]>(
       factory: () => {
         let content: JSX.Element = element;
 
-        if (mountedPaths.length > 0) {
+        if (mountPath) {
+          const routePath =
+            mountPath === '/' ? mountPath : `${mountPath.replace(/\/$/, '')}/*`;
           content = (
             <Routes>
-              {mountedPaths.map(path => (
-                <Route
-                  key={path}
-                  path={path === '/' ? path : `${path.replace(/\/$/, '')}/*`}
-                  element={content}
-                />
-              ))}
+              <Route path={routePath} element={content} />
               <Route path="*" element={content} />
             </Routes>
           );
@@ -198,7 +213,10 @@ export function renderInTestApp<const TApiPairs extends any[] = any[]>(
           params: {
             component: ({ children }) => (
               <MemoryRouter
-                initialEntries={options?.initialRouteEntries}
+                initialEntries={
+                  options?.initialRouteEntries ??
+                  (mountPath ? [mountPath] : undefined)
+                }
                 future={{
                   v7_relativeSplatPath: false,
                   v7_startTransition: false,
