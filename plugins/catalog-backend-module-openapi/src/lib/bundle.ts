@@ -18,7 +18,6 @@ import type {
   ResolverOptions,
 } from '@apidevtools/json-schema-ref-parser';
 import { parse, stringify } from 'yaml';
-import { $RefParser } from '@apidevtools/json-schema-ref-parser';
 
 const protocolPattern = /^(\w{2,}):\/\//i;
 const getProtocol = (refPath: string) => {
@@ -113,6 +112,7 @@ export async function bundleFileWithRefs(
       };
     }
   }
+  const { $RefParser } = await import('@apidevtools/json-schema-ref-parser');
   const bundledObject = await $RefParser.bundle(fileObject, options);
   return stringify(bundledObject);
 }
