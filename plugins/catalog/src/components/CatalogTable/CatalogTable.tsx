@@ -196,12 +196,14 @@ export const CatalogTable = (props: CatalogTableProps) => {
 
   // Derive the title's kind label from the displayed entities so the
   // title stays consistent with the rows during filter transitions.
-  const displayedKind =
-    entities[0]?.kind?.toLocaleLowerCase('en-US') ?? filters.kind?.value;
+  // Use the filter's label when it matches (it has proper casing),
+  // otherwise fall back to the entity's kind field directly.
+  const displayedKind = entities[0]?.kind ?? filters.kind?.value;
   const displayedKindLabel =
-    displayedKind === filters.kind?.value?.toLocaleLowerCase('en-US')
+    displayedKind?.toLocaleLowerCase('en-US') ===
+    filters.kind?.value?.toLocaleLowerCase('en-US')
       ? filters.kind?.label || ''
-      : capitalize(displayedKind || '');
+      : displayedKind || '';
   const currentType = filters.type?.value || '';
   const countIsCorrect =
     typeof totalItems === 'number' && !totalItemsLoading && !loading;
