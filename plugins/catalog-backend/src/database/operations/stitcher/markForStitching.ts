@@ -27,6 +27,18 @@ const UPDATE_CHUNK_SIZE = 100; // Smaller chunks reduce contention
  * future.
  *
  * @remarks
+ *
+ * If there is no existing stitch_queue entry, a new row is created with
+ * next_stitch_at set to now() (immediately eligible). If an entry already
+ * exists, only the stitch_ticket is updated — the timestamp is left
+ * unchanged. This prevents interrupting an in-progress stitch: the worker
+ * that claimed the entry pushed next_stitch_at forward by the timeout
+ * duration, and we don't want to yank it back to now() which would allow
+ * another worker to claim the same entity and cause overlapping stitches.
+ *
+ * When the in-progress stitch completes, markDeferredStitchCompleted
+ * detects the ticket change and makes the entry immediately eligible for
+ * the follow-up stitch.
  */
 export async function markForStitching(options: {
   knex: Knex | Knex.Transaction;
@@ -53,7 +65,7 @@ export async function markForStitching(options: {
             })),
           )
           .onConflict('entity_ref')
-          .merge(['next_stitch_at', 'stitch_ticket']);
+          .merge(['stitch_ticket']);
       }
     }, knex);
   }
@@ -75,7 +87,7 @@ export async function markForStitching(options: {
             })),
           )
           .onConflict('entity_ref')
-          .merge(['next_stitch_at', 'stitch_ticket']);
+          .merge(['stitch_ticket']);
       }
     }, knex);
   }

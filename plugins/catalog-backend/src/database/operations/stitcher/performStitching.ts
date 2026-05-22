@@ -56,10 +56,11 @@ export async function performStitching(options: {
 }): Promise<'changed' | 'unchanged' | 'abandoned'> {
   const { knex, logger, entityRef, stitchTicket } = options;
 
-  // The entity is removed from the stitch queue on ANY completion, except when
-  // an exception is thrown. In the latter case, the entity will be retried at a
-  // later time.
-  let removeFromStitchQueueOnCompletion = true;
+  // The stitch queue is cleaned up on ANY completion — either by deleting
+  // the entry (ticket unchanged) or bumping next_stitch_at (re-stitch
+  // requested). Exceptions are the only case where we skip cleanup, so
+  // the entity gets retried at a later time.
+  let stitchResult: 'succeeded' | 'abandoned' | undefined;
 
   try {
     // Selecting from refresh_state (with an optional left join to
@@ -106,6 +107,7 @@ export async function performStitching(options: {
       logger.debug(
         `Unable to stitch ${entityRef}, item does not exist in refresh state table`,
       );
+      stitchResult = 'abandoned';
       return 'abandoned';
     }
 
@@ -125,6 +127,7 @@ export async function performStitching(options: {
       logger.debug(
         `Unable to stitch ${entityRef}, the entity has not yet been processed`,
       );
+      stitchResult = 'abandoned';
       return 'abandoned';
     }
 
@@ -180,6 +183,7 @@ export async function performStitching(options: {
     const hash = generateStableHash(entity);
     if (hash === previousHash) {
       logger.debug(`Skipped stitching of ${entityRef}, no changes`);
+      stitchResult = 'succeeded';
       return 'unchanged';
     }
 
@@ -213,6 +217,7 @@ export async function performStitching(options: {
         logger.debug(
           `Entity ${entityRef} is already stitched, skipping write.`,
         );
+        stitchResult = 'abandoned';
         return 'abandoned';
       }
     }
@@ -253,22 +258,24 @@ export async function performStitching(options: {
         logger.debug(
           `Entity ${entityRef} is already stitched, skipping write.`,
         );
+        stitchResult = 'abandoned';
         return 'abandoned';
       }
     }
 
     await syncSearchRows(knex, entityId, searchEntries);
 
+    stitchResult = 'succeeded';
     return 'changed';
   } catch (error) {
-    removeFromStitchQueueOnCompletion = false;
     throw error;
   } finally {
-    if (removeFromStitchQueueOnCompletion) {
+    if (stitchResult) {
       await markDeferredStitchCompleted({
         knex: knex,
         entityRef,
         stitchTicket,
+        result: stitchResult,
       });
     }
   }
