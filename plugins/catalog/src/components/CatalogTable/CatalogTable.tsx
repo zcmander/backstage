@@ -205,7 +205,7 @@ export const CatalogTable = (props: CatalogTableProps) => {
   const currentType = filters.type?.value || '';
   const countIsCorrect =
     typeof totalItems === 'number' && !totalItemsLoading && !loading;
-  const currentCount = countIsCorrect ? `(${totalItems})` : '';
+  const currentCount = countIsCorrect ? ` (${totalItems})` : '';
   const somethingIsLoading = loading || totalItemsLoading;
   // TODO(timbonicus): remove the title from the CatalogTable once using EntitySearchBar
   const titlePreamble = capitalize(
