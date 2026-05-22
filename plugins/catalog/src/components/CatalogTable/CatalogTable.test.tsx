@@ -126,7 +126,8 @@ describe('CatalogTable component', () => {
         },
       },
     );
-    expect(screen.getByText(/Owned Components \(3\)/)).toBeInTheDocument();
+    expect(screen.getByText(/Owned Components/)).toBeInTheDocument();
+    expect(screen.getByText(/\(3\)/)).toBeInTheDocument();
     expect(screen.getByText(/component1/)).toBeInTheDocument();
     expect(screen.getByText(/component2/)).toBeInTheDocument();
     expect(screen.getByText(/component3/)).toBeInTheDocument();

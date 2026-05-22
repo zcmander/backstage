@@ -1239,6 +1239,7 @@ describe('versioned context', () => {
       updateFilters: jest.fn(),
       queryParameters: {},
       loading: true,
+      totalItemsLoading: false,
       limit: 277,
       setLimit: jest.fn(),
       setOffset: jest.fn(),

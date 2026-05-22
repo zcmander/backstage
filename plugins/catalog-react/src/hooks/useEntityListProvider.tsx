@@ -121,6 +121,7 @@ export type EntityListContextProps<
     prev?: () => void;
   };
   totalItems?: number;
+  totalItemsLoading: boolean;
   limit: number;
   offset?: number;
   setLimit: (limit: number) => void;
@@ -350,25 +351,26 @@ export const EntityListProvider = <EntityFilters extends DefaultEntityFilters>(
   // decoupled from the main list fetch so that page navigation doesn't
   // re-run the expensive count query, and so that the count can arrive
   // asynchronously without blocking the list response.
-  const [{ value: asyncTotalItems }, refreshCount] = useAsyncFn(async () => {
-    if (paginationMode === 'none') {
-      return undefined;
-    }
-    const compacted = compact(Object.values(adjustedFilters));
-    if (compacted.length === 0) {
-      return undefined;
-    }
-    const backendFilter = reduceCatalogFilters(compacted);
-    try {
-      const response = await catalogApi.queryEntities({
-        ...backendFilter,
-        limit: 0,
-      });
-      return response.totalItems;
-    } catch {
-      return undefined;
-    }
-  }, [catalogApi, paginationMode, adjustedFilters]);
+  const [{ value: totalItems, loading: totalItemsLoading }, refreshCount] =
+    useAsyncFn(async () => {
+      if (paginationMode === 'none') {
+        return undefined;
+      }
+      const compacted = compact(Object.values(adjustedFilters));
+      if (compacted.length === 0) {
+        return undefined;
+      }
+      const backendFilter = reduceCatalogFilters(compacted);
+      try {
+        const response = await catalogApi.queryEntities({
+          ...backendFilter,
+          limit: 0,
+        });
+        return response.totalItems;
+      } catch {
+        return undefined;
+      }
+    }, [catalogApi, paginationMode, adjustedFilters]);
 
   useDebounce(refreshCount, 10, [adjustedFilters]);
 
@@ -475,7 +477,8 @@ export const EntityListProvider = <EntityFilters extends DefaultEntityFilters>(
       totalItems:
         paginationMode === 'none'
           ? entities.length
-          : asyncTotalItems ?? backendState.totalItems,
+          : totalItems ?? backendState.totalItems,
+      totalItemsLoading: paginationMode !== 'none' && totalItemsLoading,
       limit,
       offset,
       setLimit,
@@ -486,7 +489,8 @@ export const EntityListProvider = <EntityFilters extends DefaultEntityFilters>(
       requestedFilters,
       entities,
       backendState,
-      asyncTotalItems,
+      totalItems,
+      totalItemsLoading,
       updateFilters,
       queryParameters,
       loading,
