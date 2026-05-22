@@ -349,12 +349,20 @@ describe.each(databases.eachSupportedId())(
         },
       ]);
 
+      await markForStitching({ knex, entityRefs: ['k:ns/n'] });
+
       const stitchLogger = mockServices.logger.mock();
       await expect(
         performStitching({
           knex,
           logger: stitchLogger,
           entityRef: 'k:ns/n',
+          stitchTicket: (
+            await knex('stitch_queue')
+              .where('entity_ref', 'k:ns/n')
+              .select('stitch_ticket')
+              .first()
+          )?.stitch_ticket,
         }),
       ).resolves.toBe('changed');
 

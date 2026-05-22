@@ -128,7 +128,7 @@ export class DefaultStitcher {
 
   async #stitchOne(options: {
     entityRef: string;
-    stitchTicket?: string;
+    stitchTicket: string;
     stitchRequestedAt?: DateTime;
   }) {
     const track = this.tracker.stitchStart({

@@ -52,10 +52,9 @@ export async function performStitching(options: {
   knex: Knex | Knex.Transaction;
   logger: LoggerService;
   entityRef: string;
-  stitchTicket?: string;
+  stitchTicket: string;
 }): Promise<'changed' | 'unchanged' | 'abandoned'> {
-  const { knex, logger, entityRef } = options;
-  const stitchTicket = options.stitchTicket;
+  const { knex, logger, entityRef, stitchTicket } = options;
 
   // The entity is removed from the stitch queue on ANY completion, except when
   // an exception is thrown. In the latter case, the entity will be retried at a
@@ -205,7 +204,7 @@ export async function performStitching(options: {
     // stitch cycle).
     const isMySQL = String(knex.client.config.client).includes('mysql');
 
-    if (stitchTicket && isMySQL) {
+    if (isMySQL) {
       const ticketValid = await knex<DbStitchQueueRow>('stitch_queue')
         .where('entity_ref', entityRef)
         .where('stitch_ticket', stitchTicket)
@@ -229,7 +228,7 @@ export async function performStitching(options: {
       .onConflict('entity_id')
       .merge(['final_entity', 'hash', 'last_updated_at']);
 
-    if (stitchTicket && !isMySQL) {
+    if (!isMySQL) {
       upsert = upsert.where(
         knex.raw(
           'exists (select 1 from stitch_queue where entity_ref = ? and stitch_ticket = ?)',
@@ -244,7 +243,7 @@ export async function performStitching(options: {
     // database engines (row IDs vs row counts vs empty arrays), so we
     // check the hash directly — we already know hash !== previousHash
     // from the check above, so a mismatch means the write was blocked.
-    if (stitchTicket && !isMySQL) {
+    if (!isMySQL) {
       const written = await knex<DbFinalEntitiesRow>('final_entities')
         .where('entity_id', entityId)
         .where('hash', hash)
@@ -265,7 +264,7 @@ export async function performStitching(options: {
     removeFromStitchQueueOnCompletion = false;
     throw error;
   } finally {
-    if (removeFromStitchQueueOnCompletion && stitchTicket) {
+    if (removeFromStitchQueueOnCompletion) {
       await markDeferredStitchCompleted({
         knex: knex,
         entityRef,
