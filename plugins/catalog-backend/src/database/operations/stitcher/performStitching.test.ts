@@ -90,12 +90,7 @@ it.each(databases.eachSupportedId())(
       knex,
       logger,
       entityRef: 'k:ns/n',
-      stitchTicket: (
-        await knex('stitch_queue')
-          .where('entity_ref', 'k:ns/n')
-          .select('stitch_ticket')
-          .first()
-      )?.stitch_ticket,
+      stitchTicket: await getStitchTicket(knex, 'k:ns/n'),
     });
 
     entities = await knex<DbFinalEntitiesRow>('final_entities');
@@ -185,12 +180,7 @@ it.each(databases.eachSupportedId())(
       knex,
       logger,
       entityRef: 'k:ns/n',
-      stitchTicket: (
-        await knex('stitch_queue')
-          .where('entity_ref', 'k:ns/n')
-          .select('stitch_ticket')
-          .first()
-      )?.stitch_ticket,
+      stitchTicket: await getStitchTicket(knex, 'k:ns/n'),
     });
 
     entities = await knex<DbFinalEntitiesRow>('final_entities');
@@ -218,12 +208,7 @@ it.each(databases.eachSupportedId())(
       knex,
       logger,
       entityRef: 'k:ns/n',
-      stitchTicket: (
-        await knex('stitch_queue')
-          .where('entity_ref', 'k:ns/n')
-          .select('stitch_ticket')
-          .first()
-      )?.stitch_ticket,
+      stitchTicket: await getStitchTicket(knex, 'k:ns/n'),
     });
 
     entities = await knex<DbFinalEntitiesRow>('final_entities');
@@ -357,12 +342,7 @@ describe.each(databases.eachSupportedId())(
           knex,
           logger: stitchLogger,
           entityRef: 'k:ns/n',
-          stitchTicket: (
-            await knex('stitch_queue')
-              .where('entity_ref', 'k:ns/n')
-              .select('stitch_ticket')
-              .first()
-          )?.stitch_ticket,
+          stitchTicket: await getStitchTicket(knex, 'k:ns/n'),
         }),
       ).resolves.toBe('changed');
 
@@ -395,12 +375,7 @@ describe.each(databases.eachSupportedId())(
 
       // First stitch: create the final_entities row with a valid ticket
       await markForStitching({ knex, entityRefs: ['k:ns/n'] });
-      const validTicket = (
-        await knex('stitch_queue')
-          .where('entity_ref', 'k:ns/n')
-          .select('stitch_ticket')
-          .first()
-      )?.stitch_ticket;
+      const validTicket = await getStitchTicket(knex, 'k:ns/n');
 
       const result1 = await performStitching({
         knex,
@@ -427,12 +402,7 @@ describe.each(databases.eachSupportedId())(
         });
 
       await markForStitching({ knex, entityRefs: ['k:ns/n'] });
-      const freshTicket = (
-        await knex('stitch_queue')
-          .where('entity_ref', 'k:ns/n')
-          .select('stitch_ticket')
-          .first()
-      )?.stitch_ticket;
+      const freshTicket = await getStitchTicket(knex, 'k:ns/n');
 
       // Attempt to stitch with a WRONG ticket (simulating a stale worker)
       const result2 = await performStitching({
@@ -466,3 +436,17 @@ describe.each(databases.eachSupportedId())(
     });
   },
 );
+
+async function getStitchTicket(
+  knex: import('knex').Knex,
+  entityRef: string,
+): Promise<string> {
+  const row = await knex('stitch_queue')
+    .where('entity_ref', entityRef)
+    .select('stitch_ticket')
+    .first();
+  if (!row) {
+    throw new Error(`No stitch_queue entry for ${entityRef}`);
+  }
+  return row.stitch_ticket;
+}

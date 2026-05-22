@@ -72,7 +72,6 @@ describe('DefaultCatalogProcessingEngine', () => {
       processingDatabase: db,
       knex: {} as any,
       orchestrator: orchestrator,
-
       createHash: () => hash,
       scheduler: mockServices.scheduler(),
       events: mockServices.events.mock(),
@@ -142,7 +141,6 @@ describe('DefaultCatalogProcessingEngine', () => {
       processingDatabase: db,
       knex: {} as any,
       orchestrator: orchestrator,
-
       scheduler: mockServices.scheduler(),
       createHash: () => hash,
       events: mockServices.events.mock(),
@@ -228,7 +226,6 @@ describe('DefaultCatalogProcessingEngine', () => {
       processingDatabase: db,
       knex: {} as any,
       orchestrator: orchestrator,
-
       scheduler: mockServices.scheduler(),
       createHash: () => hash,
       events: mockServices.events.mock(),
@@ -308,7 +305,6 @@ describe('DefaultCatalogProcessingEngine', () => {
       processingDatabase: db,
       knex: {} as any,
       orchestrator: orchestrator,
-
       scheduler: mockServices.scheduler(),
       createHash: () => hash,
       events: mockServices.events.mock(),
@@ -370,7 +366,6 @@ describe('DefaultCatalogProcessingEngine', () => {
       processingDatabase: db,
       knex: {} as any,
       orchestrator: orchestrator,
-
       scheduler: mockServices.scheduler(),
       createHash: () => hash,
       pollingIntervalMs: 100,
@@ -488,7 +483,6 @@ describe('DefaultCatalogProcessingEngine', () => {
       processingDatabase: db,
       knex: {} as any,
       orchestrator: orchestrator,
-
       scheduler: mockServices.scheduler(),
       createHash: () => hash,
       pollingIntervalMs: 100,
@@ -596,7 +590,6 @@ describe('DefaultCatalogProcessingEngine', () => {
       processingDatabase: db,
       knex: {} as any,
       orchestrator: orchestrator,
-
       scheduler: mockServices.scheduler(),
       createHash: () => hash,
       pollingIntervalMs: 100,
@@ -682,7 +675,6 @@ describe('DefaultCatalogProcessingEngine', () => {
       processingDatabase: db,
       knex: {} as any,
       orchestrator: orchestrator,
-
       scheduler: mockServices.scheduler(),
       createHash: () => hash,
       pollingIntervalMs: 100,
@@ -773,7 +765,6 @@ describe('DefaultCatalogProcessingEngine', () => {
       processingDatabase: db,
       knex: {} as any,
       orchestrator: orchestrator,
-
       scheduler: mockServices.scheduler(),
       createHash: () => hash,
       pollingIntervalMs: 100,
