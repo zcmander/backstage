@@ -43,7 +43,7 @@ import Edit from '@material-ui/icons/Edit';
 import OpenInNew from '@material-ui/icons/OpenInNew';
 import { capitalize, sortBy } from 'lodash';
 import pluralize from 'pluralize';
-import { ReactNode, useMemo } from 'react';
+import { ReactNode, useMemo, useRef } from 'react';
 import { columnFactories } from './columns';
 import { CatalogTableColumnsFunc, CatalogTableRow } from './types';
 import { OffsetPaginatedCatalogTable } from './OffsetPaginatedCatalogTable';
@@ -114,11 +114,14 @@ export const CatalogTable = (props: CatalogTableProps) => {
     paginationMode,
   } = entityListContext;
 
-  // Only show the full-table loading spinner on the very first load when
-  // there's no data yet. During subsequent fetches (filter changes, page
-  // navigation) we keep stale rows visible so the user sees content
-  // immediately — a small spinner next to the title signals the refresh.
-  const isLoading = loading && entities.length === 0;
+  // Track whether we've ever received data. The full-table spinner should
+  // only show on the truly initial load — not when a filter change
+  // empties the client-side entity list before the backend responds.
+  const hasHadData = useRef(false);
+  if (entities.length > 0) {
+    hasHadData.current = true;
+  }
+  const isLoading = loading && !hasHadData.current;
 
   const tableColumns = useMemo(
     () =>
