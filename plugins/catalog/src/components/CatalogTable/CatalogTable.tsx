@@ -194,29 +194,37 @@ export const CatalogTable = (props: CatalogTableProps) => {
     },
   ];
 
-  const currentKind = filters.kind?.label || '';
+  // Derive the title's kind label from the displayed entities so the
+  // title stays consistent with the rows during filter transitions.
+  const displayedKind =
+    entities[0]?.kind?.toLocaleLowerCase('en-US') ?? filters.kind?.value;
+  const displayedKindLabel =
+    displayedKind === filters.kind?.value?.toLocaleLowerCase('en-US')
+      ? filters.kind?.label || ''
+      : capitalize(displayedKind || '');
   const currentType = filters.type?.value || '';
-  const currentCount = typeof totalItems === 'number' ? `(${totalItems})` : '';
+  const countIsCorrect =
+    typeof totalItems === 'number' && !totalItemsLoading && !loading;
+  const currentCount = countIsCorrect ? `(${totalItems})` : '';
+  const somethingIsLoading = loading || totalItemsLoading;
   // TODO(timbonicus): remove the title from the CatalogTable once using EntitySearchBar
   const titlePreamble = capitalize(
     filters.user?.value ?? t('catalogTable.allFilters'),
   );
   const titleBase =
     props.title ||
-    [titlePreamble, currentType, pluralize(currentKind)]
+    [titlePreamble, currentType, pluralize(displayedKindLabel)]
       .filter(s => s)
       .join(' ');
-  const title = (
+  const title = props.title ? (
+    titleBase
+  ) : (
     <span
       style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5em' }}
     >
       {titleBase}
-      {currentCount && (
-        <span style={{ opacity: totalItemsLoading ? 0.5 : 1 }}>
-          {currentCount}
-        </span>
-      )}
-      {loading && !isLoading && (
+      {currentCount}
+      {somethingIsLoading && !isLoading && (
         <CircularProgress size="0.8em" data-testid="loading-indicator" />
       )}
     </span>
