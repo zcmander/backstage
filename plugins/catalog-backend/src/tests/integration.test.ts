@@ -360,12 +360,12 @@ class TestHarness {
     const tracker = new WaitingProgressTracker(entityRefs);
     this.#proxyProgressTracker.setTracker(tracker);
 
-    this.#engine.start();
+    await this.#engine.start();
     await this.#stitcher.start();
 
     const errors = await tracker.wait();
 
-    this.#engine.stop();
+    await this.#engine.stop();
     await tracker.waitForFinish();
 
     // Wait for the stitch queue to drain while the stitcher is still running
