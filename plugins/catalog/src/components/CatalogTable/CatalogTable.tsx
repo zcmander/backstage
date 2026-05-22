@@ -205,9 +205,12 @@ export const CatalogTable = (props: CatalogTableProps) => {
       ? filters.kind?.label || ''
       : displayedKind || '';
   const currentType = filters.type?.value || '';
-  const countIsCorrect =
-    typeof totalItems === 'number' && !totalItemsLoading && !loading;
-  const currentCount = countIsCorrect ? ` (${totalItems})` : '';
+  // Show the count as long as we have one. Hide it only when new rows
+  // have arrived but the count hasn't caught up yet — at that point
+  // the old count would be wrong for the new data.
+  const countIsStale = !loading && totalItemsLoading;
+  const currentCount =
+    typeof totalItems === 'number' && !countIsStale ? ` (${totalItems})` : '';
   const somethingIsLoading = loading || totalItemsLoading;
   // TODO(timbonicus): remove the title from the CatalogTable once using EntitySearchBar
   const titlePreamble = capitalize(
