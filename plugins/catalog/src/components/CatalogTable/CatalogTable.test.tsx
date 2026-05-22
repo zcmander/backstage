@@ -295,11 +295,15 @@ describe('CatalogTable component', () => {
   ])(
     'should render correct columns with kind filter $kind',
     async ({ kind, expectedColumns }) => {
+      const kindEntities = entities.map(e => ({
+        ...e,
+        kind: kind ?? e.kind,
+      }));
       await renderInTestApp(
         <ApiProvider apis={mockApis}>
           <MockEntityListContextProvider
             value={{
-              entities,
+              entities: kindEntities,
               filters: {
                 kind: kind
                   ? new EntityKindFilter(kind.toLocaleLowerCase('en-US'), kind)
