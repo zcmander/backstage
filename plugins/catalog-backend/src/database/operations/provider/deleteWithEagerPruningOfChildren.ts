@@ -240,7 +240,7 @@ async function markEntitiesAffectedByDeletionForStitching(options: {
   // change, but not here - this code by its very definition is meant to not
   // leave any orphans behind, so we can simplify away that.
   const affectedIds = await knex
-    .select('refresh_state.entity_id AS entity_id')
+    .distinct('refresh_state.entity_id AS entity_id')
     .from('relations')
     .join(
       'refresh_state',
