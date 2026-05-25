@@ -8896,14 +8896,14 @@ __metadata:
   linkType: hard
 
 "@google-cloud/cloud-sql-connector@npm:^1.4.0":
-  version: 1.9.2
-  resolution: "@google-cloud/cloud-sql-connector@npm:1.9.2"
+  version: 1.11.0
+  resolution: "@google-cloud/cloud-sql-connector@npm:1.11.0"
   dependencies:
     "@googleapis/sqladmin": "npm:^35.2.0"
     gaxios: "npm:^7.1.4"
-    google-auth-library: "npm:^10.6.1"
+    google-auth-library: "npm:^10.6.2"
     p-throttle: "npm:^7.0.0"
-  checksum: 10/975790e26126f8f14a64e5361b44362c02b8d6340da56de2fa6f6132c844199d274c356ac35e3fa36e13261aedd982a045e9e728e52e33382255f56b1fdae28d
+  checksum: 10/d89da34337fe1b9baeecb830f53276bd28155c8cfa41a21b15069f579dc1cedb47975e5f591facd59f1c4f8e755a6580d93ea10e6df368d1340e011d606a95d5
   languageName: node
   linkType: hard
 
@@ -30307,7 +30307,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"google-auth-library@npm:^10.1.0, google-auth-library@npm:^10.6.1":
+"google-auth-library@npm:^10.1.0, google-auth-library@npm:^10.6.2":
   version: 10.6.2
   resolution: "google-auth-library@npm:10.6.2"
   dependencies:
