@@ -82,12 +82,10 @@ export type TestAppOptions<TApiPairs extends any[] = any[]> = {
   /**
    * The route path pattern that the test element is rendered at. When set,
    * the element is wrapped in a `<Route>` with this path, enabling
-   * `useParams()` to extract parameters from the URL. Defaults to `'/'`.
+   * `useParams()` to extract parameters from the URL.
    *
-   * When `mountPath` is set and `initialRouteEntries` is not, the
-   * initial route entry defaults to `mountPath` (which works for paths
-   * without parameters). For parameterized paths you must also set
-   * `initialRouteEntries` to a concrete URL that matches the pattern.
+   * Should be used together with `initialRouteEntries` to set a concrete
+   * URL that matches the pattern.
    *
    * @example
    * ```ts
@@ -100,8 +98,7 @@ export type TestAppOptions<TApiPairs extends any[] = any[]> = {
   mountPath?: string;
 
   /**
-   * Initial route entries to use for the router. When `mountPath` is set
-   * and this is not, defaults to `[mountPath]`.
+   * Initial route entries to use for the router.
    */
   initialRouteEntries?: string[];
 
@@ -214,10 +211,7 @@ export function renderInTestApp<const TApiPairs extends any[] = any[]>(
           params: {
             component: ({ children }) => (
               <MemoryRouter
-                initialEntries={
-                  options?.initialRouteEntries ??
-                  (mountPath ? [mountPath] : undefined)
-                }
+                initialEntries={options?.initialRouteEntries}
                 future={{
                   v7_relativeSplatPath: false,
                   v7_startTransition: false,
