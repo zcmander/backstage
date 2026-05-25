@@ -16251,14 +16251,14 @@ __metadata:
   linkType: hard
 
 "@slack/web-api@npm:^7.5.0":
-  version: 7.15.2
-  resolution: "@slack/web-api@npm:7.15.2"
+  version: 7.16.0
+  resolution: "@slack/web-api@npm:7.16.0"
   dependencies:
     "@slack/logger": "npm:^4.0.1"
     "@slack/types": "npm:^2.21.0"
     "@types/node": "npm:>=18"
     "@types/retry": "npm:0.12.0"
-    axios: "npm:^1.15.0"
+    axios: "npm:^1.16.0"
     eventemitter3: "npm:^5.0.1"
     form-data: "npm:^4.0.4"
     is-electron: "npm:2.2.2"
@@ -16266,7 +16266,7 @@ __metadata:
     p-queue: "npm:^6"
     p-retry: "npm:^4"
     retry: "npm:^0.13.1"
-  checksum: 10/1fba1f269f7e44be8510c0d97dc2867573713fdd5e3b6c21a9644845fb7f0ae511aea862f57f08d0de60a8369f55cb8d1f41903da0fc5f069c83268ca66f407f
+  checksum: 10/4dbdfbcf36608d3ad752456324ea9ce9e6ae071d4eb43b8b3e06d027b4e5e6e7b652f6c3d776540ddbb6a3e966224981c7959ddfa6c1b8a2989fcdc96d293898
   languageName: node
   linkType: hard
 
