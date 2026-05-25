@@ -541,6 +541,7 @@ TTLs
 Turbopack
 TSDoc
 typeahead
+typoed
 ui
 unassign
 unbreak
