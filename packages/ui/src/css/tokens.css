@@ -126,9 +126,9 @@
     --bui-announcement-bg-subdued-disabled: #c8e0fc;
     --bui-announcement-border: #549ef4;
     --bui-announcement-fg: #ffffff;
-    --bui-announcement-fg-disabled: #ffffff;
+    --bui-announcement-fg-disabled: #a4ccfb;
     --bui-announcement-fg-subdued: #173da6;
-    --bui-announcement-fg-subdued-disabled: #173da6;
+    --bui-announcement-fg-subdued-disabled: #7391e3;
 
     /* Warning */
     --bui-warning-bg: #ff9400;
@@ -139,9 +139,9 @@
     --bui-warning-bg-subdued-disabled: #f8ddb9;
     --bui-warning-border: #ff9400;
     --bui-warning-fg: #000000;
-    --bui-warning-fg-disabled: #000000;
+    --bui-warning-fg-disabled: #aa4d00;
     --bui-warning-fg-subdued: #aa4d00;
-    --bui-warning-fg-subdued-disabled: #aa4d00;
+    --bui-warning-fg-subdued-disabled: #e3a572;
 
     /* Negative */
     --bui-negative-bg: #dc2626;
@@ -152,7 +152,7 @@
     --bui-negative-bg-subdued-disabled: #f7b6b6;
     --bui-negative-border: #d06565;
     --bui-negative-fg: #ffffff;
-    --bui-negative-fg-disabled: #ffffff;
+    --bui-negative-fg-disabled: #f7b6b6;
     --bui-negative-fg-subdued: #991919;
     --bui-negative-fg-subdued-disabled: #bb7272;
 
@@ -165,9 +165,9 @@
     --bui-positive-bg-subdued-disabled: #96f0b6;
     --bui-positive-border: #54a671;
     --bui-positive-fg: #000000;
-    --bui-positive-fg-disabled: #ffffff;
+    --bui-positive-fg-disabled: #0c632b;
     --bui-positive-fg-subdued: #0c632b;
-    --bui-positive-fg-subdued-disabled: #0c632b;
+    --bui-positive-fg-subdued-disabled: #4b9666;
 
     /* Deprecated tokens */
     --bui-bg-solid: #1f5493;
@@ -255,9 +255,9 @@
     --bui-announcement-bg-subdued-disabled: #052a56;
     --bui-announcement-border: #2363af;
     --bui-announcement-fg: #ffffff;
-    --bui-announcement-fg-disabled: #ffffff;
+    --bui-announcement-fg-disabled: #70b8ff;
     --bui-announcement-fg-subdued: #70b8ff;
-    --bui-announcement-fg-subdued-disabled: #70b8ff;
+    --bui-announcement-fg-subdued-disabled: #4275a6;
 
     /* Warning */
     --bui-warning-bg: #ffa42c;
@@ -268,9 +268,9 @@
     --bui-warning-bg-subdued-disabled: #582400;
     --bui-warning-border: #7c4903;
     --bui-warning-fg: #000000;
-    --bui-warning-fg-disabled: #000000;
+    --bui-warning-fg-disabled: #aa4d00;
     --bui-warning-fg-subdued: #f2ab4a;
-    --bui-warning-fg-subdued-disabled: #f2ab4a;
+    --bui-warning-fg-subdued-disabled: #aa4d00;
 
     /* Negative */
     --bui-negative-bg: #dc2626;
@@ -281,9 +281,9 @@
     --bui-negative-bg-subdued-disabled: #5e1a1b;
     --bui-negative-border: #6f101c;
     --bui-negative-fg: #ffffff;
-    --bui-negative-fg-disabled: #ffffff;
+    --bui-negative-fg-disabled: #f7b6b6;
     --bui-negative-fg-subdued: #fca5a5;
-    --bui-negative-fg-subdued-disabled: #ffffff;
+    --bui-negative-fg-subdued-disabled: #bb7272;
 
     /* Positive */
     --bui-positive-bg: #1ed760;
@@ -294,9 +294,9 @@
     --bui-positive-bg-subdued-disabled: #073116;
     --bui-positive-border: #136d33;
     --bui-positive-fg: #000000;
-    --bui-positive-fg-disabled: #ffffff;
+    --bui-positive-fg-disabled: #0c632b;
     --bui-positive-fg-subdued: #8ddeaa;
-    --bui-positive-fg-subdued-disabled: #8ddeaa;
+    --bui-positive-fg-subdued-disabled: #509c6b;
 
     /* Deprecated tokens */
     --bui-bg-solid: #9cc9ff;
