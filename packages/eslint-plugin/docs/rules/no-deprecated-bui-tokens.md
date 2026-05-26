@@ -38,7 +38,7 @@ const style = { borderColor: 'var(--bui-positive-border)' };
 
 Replace deprecated tokens with their equivalents from the new semantic families.
 
-**Surfaces**
+### Surfaces
 
 | Deprecated           | Replacement       |
 | -------------------- | ----------------- |
@@ -48,7 +48,7 @@ Replace deprecated tokens with their equivalents from the new semantic families.
 | `--bui-bg-neutral-3` | `--bui-surface-4` |
 | `--bui-bg-neutral-4` | `--bui-surface-5` |
 
-**Foreground**
+### Foreground
 
 | Deprecated         | Replacement             |
 | ------------------ | ----------------------- |
@@ -56,7 +56,7 @@ Replace deprecated tokens with their equivalents from the new semantic families.
 | `--bui-fg-success` | `--bui-fg-positive`     |
 | `--bui-fg-info`    | `--bui-fg-announcement` |
 
-**Accent**
+### Accent
 
 | Deprecated                | Replacement                |
 | ------------------------- | -------------------------- |
@@ -66,7 +66,7 @@ Replace deprecated tokens with their equivalents from the new semantic families.
 | `--bui-fg-solid`          | `--bui-accent-fg`          |
 | `--bui-fg-solid-disabled` | `--bui-accent-fg-disabled` |
 
-**Positive**
+### Positive
 
 | Deprecated               | Replacement                 |
 | ------------------------ | --------------------------- |
@@ -74,7 +74,7 @@ Replace deprecated tokens with their equivalents from the new semantic families.
 | `--bui-fg-success-on-bg` | `--bui-positive-fg-subdued` |
 | `--bui-border-success`   | `--bui-positive-border`     |
 
-**Negative**
+### Negative
 
 | Deprecated              | Replacement                 |
 | ----------------------- | --------------------------- |
@@ -82,7 +82,7 @@ Replace deprecated tokens with their equivalents from the new semantic families.
 | `--bui-fg-danger-on-bg` | `--bui-negative-fg-subdued` |
 | `--bui-border-danger`   | `--bui-negative-border`     |
 
-**Warning**
+### Warning
 
 | Deprecated               | Replacement                |
 | ------------------------ | -------------------------- |
@@ -90,7 +90,7 @@ Replace deprecated tokens with their equivalents from the new semantic families.
 | `--bui-fg-warning-on-bg` | `--bui-warning-fg-subdued` |
 | `--bui-border-warning`   | `--bui-warning-border`     |
 
-**Announcement**
+### Announcement
 
 | Deprecated            | Replacement                     |
 | --------------------- | ------------------------------- |
