@@ -83,7 +83,7 @@ module.exports = {
     },
     messages: {
       deprecated:
-        "'{{token}}' is a deprecated BUI token. Use the new semantic token families instead: --bui-negative-*, --bui-positive-*, --bui-warning-*, --bui-announcement-*, or --bui-accent-*.",
+        "'{{token}}' is a deprecated BUI token. Replace it with the appropriate current BUI token for its usage (for example, a semantic intent, surface/background, or shadow token); see this rule's migration guide for the correct mapping.",
     },
     schema: [],
   },
