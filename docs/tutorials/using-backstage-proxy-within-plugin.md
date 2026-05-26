@@ -71,20 +71,22 @@ import {
   fetchApiRef,
 } from '@backstage/core-plugin-api';
 import { Progress, Alert } from '@backstage/core-components';
-import useAsync from 'react-use/esm/useAsync';
+import { useAsync, useMountEffect } from '@react-hookz/web';
 import { myAwesomeApiRef } from '../../api';
 
 export const AwesomeUsersTable = () => {
   const fetchApi = useApi(fetchApiRef);
   const discoveryApi = useApi(discoveryApiRef);
 
-  const { value, loading, error } = useAsync(async () => {
+  const [{ status, result, error }, { execute }] = useAsync(async () => {
     const baseUrl = await discoveryApi.getBaseUrl('proxy');
     // As configured previously for the backend proxy
     const resp = await fetchApi.fetch(`${baseUrl}/<your-proxy-uri>`);
     if (!resp.ok) throw new Error(resp.statusText);
     return resp.json();
-  }, [fetchApi, discoveryApi]);
+  });
+
+  useMountEffect(execute);
 
   // ...
 };
@@ -238,15 +240,17 @@ Now you should be able to access your API using the backstage hook
 ```ts title="plugins/my-awesome-plugin/src/components/AwesomeUsersTable.tsx"
 import { useApi } from '@backstage/core-plugin-api';
 import { myAwesomeApiRef } from '../../api';
-import useAsync from 'react-use/esm/useAsync';
+import { useAsync, useMountEffect } from '@react-hookz/web';
 
 export const AwesomeUsersTable = () => {
   const apiClient = useApi(myAwesomeApiRef);
 
-  const { value, loading, error } = useAsync(async () => {
+  const [{ status, result, error }, { execute }] = useAsync(async () => {
     const users = await apiClient.listUsers();
     return users;
   }, [apiClient]);
+
+  useMountEffect(execute);
 
   // ...
 };
