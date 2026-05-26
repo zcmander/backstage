@@ -188,7 +188,7 @@ describe('createRouter with public entry point', () => {
       .send(`type=sign-in&token=${mockCredentials.user.token()}`);
 
     expect(response.status).toBe(200);
-    expect(response.headers['set-cookie']).toBeDefined();
+    expect(response.header['set-cookie']).toBeDefined();
     expect(response.text.trim()).toBe('this is index.html');
   });
 
@@ -198,7 +198,7 @@ describe('createRouter with public entry point', () => {
       .set('Content-Type', 'application/x-www-form-urlencoded')
       .send('type=something-else');
 
-    expect(response.status).toBeGreaterThanOrEqual(400);
+    expect(response.status).toBe(500);
   });
 });
 
