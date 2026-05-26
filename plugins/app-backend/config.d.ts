@@ -44,12 +44,12 @@ export interface Config {
     disableStaticFallbackCache?: boolean;
 
     /**
-     * Disables the experimental public entry point used for unauthenticated
-     * sign-in pages. When the app is bundled with an
-     * `index-public-experimental` entry point, the app backend will
-     * automatically serve it to unauthenticated users. Set this to `true` to
-     * skip that behavior and always serve the main entry point instead.
+     * Disables the public entry point used for unauthenticated sign-in pages.
+     * When the app is bundled with an `index-public-experimental` entry point,
+     * the app backend will automatically serve it to unauthenticated users.
+     * Set this to `true` to skip that behavior and always serve the main
+     * entry point instead.
      */
-    disableExperimentalPublicEntryPoint?: boolean;
+    disablePublicEntryPoint?: boolean;
   };
 }
