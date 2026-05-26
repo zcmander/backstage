@@ -98,212 +98,205 @@ export const All = meta.story({
   render: () => (
     <div
       style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+        gap: '2.5rem 3rem',
         padding: '2rem',
-        backgroundColor: 'var(--bui-surface-1)',
-        minHeight: '100vh',
       }}
     >
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-          gap: '2.5rem 3rem',
-        }}
-      >
-        <Section
-          title="Gray Scale"
-          tokens={[
-            { label: 'Gray 1', token: '--bui-gray-1' },
-            { label: 'Gray 2', token: '--bui-gray-2' },
-            { label: 'Gray 3', token: '--bui-gray-3' },
-            { label: 'Gray 4', token: '--bui-gray-4' },
-            { label: 'Gray 5', token: '--bui-gray-5' },
-            { label: 'Gray 6', token: '--bui-gray-6' },
-            { label: 'Gray 7', token: '--bui-gray-7' },
-            { label: 'Gray 8', token: '--bui-gray-8' },
-            { label: 'Gray 9', token: '--bui-gray-9' },
-            { label: 'Gray 10', token: '--bui-gray-10' },
-            { label: 'Gray 11', token: '--bui-gray-11' },
-          ]}
-        />
+      <Section
+        title="Gray Scale"
+        tokens={[
+          { label: 'Gray 1', token: '--bui-gray-1' },
+          { label: 'Gray 2', token: '--bui-gray-2' },
+          { label: 'Gray 3', token: '--bui-gray-3' },
+          { label: 'Gray 4', token: '--bui-gray-4' },
+          { label: 'Gray 5', token: '--bui-gray-5' },
+          { label: 'Gray 6', token: '--bui-gray-6' },
+          { label: 'Gray 7', token: '--bui-gray-7' },
+          { label: 'Gray 8', token: '--bui-gray-8' },
+          { label: 'Gray 9', token: '--bui-gray-9' },
+          { label: 'Gray 10', token: '--bui-gray-10' },
+          { label: 'Gray 11', token: '--bui-gray-11' },
+        ]}
+      />
 
-        <Section
-          title="Surfaces"
-          tokens={[
-            { label: 'Surface 1', token: '--bui-surface-1' },
-            { label: 'Surface 2', token: '--bui-surface-2' },
-            { label: 'Surface 3', token: '--bui-surface-3' },
-            { label: 'Surface 4', token: '--bui-surface-4' },
-            { label: 'Surface 5', token: '--bui-surface-5' },
-          ]}
-        />
+      <Section
+        title="Surfaces"
+        tokens={[
+          { label: 'Surface 1', token: '--bui-surface-1' },
+          { label: 'Surface 2', token: '--bui-surface-2' },
+          { label: 'Surface 3', token: '--bui-surface-3' },
+          { label: 'Surface 4', token: '--bui-surface-4' },
+          { label: 'Surface 5', token: '--bui-surface-5' },
+        ]}
+      />
 
-        <Section
-          title="Foreground"
-          tokens={[
-            { label: 'Primary', token: '--bui-fg-primary' },
-            { label: 'Secondary', token: '--bui-fg-secondary' },
-            { label: 'Disabled', token: '--bui-fg-disabled' },
-            { label: 'Positive', token: '--bui-fg-positive' },
-            { label: 'Negative', token: '--bui-fg-negative' },
-            { label: 'Warning', token: '--bui-fg-warning' },
-            { label: 'Announcement', token: '--bui-fg-announcement' },
-          ]}
-        />
+      <Section
+        title="Foreground"
+        tokens={[
+          { label: 'Primary', token: '--bui-fg-primary' },
+          { label: 'Secondary', token: '--bui-fg-secondary' },
+          { label: 'Disabled', token: '--bui-fg-disabled' },
+          { label: 'Positive', token: '--bui-fg-positive' },
+          { label: 'Negative', token: '--bui-fg-negative' },
+          { label: 'Warning', token: '--bui-fg-warning' },
+          { label: 'Announcement', token: '--bui-fg-announcement' },
+        ]}
+      />
 
-        <Section
-          title="Border"
-          tokens={[
-            { label: 'Border 1', token: '--bui-border-1' },
-            { label: 'Border 2', token: '--bui-border-2' },
-          ]}
-        />
+      <Section
+        title="Border"
+        tokens={[
+          { label: 'Border 1', token: '--bui-border-1' },
+          { label: 'Border 2', token: '--bui-border-2' },
+        ]}
+      />
 
-        <Section
-          title="Accent"
-          tokens={[
-            { label: 'Bg', token: '--bui-accent-bg' },
-            { label: 'Bg - Hover', token: '--bui-accent-bg-hover' },
-            { label: 'Bg - Disabled', token: '--bui-accent-bg-disabled' },
-            { label: 'Fg', token: '--bui-accent-fg' },
-            { label: 'Fg - Disabled', token: '--bui-accent-fg-disabled' },
-          ]}
-        />
+      <Section
+        title="Accent"
+        tokens={[
+          { label: 'Bg', token: '--bui-accent-bg' },
+          { label: 'Bg - Hover', token: '--bui-accent-bg-hover' },
+          { label: 'Bg - Disabled', token: '--bui-accent-bg-disabled' },
+          { label: 'Fg', token: '--bui-accent-fg' },
+          { label: 'Fg - Disabled', token: '--bui-accent-fg-disabled' },
+        ]}
+      />
 
-        <Section
-          title="Announcement"
-          tokens={[
-            { label: 'Bg - Base', token: '--bui-announcement-bg' },
-            {
-              label: 'Bg - Base - Hover',
-              token: '--bui-announcement-bg-hover',
-            },
-            {
-              label: 'Bg - Base - Disabled',
-              token: '--bui-announcement-bg-disabled',
-            },
-            { label: 'Bg - Subdued', token: '--bui-announcement-bg-subdued' },
-            {
-              label: 'Bg - Subdued - Hover',
-              token: '--bui-announcement-bg-subdued-hover',
-            },
-            {
-              label: 'Bg - Subdued - Disabled',
-              token: '--bui-announcement-bg-subdued-disabled',
-            },
-            { label: 'Border', token: '--bui-announcement-border' },
-            { label: 'Fg - On Base', token: '--bui-announcement-fg' },
-            {
-              label: 'Fg - On Base - Disabled',
-              token: '--bui-announcement-fg-disabled',
-            },
-            {
-              label: 'Fg - On Subdued',
-              token: '--bui-announcement-fg-subdued',
-            },
-            {
-              label: 'Fg - On Subdued - Disabled',
-              token: '--bui-announcement-fg-subdued-disabled',
-            },
-          ]}
-        />
+      <Section
+        title="Announcement"
+        tokens={[
+          { label: 'Bg - Base', token: '--bui-announcement-bg' },
+          {
+            label: 'Bg - Base - Hover',
+            token: '--bui-announcement-bg-hover',
+          },
+          {
+            label: 'Bg - Base - Disabled',
+            token: '--bui-announcement-bg-disabled',
+          },
+          { label: 'Bg - Subdued', token: '--bui-announcement-bg-subdued' },
+          {
+            label: 'Bg - Subdued - Hover',
+            token: '--bui-announcement-bg-subdued-hover',
+          },
+          {
+            label: 'Bg - Subdued - Disabled',
+            token: '--bui-announcement-bg-subdued-disabled',
+          },
+          { label: 'Border', token: '--bui-announcement-border' },
+          { label: 'Fg - On Base', token: '--bui-announcement-fg' },
+          {
+            label: 'Fg - On Base - Disabled',
+            token: '--bui-announcement-fg-disabled',
+          },
+          {
+            label: 'Fg - On Subdued',
+            token: '--bui-announcement-fg-subdued',
+          },
+          {
+            label: 'Fg - On Subdued - Disabled',
+            token: '--bui-announcement-fg-subdued-disabled',
+          },
+        ]}
+      />
 
-        <Section
-          title="Warning"
-          tokens={[
-            { label: 'Bg - Base', token: '--bui-warning-bg' },
-            { label: 'Bg - Base - Hover', token: '--bui-warning-bg-hover' },
-            {
-              label: 'Bg - Base - Disabled',
-              token: '--bui-warning-bg-disabled',
-            },
-            { label: 'Bg - Subdued', token: '--bui-warning-bg-subdued' },
-            {
-              label: 'Bg - Subdued - Hover',
-              token: '--bui-warning-bg-subdued-hover',
-            },
-            {
-              label: 'Bg - Subdued - Disabled',
-              token: '--bui-warning-bg-subdued-disabled',
-            },
-            { label: 'Border', token: '--bui-warning-border' },
-            { label: 'Fg - On Base', token: '--bui-warning-fg' },
-            {
-              label: 'Fg - On Base - Disabled',
-              token: '--bui-warning-fg-disabled',
-            },
-            { label: 'Fg - On Subdued', token: '--bui-warning-fg-subdued' },
-            {
-              label: 'Fg - On Subdued - Disabled',
-              token: '--bui-warning-fg-subdued-disabled',
-            },
-          ]}
-        />
+      <Section
+        title="Warning"
+        tokens={[
+          { label: 'Bg - Base', token: '--bui-warning-bg' },
+          { label: 'Bg - Base - Hover', token: '--bui-warning-bg-hover' },
+          {
+            label: 'Bg - Base - Disabled',
+            token: '--bui-warning-bg-disabled',
+          },
+          { label: 'Bg - Subdued', token: '--bui-warning-bg-subdued' },
+          {
+            label: 'Bg - Subdued - Hover',
+            token: '--bui-warning-bg-subdued-hover',
+          },
+          {
+            label: 'Bg - Subdued - Disabled',
+            token: '--bui-warning-bg-subdued-disabled',
+          },
+          { label: 'Border', token: '--bui-warning-border' },
+          { label: 'Fg - On Base', token: '--bui-warning-fg' },
+          {
+            label: 'Fg - On Base - Disabled',
+            token: '--bui-warning-fg-disabled',
+          },
+          { label: 'Fg - On Subdued', token: '--bui-warning-fg-subdued' },
+          {
+            label: 'Fg - On Subdued - Disabled',
+            token: '--bui-warning-fg-subdued-disabled',
+          },
+        ]}
+      />
 
-        <Section
-          title="Negative"
-          tokens={[
-            { label: 'Bg - Base', token: '--bui-negative-bg' },
-            { label: 'Bg - Base - Hover', token: '--bui-negative-bg-hover' },
-            {
-              label: 'Bg - Base - Disabled',
-              token: '--bui-negative-bg-disabled',
-            },
-            { label: 'Bg - Subdued', token: '--bui-negative-bg-subdued' },
-            {
-              label: 'Bg - Subdued - Hover',
-              token: '--bui-negative-bg-subdued-hover',
-            },
-            {
-              label: 'Bg - Subdued - Disabled',
-              token: '--bui-negative-bg-subdued-disabled',
-            },
-            { label: 'Border', token: '--bui-negative-border' },
-            { label: 'Fg - On Base', token: '--bui-negative-fg' },
-            {
-              label: 'Fg - On Base - Disabled',
-              token: '--bui-negative-fg-disabled',
-            },
-            { label: 'Fg - On Subdued', token: '--bui-negative-fg-subdued' },
-            {
-              label: 'Fg - On Subdued - Disabled',
-              token: '--bui-negative-fg-subdued-disabled',
-            },
-          ]}
-        />
+      <Section
+        title="Negative"
+        tokens={[
+          { label: 'Bg - Base', token: '--bui-negative-bg' },
+          { label: 'Bg - Base - Hover', token: '--bui-negative-bg-hover' },
+          {
+            label: 'Bg - Base - Disabled',
+            token: '--bui-negative-bg-disabled',
+          },
+          { label: 'Bg - Subdued', token: '--bui-negative-bg-subdued' },
+          {
+            label: 'Bg - Subdued - Hover',
+            token: '--bui-negative-bg-subdued-hover',
+          },
+          {
+            label: 'Bg - Subdued - Disabled',
+            token: '--bui-negative-bg-subdued-disabled',
+          },
+          { label: 'Border', token: '--bui-negative-border' },
+          { label: 'Fg - On Base', token: '--bui-negative-fg' },
+          {
+            label: 'Fg - On Base - Disabled',
+            token: '--bui-negative-fg-disabled',
+          },
+          { label: 'Fg - On Subdued', token: '--bui-negative-fg-subdued' },
+          {
+            label: 'Fg - On Subdued - Disabled',
+            token: '--bui-negative-fg-subdued-disabled',
+          },
+        ]}
+      />
 
-        <Section
-          title="Positive"
-          tokens={[
-            { label: 'Bg - Base', token: '--bui-positive-bg' },
-            { label: 'Bg - Base - Hover', token: '--bui-positive-bg-hover' },
-            {
-              label: 'Bg - Base - Disabled',
-              token: '--bui-positive-bg-disabled',
-            },
-            { label: 'Bg - Subdued', token: '--bui-positive-bg-subdued' },
-            {
-              label: 'Bg - Subdued - Hover',
-              token: '--bui-positive-bg-subdued-hover',
-            },
-            {
-              label: 'Bg - Subdued - Disabled',
-              token: '--bui-positive-bg-subdued-disabled',
-            },
-            { label: 'Border', token: '--bui-positive-border' },
-            { label: 'Fg - On Base', token: '--bui-positive-fg' },
-            {
-              label: 'Fg - On Base - Disabled',
-              token: '--bui-positive-fg-disabled',
-            },
-            { label: 'Fg - On Subdued', token: '--bui-positive-fg-subdued' },
-            {
-              label: 'Fg - On Subdued - Disabled',
-              token: '--bui-positive-fg-subdued-disabled',
-            },
-          ]}
-        />
-      </div>
+      <Section
+        title="Positive"
+        tokens={[
+          { label: 'Bg - Base', token: '--bui-positive-bg' },
+          { label: 'Bg - Base - Hover', token: '--bui-positive-bg-hover' },
+          {
+            label: 'Bg - Base - Disabled',
+            token: '--bui-positive-bg-disabled',
+          },
+          { label: 'Bg - Subdued', token: '--bui-positive-bg-subdued' },
+          {
+            label: 'Bg - Subdued - Hover',
+            token: '--bui-positive-bg-subdued-hover',
+          },
+          {
+            label: 'Bg - Subdued - Disabled',
+            token: '--bui-positive-bg-subdued-disabled',
+          },
+          { label: 'Border', token: '--bui-positive-border' },
+          { label: 'Fg - On Base', token: '--bui-positive-fg' },
+          {
+            label: 'Fg - On Base - Disabled',
+            token: '--bui-positive-fg-disabled',
+          },
+          { label: 'Fg - On Subdued', token: '--bui-positive-fg-subdued' },
+          {
+            label: 'Fg - On Subdued - Disabled',
+            token: '--bui-positive-fg-subdued-disabled',
+          },
+        ]}
+      />
     </div>
   ),
 });
