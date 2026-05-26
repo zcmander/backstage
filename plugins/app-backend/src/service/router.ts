@@ -153,7 +153,12 @@ export async function createRouter(
 
   const publicDistDir = resolvePath(appDistDir, 'public');
 
-  const enablePublicEntryPoint = await fs.pathExists(publicDistDir);
+  const disableExperimentalPublicEntryPoint = config.getOptionalBoolean(
+    'app.disableExperimentalPublicEntryPoint',
+  );
+  const enablePublicEntryPoint =
+    !disableExperimentalPublicEntryPoint &&
+    (await fs.pathExists(publicDistDir));
 
   if (enablePublicEntryPoint) {
     logger.info(
