@@ -292,3 +292,52 @@ it.each(databases.eachSupportedId())(
     });
   },
 );
+
+describe.each(databases.eachSupportedId())(
+  'stitch queue overlap prevention, %p',
+  databaseId => {
+    it('does not overwrite next_stitch_at when a stitch is in progress', async () => {
+      const knex = await databases.init(databaseId);
+      await applyDatabaseMigrations(knex);
+
+      // Simulate a claimed entry: next_stitch_at far in the future
+      const futureTimestamp = '2099-01-01T00:00:00.000';
+      await knex<DbStitchQueueRow>('stitch_queue').insert({
+        entity_ref: 'k:ns/target',
+        stitch_ticket: 'in-progress-ticket',
+        next_stitch_at: futureTimestamp,
+      });
+
+      // A new stitch request comes in while the stitch is in progress
+      await markForStitching({ knex, entityRefs: ['k:ns/target'] });
+
+      const [row] = await knex<DbStitchQueueRow>('stitch_queue').where(
+        'entity_ref',
+        'k:ns/target',
+      );
+
+      // Ticket should be updated (new stitch requested)
+      expect(row.stitch_ticket).not.toBe('in-progress-ticket');
+      // Timestamp should NOT be yanked back to now — the in-progress
+      // worker's timeout must be respected
+      const nextStitch = new Date(row.next_stitch_at as string);
+      expect(nextStitch.getFullYear()).toBe(2099);
+    });
+
+    it('sets next_stitch_at to now for new entries', async () => {
+      const knex = await databases.init(databaseId);
+      await applyDatabaseMigrations(knex);
+
+      await markForStitching({ knex, entityRefs: ['k:ns/brand-new'] });
+
+      const [row] = await knex<DbStitchQueueRow>('stitch_queue').where(
+        'entity_ref',
+        'k:ns/brand-new',
+      );
+
+      expect(row.stitch_ticket).toBeDefined();
+      const nextStitch = new Date(row.next_stitch_at as string);
+      expect(nextStitch.getTime()).toBeLessThanOrEqual(Date.now() + 5000);
+    });
+  },
+);

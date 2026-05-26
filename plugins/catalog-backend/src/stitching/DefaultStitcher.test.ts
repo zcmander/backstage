@@ -209,7 +209,14 @@ describe.each(databases.eachSupportedId())('Stitcher, %p', databaseId => {
 
     await waitForCondition(async () => {
       const e = await db<DbFinalEntitiesRow>('final_entities');
-      return e.length === 1 && e[0].hash !== firstHash;
+      if (e.length !== 1 || e[0].hash === firstHash) {
+        return false;
+      }
+      const s = await db<DbSearchRow>('search').where(
+        'original_value',
+        'k:ns/third',
+      );
+      return s.length > 0;
     });
 
     await stitcher.stop();
