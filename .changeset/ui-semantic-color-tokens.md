@@ -4,11 +4,11 @@
 
 Introduces a new set of semantic color token families — Accent, Announcement, Warning, Negative, and Positive — each providing a consistent set of background, foreground, and border tokens for both light and dark themes. A gray scale (`--bui-gray-1` through `--bui-gray-11`) and updated foreground tokens are also included.
 
-The previous tokens remain in place for backward compatibility but are now deprecated and will be removed in a future release. Migrate using the table below.
+The previous tokens remain in place for backward compatibility but are now deprecated and will be removed in a future release.
 
-## Migration
+**Migration:**
 
-### Surfaces
+**Surfaces**
 
 | Deprecated           | Replacement       |
 | -------------------- | ----------------- |
@@ -18,7 +18,7 @@ The previous tokens remain in place for backward compatibility but are now depre
 | `--bui-bg-neutral-3` | `--bui-surface-4` |
 | `--bui-bg-neutral-4` | `--bui-surface-5` |
 
-### Foreground
+**Foreground**
 
 | Deprecated         | Replacement             |
 | ------------------ | ----------------------- |
@@ -26,7 +26,7 @@ The previous tokens remain in place for backward compatibility but are now depre
 | `--bui-fg-success` | `--bui-fg-positive`     |
 | `--bui-fg-info`    | `--bui-fg-announcement` |
 
-### Accent
+**Accent**
 
 | Deprecated                | Replacement                |
 | ------------------------- | -------------------------- |
@@ -36,7 +36,7 @@ The previous tokens remain in place for backward compatibility but are now depre
 | `--bui-fg-solid`          | `--bui-accent-fg`          |
 | `--bui-fg-solid-disabled` | `--bui-accent-fg-disabled` |
 
-### Positive
+**Positive**
 
 | Deprecated               | Replacement                 |
 | ------------------------ | --------------------------- |
@@ -44,7 +44,7 @@ The previous tokens remain in place for backward compatibility but are now depre
 | `--bui-fg-success-on-bg` | `--bui-positive-fg-subdued` |
 | `--bui-border-success`   | `--bui-positive-border`     |
 
-### Negative
+**Negative**
 
 | Deprecated              | Replacement                 |
 | ----------------------- | --------------------------- |
@@ -52,7 +52,7 @@ The previous tokens remain in place for backward compatibility but are now depre
 | `--bui-fg-danger-on-bg` | `--bui-negative-fg-subdued` |
 | `--bui-border-danger`   | `--bui-negative-border`     |
 
-### Warning
+**Warning**
 
 | Deprecated               | Replacement                |
 | ------------------------ | -------------------------- |
@@ -60,10 +60,12 @@ The previous tokens remain in place for backward compatibility but are now depre
 | `--bui-fg-warning-on-bg` | `--bui-warning-fg-subdued` |
 | `--bui-border-warning`   | `--bui-warning-border`     |
 
-### Announcement
+**Announcement**
 
 | Deprecated            | Replacement                     |
 | --------------------- | ------------------------------- |
 | `--bui-bg-info`       | `--bui-announcement-bg-subdued` |
 | `--bui-fg-info-on-bg` | `--bui-announcement-fg-subdued` |
 | `--bui-border-info`   | `--bui-announcement-border`     |
+
+**Affected components:** Colors
