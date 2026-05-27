@@ -176,6 +176,7 @@ export class MysqlEngine implements Engine {
         connection: {
           ...this.#connection,
           database: databaseName,
+          connectTimeout: 30_000,
         },
         ...LARGER_POOL_CONFIG,
       });
