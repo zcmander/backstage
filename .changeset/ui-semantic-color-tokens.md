@@ -8,15 +8,11 @@ The previous tokens remain in place for backward compatibility but are now depre
 
 **Migration:**
 
-**Surfaces**
+**Neutral backgrounds**
 
-| Deprecated           | Replacement       |
-| -------------------- | ----------------- |
-| `--bui-bg-app`       | `--bui-surface-1` |
-| `--bui-bg-neutral-1` | `--bui-surface-2` |
-| `--bui-bg-neutral-2` | `--bui-surface-3` |
-| `--bui-bg-neutral-3` | `--bui-surface-4` |
-| `--bui-bg-neutral-4` | `--bui-surface-5` |
+| Deprecated     | Replacement          |
+| -------------- | -------------------- |
+| `--bui-bg-app` | `--bui-bg-neutral-1` |
 
 **Foreground**
 

@@ -122,13 +122,13 @@ export const All = meta.story({
       />
 
       <Section
-        title="Surfaces"
+        title="Neutral Backgrounds"
         tokens={[
-          { label: 'Surface 1', token: '--bui-surface-1' },
-          { label: 'Surface 2', token: '--bui-surface-2' },
-          { label: 'Surface 3', token: '--bui-surface-3' },
-          { label: 'Surface 4', token: '--bui-surface-4' },
-          { label: 'Surface 5', token: '--bui-surface-5' },
+          { label: 'Neutral 1', token: '--bui-bg-neutral-1' },
+          { label: 'Neutral 2', token: '--bui-bg-neutral-2' },
+          { label: 'Neutral 3', token: '--bui-bg-neutral-3' },
+          { label: 'Neutral 4', token: '--bui-bg-neutral-4' },
+          { label: 'Neutral 5', token: '--bui-bg-neutral-5' },
         ]}
       />
 

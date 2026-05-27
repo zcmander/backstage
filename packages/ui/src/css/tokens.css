@@ -90,12 +90,12 @@
     --bui-gray-10: #171717;
     --bui-gray-11: #0a0a0a;
 
-    /* Surface colors */
-    --bui-surface-1: #f5f5f5;
-    --bui-surface-2: var(--bui-white);
-    --bui-surface-3: #f7f7f7;
-    --bui-surface-4: var(--bui-white);
-    --bui-surface-5: #f7f7f7;
+    /* Neutral background colors */
+    --bui-bg-neutral-1: #f5f5f5;
+    --bui-bg-neutral-2: var(--bui-white);
+    --bui-bg-neutral-3: #f7f7f7;
+    --bui-bg-neutral-4: var(--bui-white);
+    --bui-bg-neutral-5: #f7f7f7;
 
     /* Foreground colors */
     --bui-fg-primary: var(--bui-black);
@@ -175,19 +175,15 @@
     --bui-bg-solid-pressed: #0f2b4e;
     --bui-bg-solid-disabled: #163a66;
     --bui-bg-app: #f8f8f8;
-    --bui-bg-neutral-1: #fff;
     --bui-bg-neutral-1-hover: oklch(0% 0 0 / 6%);
     --bui-bg-neutral-1-pressed: oklch(0% 0 0 / 12%);
     --bui-bg-neutral-1-disabled: oklch(0% 0 0 / 6%);
-    --bui-bg-neutral-2: oklch(0% 0 0 / 6%);
     --bui-bg-neutral-2-hover: oklch(0% 0 0 / 12%);
     --bui-bg-neutral-2-pressed: oklch(0% 0 0 / 16%);
     --bui-bg-neutral-2-disabled: oklch(0% 0 0 / 6%);
-    --bui-bg-neutral-3: oklch(0% 0 0 / 6%);
     --bui-bg-neutral-3-hover: oklch(0% 0 0 / 12%);
     --bui-bg-neutral-3-pressed: oklch(0% 0 0 / 16%);
     --bui-bg-neutral-3-disabled: oklch(0% 0 0 / 6%);
-    --bui-bg-neutral-4: oklch(0% 0 0 / 6%);
     --bui-bg-neutral-4-hover: oklch(0% 0 0 / 12%);
     --bui-bg-neutral-4-pressed: oklch(0% 0 0 / 16%);
     --bui-bg-neutral-4-disabled: oklch(0% 0 0 / 6%);
@@ -219,12 +215,12 @@
     --bui-scrollbar: #3636363a;
     --bui-scrollbar-thumb: #575757;
 
-    /* Surface colors */
-    --bui-surface-1: #333333;
-    --bui-surface-2: #1a1a1a;
-    --bui-surface-3: #282828;
-    --bui-surface-4: #393939;
-    --bui-surface-5: #474747;
+    /* Neutral background colors */
+    --bui-bg-neutral-1: #333333;
+    --bui-bg-neutral-2: #1a1a1a;
+    --bui-bg-neutral-3: #282828;
+    --bui-bg-neutral-4: #393939;
+    --bui-bg-neutral-5: #474747;
 
     /* Foreground colors */
     --bui-fg-primary: var(--bui-white);
@@ -304,19 +300,15 @@
     --bui-bg-solid-pressed: #83b9fd;
     --bui-bg-solid-disabled: #1b3d68;
     --bui-bg-app: #333333;
-    --bui-bg-neutral-1: oklch(100% 0 0 / 10%);
     --bui-bg-neutral-1-hover: oklch(100% 0 0 / 14%);
     --bui-bg-neutral-1-pressed: oklch(100% 0 0 / 20%);
     --bui-bg-neutral-1-disabled: oklch(100% 0 0 / 10%);
-    --bui-bg-neutral-2: oklch(100% 0 0 / 6%);
     --bui-bg-neutral-2-hover: oklch(100% 0 0 / 10%);
     --bui-bg-neutral-2-pressed: oklch(100% 0 0 / 16%);
     --bui-bg-neutral-2-disabled: oklch(100% 0 0 / 6%);
-    --bui-bg-neutral-3: oklch(100% 0 0 / 8%);
     --bui-bg-neutral-3-hover: oklch(100% 0 0 / 12%);
     --bui-bg-neutral-3-pressed: oklch(100% 0 0 / 20%);
     --bui-bg-neutral-3-disabled: oklch(100% 0 0 / 8%);
-    --bui-bg-neutral-4: oklch(100% 0 0 / 8%);
     --bui-bg-neutral-4-hover: oklch(100% 0 0 / 12%);
     --bui-bg-neutral-4-pressed: oklch(100% 0 0 / 20%);
     --bui-bg-neutral-4-disabled: oklch(100% 0 0 / 8%);
