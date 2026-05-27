@@ -10,9 +10,15 @@ The previous tokens remain in place for backward compatibility but are now depre
 
 **Neutral backgrounds**
 
-| Deprecated     | Replacement          |
-| -------------- | -------------------- |
-| `--bui-bg-app` | `--bui-bg-neutral-1` |
+The neutral background scale has been renamed and extended. `--bui-bg-app` is replaced by the new `--bui-bg-neutral-1`, and the old overlay-based `--bui-bg-neutral-1..4` shift up by one to become `--bui-bg-neutral-2..5`:
+
+| Deprecated                         | Replacement          |
+| ---------------------------------- | -------------------- |
+| `--bui-bg-app`                     | `--bui-bg-neutral-1` |
+| `--bui-bg-neutral-1` (old overlay) | `--bui-bg-neutral-2` |
+| `--bui-bg-neutral-2` (old overlay) | `--bui-bg-neutral-3` |
+| `--bui-bg-neutral-3` (old overlay) | `--bui-bg-neutral-4` |
+| `--bui-bg-neutral-4` (old overlay) | `--bui-bg-neutral-5` |
 
 **Foreground**
 
