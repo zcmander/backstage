@@ -197,6 +197,44 @@ describe('readProviderConfigs', () => {
     expect(actual).toEqual(expected);
   });
 
+  it('should reject userFilter combined with userGroupMemberFilter', () => {
+    const config = {
+      catalog: {
+        providers: {
+          microsoftGraphOrg: {
+            customProviderId: {
+              tenantId: 'tenantId',
+              user: { filter: "userType eq 'member'" },
+              userGroupMember: { filter: "displayName eq 'Team'" },
+            },
+          },
+        },
+      },
+    };
+    expect(() => readProviderConfigs(new ConfigReader(config))).toThrow(
+      'mutually exclusive',
+    );
+  });
+
+  it('should reject userFilter combined with userGroupMemberSearch', () => {
+    const config = {
+      catalog: {
+        providers: {
+          microsoftGraphOrg: {
+            customProviderId: {
+              tenantId: 'tenantId',
+              user: { filter: "userType eq 'member'" },
+              userGroupMember: { search: '"displayName:team"' },
+            },
+          },
+        },
+      },
+    };
+    expect(() => readProviderConfigs(new ConfigReader(config))).toThrow(
+      'userGroupMemberSearch cannot be specified',
+    );
+  });
+
   it('should fail if clientId is set without clientSecret', () => {
     const config = {
       catalog: {
