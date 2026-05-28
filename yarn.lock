@@ -31947,9 +31947,9 @@ __metadata:
   linkType: hard
 
 "ipaddr.js@npm:^2.1.0, ipaddr.js@npm:^2.3.0":
-  version: 2.3.0
-  resolution: "ipaddr.js@npm:2.3.0"
-  checksum: 10/be3d01bc2e20fc2dc5349b489ea40883954b816ce3e57aa48ad943d4e7c4ace501f28a7a15bde4b96b6b97d0fbb28d599ff2f87399f3cda7bd728889402eed3b
+  version: 2.4.0
+  resolution: "ipaddr.js@npm:2.4.0"
+  checksum: 10/e29cd15cd1f3c177f1671a74ed5dc2d7908088294850a7dbc000969a370cf02d6cdd81f8ab35a4fb0397247cd93999528eb4506277cd7db52fa2a487015207cf
   languageName: node
   linkType: hard
 
