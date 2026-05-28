@@ -76,6 +76,7 @@ describe('read microsoft graph', () => {
       id: 'userid',
       displayName: 'User Name',
       mail: 'user.name@example.com',
+      accountEnabled: true,
     };
   }
   async function* getExampleGroups() {
@@ -351,6 +352,60 @@ describe('read microsoft graph', () => {
       expect(client.getUserPhotoWithSizeLimit).toHaveBeenCalledWith(
         'userid',
         120,
+      );
+    });
+
+    it('should skip disabled users fetched via group membership', async () => {
+      client.getGroups.mockImplementation(getExampleGroups);
+      client.getGroupUserMembers.mockImplementation(async function* () {
+        yield {
+          id: 'enabled-user',
+          displayName: 'Enabled User',
+          mail: 'enabled@example.com',
+          accountEnabled: true,
+        };
+        yield {
+          id: 'disabled-user',
+          displayName: 'Disabled User',
+          mail: 'disabled@example.com',
+          accountEnabled: false,
+        };
+        yield {
+          id: 'unset-user',
+          displayName: 'Unset User',
+          mail: 'unset@example.com',
+        };
+      });
+      client.getUserPhotoWithSizeLimit.mockResolvedValue(undefined);
+
+      const { users } = await readMicrosoftGraphUsersInGroups(client, {
+        userGroupMemberFilter: 'securityEnabled eq true',
+        logger: mockServices.logger.mock(),
+      });
+
+      const names = users.map(u => u.metadata.name);
+      expect(names).toEqual(['enabled_example.com']);
+    });
+
+    it('should include accountEnabled in select when userSelect is set', async () => {
+      client.getGroups.mockImplementation(getExampleGroups);
+      client.getGroupUserMembers.mockImplementation(getExampleUsers);
+      client.getUserPhotoWithSizeLimit.mockResolvedValue(undefined);
+
+      await readMicrosoftGraphUsersInGroups(client, {
+        userGroupMemberFilter: 'securityEnabled eq true',
+        userSelect: ['id', 'displayName', 'mail'],
+        logger: mockServices.logger.mock(),
+      });
+
+      expect(client.getGroupUserMembers).toHaveBeenCalledWith(
+        'groupid',
+        {
+          select: ['id', 'displayName', 'mail', 'accountEnabled'],
+          top: 999,
+        },
+        undefined,
+        undefined,
       );
     });
 
@@ -1232,6 +1287,7 @@ describe('read microsoft graph', () => {
     async function* getExampleUsersEmail() {
       yield {
         mail: 'user.name@example.com',
+        accountEnabled: true,
       };
     }
 
@@ -1460,6 +1516,7 @@ describe('read microsoft graph', () => {
             id: `userid-${i}`,
             displayName: 'User Name',
             mail: 'user.name@example.com',
+            accountEnabled: true,
           };
         }
       }

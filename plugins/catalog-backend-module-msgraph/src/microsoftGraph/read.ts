@@ -57,7 +57,7 @@ async function* filterDisabledUsers(
   users: AsyncIterable<MicrosoftGraph.User>,
 ): AsyncIterable<MicrosoftGraph.User> {
   for await (const user of users) {
-    if (user.accountEnabled !== false) {
+    if (user.accountEnabled === true) {
       yield user;
     }
   }
