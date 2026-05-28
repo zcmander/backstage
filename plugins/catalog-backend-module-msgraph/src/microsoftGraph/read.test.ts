@@ -292,6 +292,74 @@ describe('read microsoft graph', () => {
         120,
       );
     });
+
+    it('should skip disabled users', async () => {
+      client.getUsers.mockImplementation(async function* () {
+        yield {
+          id: 'enabled',
+          displayName: 'Enabled',
+          mail: 'enabled@example.com',
+          accountEnabled: true,
+        };
+        yield {
+          id: 'disabled',
+          displayName: 'Disabled',
+          mail: 'disabled@example.com',
+          accountEnabled: false,
+        };
+        yield {
+          id: 'unset',
+          displayName: 'Unset',
+          mail: 'unset@example.com',
+        };
+      });
+      client.getUserPhotoWithSizeLimit.mockResolvedValue(undefined);
+
+      const { users } = await readMicrosoftGraphUsers(client, {
+        logger: mockServices.logger.mock(),
+      });
+
+      expect(users.map(u => u.metadata.name)).toEqual([
+        'enabled_example.com',
+        'unset_example.com',
+      ]);
+    });
+
+    it('should not pass select when userSelect is not configured', async () => {
+      client.getUsers.mockImplementation(getExampleUsers);
+      client.getUserPhotoWithSizeLimit.mockResolvedValue(undefined);
+
+      await readMicrosoftGraphUsers(client, {
+        logger: mockServices.logger.mock(),
+      });
+
+      expect(client.getUsers).toHaveBeenCalledWith(
+        { top: 999 },
+        undefined,
+        undefined,
+        undefined,
+      );
+    });
+
+    it('should add accountEnabled to select when userSelect is configured', async () => {
+      client.getUsers.mockImplementation(getExampleUsers);
+      client.getUserPhotoWithSizeLimit.mockResolvedValue(undefined);
+
+      await readMicrosoftGraphUsers(client, {
+        userSelect: ['id', 'displayName', 'mail'],
+        logger: mockServices.logger.mock(),
+      });
+
+      expect(client.getUsers).toHaveBeenCalledWith(
+        {
+          select: ['id', 'displayName', 'mail', 'accountEnabled'],
+          top: 999,
+        },
+        undefined,
+        undefined,
+        undefined,
+      );
+    });
   });
 
   describe('readMicrosoftGraphUsersInGroups', () => {
@@ -404,6 +472,24 @@ describe('read microsoft graph', () => {
           select: ['id', 'displayName', 'mail', 'accountEnabled'],
           top: 999,
         },
+        undefined,
+        undefined,
+      );
+    });
+
+    it('should not pass select when userSelect is not configured', async () => {
+      client.getGroups.mockImplementation(getExampleGroups);
+      client.getGroupUserMembers.mockImplementation(getExampleUsers);
+      client.getUserPhotoWithSizeLimit.mockResolvedValue(undefined);
+
+      await readMicrosoftGraphUsersInGroups(client, {
+        userGroupMemberFilter: 'securityEnabled eq true',
+        logger: mockServices.logger.mock(),
+      });
+
+      expect(client.getGroupUserMembers).toHaveBeenCalledWith(
+        'groupid',
+        { top: 999 },
         undefined,
         undefined,
       );
