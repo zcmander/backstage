@@ -384,7 +384,7 @@ describe('read microsoft graph', () => {
       });
 
       const names = users.map(u => u.metadata.name);
-      expect(names).toEqual(['enabled_example.com']);
+      expect(names).toEqual(['enabled_example.com', 'unset_example.com']);
     });
 
     it('should include accountEnabled in select when userSelect is set', async () => {
