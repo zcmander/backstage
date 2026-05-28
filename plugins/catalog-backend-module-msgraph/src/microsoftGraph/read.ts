@@ -42,21 +42,39 @@ import { LoggerService } from '@backstage/backend-plugin-api';
 
 const PAGE_SIZE = 999;
 
+// The default properties returned by the Microsoft Graph API for User
+// objects when no $select is specified. accountEnabled is NOT included
+// in this set — it requires an explicit $select. We always request it
+// so that filterDisabledUsers can work.
+// https://learn.microsoft.com/en-us/graph/api/user-list#optional-query-parameters
+const DEFAULT_USER_SELECT = [
+  'accountEnabled',
+  'businessPhones',
+  'displayName',
+  'givenName',
+  'id',
+  'jobTitle',
+  'mail',
+  'mobilePhone',
+  'officeLocation',
+  'preferredLanguage',
+  'surname',
+  'userPrincipalName',
+];
+
 function ensureSelectContains(
   select: string[] | undefined,
   field: string,
-): string[] | undefined {
-  if (!select) {
-    return undefined;
-  }
+): string[] {
+  const base = select ?? DEFAULT_USER_SELECT;
   if (
-    select.some(
+    base.some(
       s => s.toLocaleLowerCase('en-US') === field.toLocaleLowerCase('en-US'),
     )
   ) {
-    return select;
+    return base;
   }
-  return [...select, field];
+  return [...base, field];
 }
 
 async function* filterDisabledUsers(

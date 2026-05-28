@@ -137,6 +137,7 @@ describe('read microsoft graph', () => {
       expect(client.getUsers).toHaveBeenCalledWith(
         {
           filter: 'accountEnabled eq true',
+          select: expect.arrayContaining(['accountEnabled']),
           top: 999,
         },
         undefined,
@@ -186,6 +187,7 @@ describe('read microsoft graph', () => {
       expect(client.getUsers).toHaveBeenCalledWith(
         {
           filter: 'accountEnabled eq true',
+          select: expect.arrayContaining(['accountEnabled']),
           top: 999,
         },
         'advanced',
@@ -231,6 +233,7 @@ describe('read microsoft graph', () => {
         {
           expand: 'manager',
           filter: 'accountEnabled eq true',
+          select: expect.arrayContaining(['accountEnabled']),
           top: 999,
         },
         undefined,
@@ -280,6 +283,7 @@ describe('read microsoft graph', () => {
       expect(client.getUsers).toHaveBeenCalledWith(
         {
           filter: 'accountEnabled eq true',
+          select: expect.arrayContaining(['accountEnabled']),
           top: 999,
         },
         undefined,
@@ -325,7 +329,7 @@ describe('read microsoft graph', () => {
       ]);
     });
 
-    it('should not pass select when userSelect is not configured', async () => {
+    it('should request default fields including accountEnabled when userSelect is not configured', async () => {
       client.getUsers.mockImplementation(getExampleUsers);
       client.getUserPhotoWithSizeLimit.mockResolvedValue(undefined);
 
@@ -334,7 +338,7 @@ describe('read microsoft graph', () => {
       });
 
       expect(client.getUsers).toHaveBeenCalledWith(
-        { top: 999 },
+        { select: expect.arrayContaining(['accountEnabled']), top: 999 },
         undefined,
         undefined,
         undefined,
@@ -411,7 +415,7 @@ describe('read microsoft graph', () => {
       expect(client.getGroupUserMembers).toHaveBeenCalledTimes(1);
       expect(client.getGroupUserMembers).toHaveBeenCalledWith(
         'groupid',
-        { top: 999 },
+        { select: expect.arrayContaining(['accountEnabled']), top: 999 },
         undefined,
         undefined,
       );
@@ -477,7 +481,7 @@ describe('read microsoft graph', () => {
       );
     });
 
-    it('should not pass select when userSelect is not configured', async () => {
+    it('should request default fields including accountEnabled when userSelect is not configured', async () => {
       client.getGroups.mockImplementation(getExampleGroups);
       client.getGroupUserMembers.mockImplementation(getExampleUsers);
       client.getUserPhotoWithSizeLimit.mockResolvedValue(undefined);
@@ -489,7 +493,7 @@ describe('read microsoft graph', () => {
 
       expect(client.getGroupUserMembers).toHaveBeenCalledWith(
         'groupid',
-        { top: 999 },
+        { select: expect.arrayContaining(['accountEnabled']), top: 999 },
         undefined,
         undefined,
       );
@@ -544,7 +548,7 @@ describe('read microsoft graph', () => {
       expect(client.getGroupUserMembers).toHaveBeenCalledTimes(1);
       expect(client.getGroupUserMembers).toHaveBeenCalledWith(
         'groupid',
-        { top: 999 },
+        { select: expect.arrayContaining(['accountEnabled']), top: 999 },
         'advanced',
         undefined,
       );
@@ -604,6 +608,7 @@ describe('read microsoft graph', () => {
         'groupid',
         {
           expand: 'manager',
+          select: expect.arrayContaining(['accountEnabled']),
           top: 999,
         },
         undefined,
@@ -1407,6 +1412,7 @@ describe('read microsoft graph', () => {
       expect(client.getUsers).toHaveBeenCalledWith(
         {
           filter: undefined,
+          select: expect.arrayContaining(['accountEnabled']),
           top: 999,
         },
         undefined,
@@ -1451,6 +1457,7 @@ describe('read microsoft graph', () => {
         {
           expand: 'manager',
           filter: 'accountEnabled eq true',
+          select: expect.arrayContaining(['accountEnabled']),
           top: 999,
         },
         undefined,
@@ -1493,6 +1500,7 @@ describe('read microsoft graph', () => {
       expect(client.getUsers).toHaveBeenCalledTimes(1);
       expect(client.getUsers).toHaveBeenCalledWith(
         {
+          select: expect.arrayContaining(['accountEnabled']),
           top: 999,
         },
         undefined,
@@ -1625,6 +1633,7 @@ describe('read microsoft graph', () => {
       expect(client.getUsers).toHaveBeenCalledTimes(1);
       expect(client.getUsers).toHaveBeenCalledWith(
         {
+          select: expect.arrayContaining(['accountEnabled']),
           top: 999,
         },
         undefined,
