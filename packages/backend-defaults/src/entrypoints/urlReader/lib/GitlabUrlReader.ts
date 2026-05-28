@@ -211,7 +211,7 @@ export class GitlabUrlReader implements UrlReaderService {
     )}/repository/archive?${archiveReqParams.toString()}`;
     const archiveGitLabResponse = await this.integration.fetch(reqUrl, {
       ...getGitLabRequestOptions(this.integration.config, token),
-      mode: `same-origin`,
+      mode: 'same-origin',
       // TODO(freben): The signal cast is there because pre-3.x versions of
       // node-fetch have a very slightly deviating AbortSignal type signature.
       // The difference does not affect us in practice however. The cast can
