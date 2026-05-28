@@ -1390,7 +1390,7 @@ describe('read microsoft graph', () => {
       expect(client.getUsers).toHaveBeenCalledTimes(1);
       expect(client.getUsers).toHaveBeenCalledWith(
         {
-          select: ['mail'],
+          select: ['mail', 'accountEnabled'],
           top: 999,
         },
         undefined,

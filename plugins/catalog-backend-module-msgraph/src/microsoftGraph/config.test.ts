@@ -34,7 +34,7 @@ describe('readMicrosoftGraphConfig', () => {
         id: 'target',
         target: 'target',
         tenantId: 'tenantId',
-        userFilter: 'accountEnabled eq true',
+        userFilter: undefined,
       },
     ];
     expect(actual).toEqual(expected);
@@ -69,7 +69,7 @@ describe('readMicrosoftGraphConfig', () => {
         clientSecret: 'clientSecret',
         authority: 'https://login.example.com/',
         userExpand: 'manager',
-        userFilter: "accountEnabled eq true and (userType eq 'member')",
+        userFilter: "userType eq 'member'",
         userSelect: ['id', 'displayName', 'department'],
         groupExpand: 'member',
         groupSelect: ['id', 'displayName', 'description'],
@@ -123,7 +123,7 @@ describe('readProviderConfigs', () => {
         id: 'customProviderId',
         target: 'https://graph.microsoft.com/v1.0',
         tenantId: 'tenantId',
-        userFilter: 'accountEnabled eq true',
+        userFilter: undefined,
         userPath: 'users',
         groupPath: 'groups',
       },
@@ -178,7 +178,7 @@ describe('readProviderConfigs', () => {
         authority: 'https://login.example.com/',
         queryMode: 'advanced',
         userExpand: 'manager',
-        userFilter: "accountEnabled eq true and (userType eq 'member')",
+        userFilter: "userType eq 'member'",
         userSelect: ['id', 'displayName', 'department'],
         userPath: '/groups/{groupId}/members',
         groupExpand: 'member',
@@ -195,27 +195,6 @@ describe('readProviderConfigs', () => {
       },
     ];
     expect(actual).toEqual(expected);
-  });
-
-  it('should combine custom filter with accountEnabled filter by default', () => {
-    const config = {
-      catalog: {
-        providers: {
-          microsoftGraphOrg: {
-            customProviderId: {
-              tenantId: 'tenantId',
-              user: {
-                filter: "userType eq 'member'",
-              },
-            },
-          },
-        },
-      },
-    };
-    const [result] = readProviderConfigs(new ConfigReader(config));
-    expect(result.userFilter).toBe(
-      "accountEnabled eq true and (userType eq 'member')",
-    );
   });
 
   it('should fail if clientId is set without clientSecret', () => {

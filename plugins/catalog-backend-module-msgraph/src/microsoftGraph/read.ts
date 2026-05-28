@@ -42,6 +42,27 @@ import { LoggerService } from '@backstage/backend-plugin-api';
 
 const PAGE_SIZE = 999;
 
+function ensureSelectContains(select: string[], field: string): string[] {
+  if (
+    select.some(
+      s => s.toLocaleLowerCase('en-US') === field.toLocaleLowerCase('en-US'),
+    )
+  ) {
+    return select;
+  }
+  return [...select, field];
+}
+
+async function* filterDisabledUsers(
+  users: AsyncIterable<MicrosoftGraph.User>,
+): AsyncIterable<MicrosoftGraph.User> {
+  for await (const user of users) {
+    if (user.accountEnabled !== false) {
+      yield user;
+    }
+  }
+}
+
 export async function readMicrosoftGraphUsers(
   client: MicrosoftGraphClient,
   options: {
@@ -58,16 +79,21 @@ export async function readMicrosoftGraphUsers(
 ): Promise<{
   users: UserEntity[]; // With all relations empty
 }> {
-  const users = client.getUsers(
-    {
-      filter: options.userFilter,
-      expand: options.userExpand,
-      select: options.userSelect,
-      top: PAGE_SIZE,
-    },
-    options.queryMode,
-    options.userPath,
-    options.signal,
+  const select = options.userSelect
+    ? ensureSelectContains(options.userSelect, 'accountEnabled')
+    : undefined;
+  const users = filterDisabledUsers(
+    client.getUsers(
+      {
+        filter: options.userFilter,
+        expand: options.userExpand,
+        select,
+        top: PAGE_SIZE,
+      },
+      options.queryMode,
+      options.userPath,
+      options.signal,
+    ),
   );
 
   return {
@@ -86,7 +112,6 @@ export async function readMicrosoftGraphUsersInGroups(
   options: {
     queryMode?: 'basic' | 'advanced';
     userExpand?: string;
-    userFilter?: string;
     userSelect?: string[];
     loadUserPhotos?: boolean;
     userGroupMemberSearch?: string;
@@ -121,16 +146,20 @@ export async function readMicrosoftGraphUsersInGroups(
     userGroupMemberPromises.push(
       limiter(async () => {
         let groupMemberCount = 0;
-        for await (const user of client.getGroupUserMembers(
-          group.id!,
-          {
-            expand: options.userExpand,
-            filter: options.userFilter,
-            select: options.userSelect,
-            top: PAGE_SIZE,
-          },
-          options.queryMode,
-          options.signal,
+        const memberSelect = options.userSelect
+          ? ensureSelectContains(options.userSelect, 'accountEnabled')
+          : undefined;
+        for await (const user of filterDisabledUsers(
+          client.getGroupUserMembers(
+            group.id!,
+            {
+              expand: options.userExpand,
+              select: memberSelect,
+              top: PAGE_SIZE,
+            },
+            options.queryMode,
+            options.signal,
+          ),
         )) {
           userGroupMembers.set(user.id!, user);
           groupMemberCount++;
@@ -455,7 +484,6 @@ export async function readMicrosoftGraphOrg(
       {
         queryMode: options.queryMode,
         userExpand: options.userExpand,
-        userFilter: options.userFilter,
         userSelect: options.userSelect,
         userGroupMemberFilter: options.userGroupMemberFilter,
         userGroupMemberSearch: options.userGroupMemberSearch,

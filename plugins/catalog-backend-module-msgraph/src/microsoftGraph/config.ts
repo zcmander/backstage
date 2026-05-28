@@ -61,10 +61,9 @@ export type MicrosoftGraphProviderConfig = {
    */
   clientSecret?: string;
   /**
-   * The filter to apply to extract users. This is combined with the base
-   * `accountEnabled eq true` filter that is always applied automatically.
+   * The filter to apply to extract users.
    *
-   * E.g. "userType eq 'member'"
+   * E.g. "accountEnabled eq true and userType eq 'member'"
    */
   userFilter?: string;
   /**
@@ -193,9 +192,7 @@ export function readMicrosoftGraphConfig(
     const clientSecret = providerConfig.getOptionalString('clientSecret');
 
     const userExpand = providerConfig.getOptionalString('userExpand');
-    const userFilter = buildUserFilter(
-      providerConfig.getOptionalString('userFilter'),
-    );
+    const userFilter = providerConfig.getOptionalString('userFilter');
     const userSelect = providerConfig.getOptionalStringArray('userSelect');
     const userGroupMemberFilter = providerConfig.getOptionalString(
       'userGroupMemberFilter',
@@ -206,6 +203,17 @@ export function readMicrosoftGraphConfig(
     const groupExpand = providerConfig.getOptionalString('groupExpand');
     const groupFilter = providerConfig.getOptionalString('groupFilter');
     const groupSearch = providerConfig.getOptionalString('groupSearch');
+
+    if (userFilter && userGroupMemberFilter) {
+      throw new Error(
+        `userFilter and userGroupMemberFilter are mutually exclusive, only one can be specified.`,
+      );
+    }
+    if (userFilter && userGroupMemberSearch) {
+      throw new Error(
+        `userGroupMemberSearch cannot be specified when userFilter is defined.`,
+      );
+    }
 
     const groupSelect = providerConfig.getOptionalStringArray('groupSelect');
     const queryMode = providerConfig.getOptionalString('queryMode');
@@ -304,7 +312,7 @@ export function readProviderConfig(
   const clientSecret = config.getOptionalString('clientSecret');
 
   const userExpand = config.getOptionalString('user.expand');
-  const userFilter = buildUserFilter(config.getOptionalString('user.filter'));
+  const userFilter = config.getOptionalString('user.filter');
   const userSelect = config.getOptionalStringArray('user.select');
   const userPath = config.getOptionalString('user.path') ?? 'users';
   const loadUserPhotos = config.getOptionalBoolean('user.loadPhotos');
@@ -334,6 +342,17 @@ export function readProviderConfig(
     'userGroupMember.search',
   );
   const userGroupMemberPath = config.getOptionalString('userGroupMember.path');
+
+  if (userFilter && userGroupMemberFilter) {
+    throw new Error(
+      `userFilter and userGroupMemberFilter are mutually exclusive, only one can be specified.`,
+    );
+  }
+  if (userFilter && userGroupMemberSearch) {
+    throw new Error(
+      `userGroupMemberSearch cannot be specified when userFilter is defined.`,
+    );
+  }
 
   if (clientId && !clientSecret) {
     throw new Error(`clientSecret must be provided when clientId is defined.`);
@@ -373,12 +392,4 @@ export function readProviderConfig(
     userGroupMemberPath,
     schedule,
   };
-}
-
-function buildUserFilter(rawFilter: string | undefined): string {
-  const base = 'accountEnabled eq true';
-  if (rawFilter) {
-    return `${base} and (${rawFilter})`;
-  }
-  return base;
 }
