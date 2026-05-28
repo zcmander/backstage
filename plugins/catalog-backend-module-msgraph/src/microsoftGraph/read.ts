@@ -42,7 +42,13 @@ import { LoggerService } from '@backstage/backend-plugin-api';
 
 const PAGE_SIZE = 999;
 
-function ensureSelectContains(select: string[], field: string): string[] {
+function ensureSelectContains(
+  select: string[] | undefined,
+  field: string,
+): string[] | undefined {
+  if (!select) {
+    return undefined;
+  }
   if (
     select.some(
       s => s.toLocaleLowerCase('en-US') === field.toLocaleLowerCase('en-US'),
@@ -79,15 +85,12 @@ export async function readMicrosoftGraphUsers(
 ): Promise<{
   users: UserEntity[]; // With all relations empty
 }> {
-  const select = options.userSelect
-    ? ensureSelectContains(options.userSelect, 'accountEnabled')
-    : undefined;
   const users = filterDisabledUsers(
     client.getUsers(
       {
         filter: options.userFilter,
         expand: options.userExpand,
-        select,
+        select: ensureSelectContains(options.userSelect, 'accountEnabled'),
         top: PAGE_SIZE,
       },
       options.queryMode,
@@ -146,15 +149,15 @@ export async function readMicrosoftGraphUsersInGroups(
     userGroupMemberPromises.push(
       limiter(async () => {
         let groupMemberCount = 0;
-        const memberSelect = options.userSelect
-          ? ensureSelectContains(options.userSelect, 'accountEnabled')
-          : undefined;
         for await (const user of filterDisabledUsers(
           client.getGroupUserMembers(
             group.id!,
             {
               expand: options.userExpand,
-              select: memberSelect,
+              select: ensureSelectContains(
+                options.userSelect,
+                'accountEnabled',
+              ),
               top: PAGE_SIZE,
             },
             options.queryMode,
