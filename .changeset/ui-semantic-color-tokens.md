@@ -61,5 +61,3 @@ The neutral background tokens keep their existing names (`--bui-bg-app`, `--bui-
 | `--bui-bg-info`       | `--bui-announcement-bg-subdued` |
 | `--bui-fg-info-on-bg` | `--bui-announcement-fg-subdued` |
 | `--bui-border-info`   | `--bui-announcement-border`     |
-
-**Affected components:** Colors

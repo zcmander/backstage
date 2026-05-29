@@ -213,6 +213,7 @@
 }
 
 [data-theme-mode='dark'][data-theme-name='spotify'] {
+  --bui-bg-app: var(--bui-black);
   --bui-ring: rgba(255, 255, 255, 0.2);
   --bui-accent-bg: #1ed760;
   --bui-accent-bg-hover: #3be477;
@@ -221,7 +222,6 @@
   --bui-accent-fg-disabled: #62ab7c;
 
   /* Deprecated tokens */
-  --bui-bg-app: var(--bui-black);
   --bui-bg-solid: #1ed760;
   --bui-bg-solid-hover: #3be477;
   --bui-bg-solid-pressed: #1abc54;
