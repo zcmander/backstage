@@ -22,7 +22,6 @@ const DEPRECATED_TOKENS = [
   '--bui-bg-solid-hover',
   '--bui-bg-solid-pressed',
   '--bui-bg-solid-disabled',
-  '--bui-bg-app',
   '--bui-bg-neutral-1-hover',
   '--bui-bg-neutral-1-pressed',
   '--bui-bg-neutral-1-disabled',

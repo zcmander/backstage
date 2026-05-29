@@ -1,8 +1,8 @@
 ---
-'@backstage/ui': minor
+'@backstage/ui': patch
 ---
 
-**BREAKING**: Introduces a new set of semantic color token families — Accent, Announcement, Warning, Negative, and Positive — each providing a consistent set of background, foreground, and border tokens for both light and dark themes. A gray scale (`--bui-gray-1` through `--bui-gray-11`) and updated foreground tokens are also included.
+Introduces a new set of semantic color token families — Accent, Announcement, Warning, Negative, and Positive — each providing a consistent set of background, foreground, and border tokens for both light and dark themes. A gray scale (`--bui-gray-1` through `--bui-gray-11`) and updated foreground tokens are also included.
 
 The previous tokens remain in place for backward compatibility but are now deprecated and will be removed in a future release.
 
@@ -10,15 +10,7 @@ The previous tokens remain in place for backward compatibility but are now depre
 
 **Neutral backgrounds**
 
-The neutral background scale has been renamed and extended. `--bui-bg-app` is replaced by the new `--bui-bg-neutral-1`, and the old overlay-based `--bui-bg-neutral-1..4` shift up by one to become `--bui-bg-neutral-2..5`:
-
-| Deprecated                         | Replacement          |
-| ---------------------------------- | -------------------- |
-| `--bui-bg-app`                     | `--bui-bg-neutral-1` |
-| `--bui-bg-neutral-1` (old overlay) | `--bui-bg-neutral-2` |
-| `--bui-bg-neutral-2` (old overlay) | `--bui-bg-neutral-3` |
-| `--bui-bg-neutral-3` (old overlay) | `--bui-bg-neutral-4` |
-| `--bui-bg-neutral-4` (old overlay) | `--bui-bg-neutral-5` |
+The neutral background tokens keep their existing names (`--bui-bg-app`, `--bui-bg-neutral-1` through `--bui-bg-neutral-4`) but are updated with new solid-color values for both light and dark themes. No token renaming is required. The `-hover`, `-pressed`, and `-disabled` interaction variants of these tokens are deprecated and should be removed.
 
 **Foreground**
 

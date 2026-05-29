@@ -40,17 +40,22 @@ Replace deprecated tokens with their equivalents from the new semantic families.
 
 ### Neutral backgrounds
 
-The neutral background scale has been renamed and extended. `--bui-bg-app` is replaced by the new `--bui-bg-neutral-1`, and the old overlay-based `--bui-bg-neutral-1..4` shift up by one to become `--bui-bg-neutral-2..5`:
+The neutral background tokens (`--bui-bg-app`, `--bui-bg-neutral-1..4`) are now the active semantic tokens with updated solid-color values. The `-hover`, `-pressed`, and `-disabled` interaction variants remain deprecated:
 
-| Deprecated                         | Replacement          |
-| ---------------------------------- | -------------------- |
-| `--bui-bg-app`                     | `--bui-bg-neutral-1` |
-| `--bui-bg-neutral-1` (old overlay) | `--bui-bg-neutral-2` |
-| `--bui-bg-neutral-2` (old overlay) | `--bui-bg-neutral-3` |
-| `--bui-bg-neutral-3` (old overlay) | `--bui-bg-neutral-4` |
-| `--bui-bg-neutral-4` (old overlay) | `--bui-bg-neutral-5` |
-
-> Note: the old `--bui-bg-neutral-1..4` names are now reused for the new solid-color tokens, so this rule does not warn on them directly. The `-hover`, `-pressed`, and `-disabled` variants of those tokens remain deprecated.
+| Deprecated                    | Replacement           |
+| ----------------------------- | --------------------- |
+| `--bui-bg-neutral-1-hover`    | _(remove or restyle)_ |
+| `--bui-bg-neutral-1-pressed`  | _(remove or restyle)_ |
+| `--bui-bg-neutral-1-disabled` | _(remove or restyle)_ |
+| `--bui-bg-neutral-2-hover`    | _(remove or restyle)_ |
+| `--bui-bg-neutral-2-pressed`  | _(remove or restyle)_ |
+| `--bui-bg-neutral-2-disabled` | _(remove or restyle)_ |
+| `--bui-bg-neutral-3-hover`    | _(remove or restyle)_ |
+| `--bui-bg-neutral-3-pressed`  | _(remove or restyle)_ |
+| `--bui-bg-neutral-3-disabled` | _(remove or restyle)_ |
+| `--bui-bg-neutral-4-hover`    | _(remove or restyle)_ |
+| `--bui-bg-neutral-4-pressed`  | _(remove or restyle)_ |
+| `--bui-bg-neutral-4-disabled` | _(remove or restyle)_ |
 
 ### Foreground
 

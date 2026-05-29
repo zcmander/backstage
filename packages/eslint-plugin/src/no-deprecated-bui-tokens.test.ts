@@ -46,11 +46,11 @@ ruleTester.run('no-deprecated-bui-tokens', rule, {
     { code: `const s = 'var(--bui-warning-bg)'` },
     { code: `const s = 'var(--bui-announcement-bg)'` },
     { code: `const s = 'var(--bui-gray-1)'` },
+    { code: `const s = 'var(--bui-bg-app)'` },
     { code: `const s = 'var(--bui-bg-neutral-1)'` },
     { code: `const s = 'var(--bui-bg-neutral-2)'` },
     { code: `const s = 'var(--bui-bg-neutral-3)'` },
     { code: `const s = 'var(--bui-bg-neutral-4)'` },
-    { code: `const s = 'var(--bui-bg-neutral-5)'` },
     // Unrelated strings — should not warn
     { code: `const s = 'some-other-string'` },
     { code: `const n = 42` },
@@ -82,10 +82,6 @@ ruleTester.run('no-deprecated-bui-tokens', rule, {
           data: { token: '--bui-bg-solid-disabled' },
         },
       ],
-    },
-    {
-      code: `const s = 'var(--bui-bg-app)'`,
-      errors: [{ messageId: 'deprecated', data: { token: '--bui-bg-app' } }],
     },
     {
       code: `const s = 'var(--bui-bg-neutral-2-hover)'`,

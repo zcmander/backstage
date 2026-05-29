@@ -124,11 +124,11 @@ export const All = meta.story({
       <Section
         title="Neutral Backgrounds"
         tokens={[
+          { label: 'App', token: '--bui-bg-app' },
           { label: 'Neutral 1', token: '--bui-bg-neutral-1' },
           { label: 'Neutral 2', token: '--bui-bg-neutral-2' },
           { label: 'Neutral 3', token: '--bui-bg-neutral-3' },
           { label: 'Neutral 4', token: '--bui-bg-neutral-4' },
-          { label: 'Neutral 5', token: '--bui-bg-neutral-5' },
         ]}
       />
 
