@@ -44,11 +44,9 @@ const PAGE_SIZE = 999;
 
 // The default properties returned by the Microsoft Graph API for User
 // objects when no $select is specified. accountEnabled is NOT included
-// in this set — it requires an explicit $select. We always request it
-// so that filterDisabledUsers can work.
+// in this set — it requires an explicit $select.
 // https://learn.microsoft.com/en-us/graph/api/user-list#optional-query-parameters
 const DEFAULT_USER_SELECT = [
-  'accountEnabled',
   'businessPhones',
   'displayName',
   'givenName',
@@ -62,19 +60,17 @@ const DEFAULT_USER_SELECT = [
   'userPrincipalName',
 ];
 
-function ensureSelectContains(
-  select: string[] | undefined,
-  field: string,
-): string[] {
+// Fields that our code requires regardless of what the user or default
+// projection provides. These are always added to the $select list.
+const MINIMUM_USER_SELECT = ['id', 'accountEnabled'];
+
+function ensureMinimumSelect(select: string[] | undefined): string[] {
   const base = select ?? DEFAULT_USER_SELECT;
-  if (
-    base.some(
-      s => s.toLocaleLowerCase('en-US') === field.toLocaleLowerCase('en-US'),
-    )
-  ) {
-    return base;
-  }
-  return [...base, field];
+  const lower = new Set(base.map(s => s.toLocaleLowerCase('en-US')));
+  const missing = MINIMUM_USER_SELECT.filter(
+    f => !lower.has(f.toLocaleLowerCase('en-US')),
+  );
+  return missing.length > 0 ? [...base, ...missing] : base;
 }
 
 async function* filterDisabledUsers(
@@ -108,7 +104,7 @@ export async function readMicrosoftGraphUsers(
       {
         filter: options.userFilter,
         expand: options.userExpand,
-        select: ensureSelectContains(options.userSelect, 'accountEnabled'),
+        select: ensureMinimumSelect(options.userSelect),
         top: PAGE_SIZE,
       },
       options.queryMode,
@@ -172,10 +168,7 @@ export async function readMicrosoftGraphUsersInGroups(
             group.id!,
             {
               expand: options.userExpand,
-              select: ensureSelectContains(
-                options.userSelect,
-                'accountEnabled',
-              ),
+              select: ensureMinimumSelect(options.userSelect),
               top: PAGE_SIZE,
             },
             options.queryMode,
