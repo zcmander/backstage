@@ -78,6 +78,16 @@
         }
       }
 
+      &[data-disabled] {
+        .bui-SwitchIndicator {
+          background: var(--bui-accent-bg-disabled);
+
+          &:before {
+            background: var(--bui-accent-fg-disabled);
+          }
+        }
+      }
+
       &[data-pressed] {
         .indicator {
           background: var(--bui-bg-neutral-3);
